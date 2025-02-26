@@ -10,12 +10,14 @@ import {
   LogOut,
   Info,
   HelpCircle,
+  Check,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+
 import { Switch } from "@/components/ui/switch";
 import {
   AlertDialog,
@@ -39,6 +41,7 @@ export default function SettingsPage() {
   const [withdrawalPassword, setWithdrawalPassword] = useState("");
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [loginHistory, setLoginHistory] = useState<any[]>([]);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
 
   useEffect(() => {
     fetchUserData();
@@ -104,14 +107,33 @@ export default function SettingsPage() {
   async function handlePasswordUpdate() {
     setLoading(true);
     try {
+      // First verify the current password
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user?.email) throw new Error("User email not found");
+
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: currentPassword,
+      });
+
+      if (signInError) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Current password is incorrect",
+        });
+        return;
+      }
+
+      // If current password is correct, proceed with password update
       const { error } = await supabase.auth.updateUser({
         password: newPassword,
       });
       if (error) throw error;
-      toast({
-        title: "Success",
-        description: "Password updated successfully",
-      });
+
+      setShowSuccessDialog(true);
       setNewPassword("");
       setCurrentPassword("");
     } catch (error: any) {
@@ -133,9 +155,17 @@ export default function SettingsPage() {
       } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
+      // First check if a record exists
+      const { data: existingSettings } = await supabase
+        .from("user_security_settings")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
       const { error } = await supabase.from("user_security_settings").upsert({
         id: user.id,
         withdrawal_password: withdrawalPassword,
+        two_factor_enabled: existingSettings?.two_factor_enabled || false,
       });
 
       if (error) throw error;
@@ -164,9 +194,17 @@ export default function SettingsPage() {
       } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
+      // First check if a record exists
+      const { data: existingSettings } = await supabase
+        .from("user_security_settings")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
       const { error } = await supabase.from("user_security_settings").upsert({
         id: user.id,
         two_factor_enabled: !twoFactorEnabled,
+        withdrawal_password: existingSettings?.withdrawal_password || null,
       });
 
       if (error) throw error;
@@ -209,7 +247,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
+    <div className="space-y-8">
       <div className="flex items-center gap-4">
         <Button
           variant="ghost"
@@ -222,27 +260,13 @@ export default function SettingsPage() {
         <h1 className="text-2xl font-bold">Settings</h1>
       </div>
 
-      <Tabs defaultValue="security" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="security" className="flex items-center gap-2">
-            <Shield className="h-4 w-4" />
-            Security
-          </TabsTrigger>
-          <TabsTrigger value="advanced" className="flex items-center gap-2">
-            <Key className="h-4 w-4" />
-            Advanced
-          </TabsTrigger>
-          <TabsTrigger value="support" className="flex items-center gap-2">
-            <HelpCircle className="h-4 w-4" />
-            Support
-          </TabsTrigger>
-          <TabsTrigger value="about" className="flex items-center gap-2">
-            <Info className="h-4 w-4" />
-            About
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="security" className="space-y-6">
+      <div className="space-y-8">
+        {/* Security Section */}
+        <div className="space-y-6">
+          <div className="flex items-center gap-2 border-b pb-2">
+            <Shield className="h-5 w-5" />
+            <h2 className="text-xl font-semibold">Security</h2>
+          </div>
           {/* Login History */}
           <Card>
             <CardHeader>
@@ -325,9 +349,14 @@ export default function SettingsPage() {
               </Button>
             </CardContent>
           </Card>
-        </TabsContent>
+        </div>
 
-        <TabsContent value="advanced" className="space-y-6">
+        {/* Advanced Section */}
+        <div className="space-y-6">
+          <div className="flex items-center gap-2 border-b pb-2">
+            <Key className="h-5 w-5" />
+            <h2 className="text-xl font-semibold">Advanced Settings</h2>
+          </div>
           {/* Withdrawal Password */}
           <Card>
             <CardHeader>
@@ -402,9 +431,14 @@ export default function SettingsPage() {
               </AlertDialog>
             </CardContent>
           </Card>
-        </TabsContent>
+        </div>
 
-        <TabsContent value="support" className="space-y-6">
+        {/* Support Section */}
+        <div className="space-y-6">
+          <div className="flex items-center gap-2 border-b pb-2">
+            <HelpCircle className="h-5 w-5" />
+            <h2 className="text-xl font-semibold">Support</h2>
+          </div>
           <Card>
             <CardHeader>
               <CardTitle>Contact Support</CardTitle>
@@ -420,9 +454,14 @@ export default function SettingsPage() {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
+        </div>
 
-        <TabsContent value="about" className="space-y-6">
+        {/* About Section */}
+        <div className="space-y-6">
+          <div className="flex items-center gap-2 border-b pb-2">
+            <Info className="h-5 w-5" />
+            <h2 className="text-xl font-semibold">About</h2>
+          </div>
           <Card>
             <CardHeader>
               <CardTitle>About NeuroTrade</CardTitle>
@@ -462,8 +501,23 @@ export default function SettingsPage() {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
-      </Tabs>
+        </div>
+      </div>
+
+      {/* Success Dialog */}
+      <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+        <DialogContent className="sm:max-w-md">
+          <div className="flex flex-col items-center justify-center space-y-4 p-6">
+            <div className="rounded-full bg-green-500/20 p-3">
+              <Check className="h-6 w-6 text-green-500" />
+            </div>
+            <h2 className="text-xl font-semibold">Password Updated</h2>
+            <p className="text-center text-muted-foreground">
+              Your password has been successfully updated.
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

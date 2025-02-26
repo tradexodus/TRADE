@@ -1,4 +1,5 @@
 import { Suspense, lazy } from "react";
+import CopyTrading from "./pages/copy-trading";
 import { useRoutes, Routes, Route } from "react-router-dom";
 import Home from "./components/home";
 import routes from "tempo-routes";
@@ -25,6 +26,7 @@ function App() {
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/account" element={<AccountPage />} />
           <Route path="/deposit" element={<DepositPage />} />
+          <Route path="/copy-trading" element={<CopyTrading />} />
           <Route path="/withdrawal" element={<WithdrawalPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/legal" element={<LegalPage />} />

@@ -21,7 +21,6 @@ import {
 import { useNavigate } from "react-router-dom";
 import { Button } from "../ui/button";
 import { supabase } from "@/lib/supabase";
-import { Separator } from "@/components/ui/separator";
 import { useEffect, useState } from "react";
 
 type UserProfile = {
@@ -77,128 +76,119 @@ export default function AuthenticatedLayout({
       {/* Header with Hamburger Menu */}
       <header className="border-b">
         <div className="flex items-center justify-between px-4 py-3">
-          <img
-            src="/images/tempo-image-20250222T194809206Z.png"
-            alt="NeuroTrade"
-            className="h-8"
-          />
+          <Button
+            variant="ghost"
+            className="p-0"
+            onClick={() => navigate("/dashboard")}
+          >
+            <img
+              src="/images/tempo-image-20250222T194809206Z.png"
+              alt="NeuroTrade"
+              className="h-8"
+            />
+          </Button>
           <Sheet>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon">
                 <Menu className="h-6 w-6" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-80">
-              <SheetHeader className="pb-4 justify-center items-center">
-                <div className="flex items-center gap-4 mb-4">
-                  <img
-                    src="/images/tempo-image-20250222T194809206Z.png"
-                    alt="NeuroTrade"
-                    className="h-8"
-                  />
+            <SheetContent side="right" className="w-80 bg-black p-0">
+              <SheetHeader className="p-6 border-b border-white/10">
+                <div className="space-y-1">
+                  <SheetTitle className="text-lg font-bold">
+                    neurotrade
+                  </SheetTitle>
+                  <p className="text-sm text-white/90">{profile?.email}</p>
+                  <p className="text-sm text-white/60">
+                    Account ID: {loading ? "Loading..." : profile?.account_id}
+                  </p>
                 </div>
-                <SheetTitle className="text-lg font-bold">
-                  {profile?.name || "User"}
-                </SheetTitle>
-                <p className="text-sm text-muted-foreground">
-                  {profile?.email}
-                </p>
-                <p className="text-sm font-medium">
-                  Account ID: {loading ? "Loading..." : profile?.account_id}
-                </p>
               </SheetHeader>
-              <Separator className="my-4" />
-              <nav className="flex flex-col gap-1">
+              <nav>
                 <Button
                   variant="ghost"
-                  className="justify-between rounded-xl"
+                  className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-white/10"
                   onClick={() => navigate("/account")}
                 >
                   <div className="flex items-center gap-2">
-                    <User className="h-4 w-4 text-[#0052CC]" />
+                    <User className="h-4 w-4" />
                     Account
                   </div>
                 </Button>
                 <Button
                   variant="ghost"
-                  className="justify-between rounded-xl"
+                  className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-white/10"
                   onClick={() => navigate("/dashboard")}
                 >
                   <div className="flex items-center gap-2">
-                    <LayoutDashboard className="h-4 w-4 text-[#0052CC]" />
+                    <LayoutDashboard className="h-4 w-4" />
                     Dashboard
                   </div>
                 </Button>
                 <Button
                   variant="ghost"
-                  className="justify-between rounded-xl"
+                  className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-white/10"
                   onClick={() => navigate("/ai-trader")}
                 >
                   <div className="flex items-center gap-2">
-                    <BrainCircuit className="h-4 w-4 text-[#0052CC]" />
+                    <BrainCircuit className="h-4 w-4" />
                     AI Trader
                   </div>
-                  <span className="text-xs text-muted-foreground">
-                    Smart trading with AI
-                  </span>
                 </Button>
                 <Button
                   variant="ghost"
-                  className="justify-between rounded-xl"
+                  className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-white/10"
                   onClick={() => navigate("/copy-trading")}
                 >
                   <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4 text-[#0052CC]" />
+                    <Users className="h-4 w-4" />
                     Copy Trading
                   </div>
-                  <span className="text-xs text-muted-foreground">
-                    Follow top traders
-                  </span>
                 </Button>
                 <Button
                   variant="ghost"
-                  className="justify-between rounded-xl"
+                  className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-white/10"
                   onClick={() => navigate("/deposit")}
                 >
                   <div className="flex items-center gap-2">
-                    <ArrowDownToLine className="h-4 w-4 text-[#0052CC]" />
+                    <ArrowDownToLine className="h-4 w-4" />
                     Deposit
                   </div>
                 </Button>
                 <Button
                   variant="ghost"
-                  className="justify-between rounded-xl"
+                  className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-white/10"
                   onClick={() => navigate("/withdrawal")}
                 >
                   <div className="flex items-center gap-2">
-                    <ArrowUpFromLine className="h-4 w-4 text-[#0052CC]" />
+                    <ArrowUpFromLine className="h-4 w-4" />
                     Withdrawal
                   </div>
                 </Button>
                 <Button
                   variant="ghost"
-                  className="justify-between rounded-xl"
+                  className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-white/10"
                   onClick={() => navigate("/history")}
                 >
                   <div className="flex items-center gap-2">
-                    <History className="h-4 w-4 text-[#0052CC]" />
+                    <History className="h-4 w-4" />
                     Transaction History
                   </div>
                 </Button>
                 <Button
                   variant="ghost"
-                  className="justify-between rounded-xl"
+                  className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-white/10"
                   onClick={() => navigate("/settings")}
                 >
                   <div className="flex items-center gap-2">
-                    <Settings className="h-4 w-4 text-[#0052CC]" />
+                    <Settings className="h-4 w-4" />
                     Settings
                   </div>
                 </Button>
-                <Separator className="my-4" />
                 <Button
                   variant="ghost"
-                  className="justify-between rounded-xl text-red-500"
+                  className="w-full justify-start px-6 py-3 text-red-500 hover:text-red-400 hover:bg-white/10"
                   onClick={handleSignOut}
                 >
                   <div className="flex items-center gap-2">
@@ -212,7 +202,7 @@ export default function AuthenticatedLayout({
         </div>
       </header>
       {/* Main Content */}
-      <main className="container mx-auto p-4">{children}</main>
+      <main className="p-6">{children}</main>
     </div>
   );
 }

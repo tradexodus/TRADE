@@ -1,4 +1,5 @@
 import { useState } from "react";
+import WithdrawalPasswordDialog from "./withdrawal-password-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,8 +16,14 @@ export default function WithdrawalPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setShowPasswordDialog(true);
+  }
+
+  async function processWithdrawal() {
     setLoading(true);
 
     try {
@@ -131,6 +138,12 @@ export default function WithdrawalPage() {
           {loading ? "Processing..." : "Confirm Withdrawal"}
         </Button>
       </form>
+
+      <WithdrawalPasswordDialog
+        open={showPasswordDialog}
+        onOpenChange={setShowPasswordDialog}
+        onConfirm={processWithdrawal}
+      />
     </div>
   );
 }

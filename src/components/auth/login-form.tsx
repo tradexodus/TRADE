@@ -39,20 +39,18 @@ export default function LoginForm() {
       });
 
       if (error) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: error.message,
+        form.setError("password", {
+          type: "manual",
+          message: "The email or password you entered is incorrect.",
         });
         return;
       }
 
       navigate("/dashboard");
     } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Something went wrong. Please try again.",
+      form.setError("password", {
+        type: "manual",
+        message: "Something went wrong. Please try again.",
       });
     } finally {
       setIsLoading(false);

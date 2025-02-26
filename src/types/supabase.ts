@@ -9,7 +9,349 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      copy_trading_relationships: {
+        Row: {
+          created_at: string
+          id: string
+          status: string
+          trader_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          status: string
+          trader_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          status?: string
+          trader_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "copy_trading_relationships_trader_id_fkey"
+            columns: ["trader_id"]
+            isOneToOne: false
+            referencedRelation: "traders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      deposits: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          screenshot_url: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          screenshot_url?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          screenshot_url?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      login_history: {
+        Row: {
+          created_at: string
+          id: string
+          ip_address: string | null
+          login_time: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          login_time?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          login_time?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      trader_trades: {
+        Row: {
+          closed_at: string | null
+          created_at: string
+          entry_price: number
+          exit_price: number | null
+          id: string
+          pair: string
+          profit_loss: number | null
+          quantity: number
+          status: string
+          trader_id: string | null
+          type: string
+        }
+        Insert: {
+          closed_at?: string | null
+          created_at?: string
+          entry_price: number
+          exit_price?: number | null
+          id?: string
+          pair: string
+          profit_loss?: number | null
+          quantity: number
+          status: string
+          trader_id?: string | null
+          type: string
+        }
+        Update: {
+          closed_at?: string | null
+          created_at?: string
+          entry_price?: number
+          exit_price?: number | null
+          id?: string
+          pair?: string
+          profit_loss?: number | null
+          quantity?: number
+          status?: string
+          trader_id?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trader_trades_trader_id_fkey"
+            columns: ["trader_id"]
+            isOneToOne: false
+            referencedRelation: "traders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      traders: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string
+          followers_count: number | null
+          id: string
+          name: string
+          total_profit: number | null
+          win_rate: number | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          followers_count?: number | null
+          id?: string
+          name: string
+          total_profit?: number | null
+          win_rate?: number | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          followers_count?: number | null
+          id?: string
+          name?: string
+          total_profit?: number | null
+          win_rate?: number | null
+        }
+        Relationships: []
+      }
+      user_accounts: {
+        Row: {
+          account_id: number
+          balance: number | null
+          created_at: string
+          id: string
+        }
+        Insert: {
+          account_id?: number
+          balance?: number | null
+          created_at?: string
+          id: string
+        }
+        Update: {
+          account_id?: number
+          balance?: number | null
+          created_at?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      user_profiles: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          name: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id: string
+          name?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string | null
+        }
+        Relationships: []
+      }
+      user_security_settings: {
+        Row: {
+          created_at: string
+          id: string
+          two_factor_enabled: boolean | null
+          updated_at: string
+          withdrawal_password: string | null
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          two_factor_enabled?: boolean | null
+          updated_at?: string
+          withdrawal_password?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          two_factor_enabled?: boolean | null
+          updated_at?: string
+          withdrawal_password?: string | null
+        }
+        Relationships: []
+      }
+      user_verifications: {
+        Row: {
+          created_at: string
+          date_of_birth: string | null
+          id: string
+          id_back_url: string | null
+          id_front_url: string | null
+          id_type: string | null
+          legal_name: string | null
+          nationality: string | null
+          residential_address: string | null
+          status: Database["public"]["Enums"]["verification_status"] | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date_of_birth?: string | null
+          id: string
+          id_back_url?: string | null
+          id_front_url?: string | null
+          id_type?: string | null
+          legal_name?: string | null
+          nationality?: string | null
+          residential_address?: string | null
+          status?: Database["public"]["Enums"]["verification_status"] | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date_of_birth?: string | null
+          id?: string
+          id_back_url?: string | null
+          id_front_url?: string | null
+          id_type?: string | null
+          legal_name?: string | null
+          nationality?: string | null
+          residential_address?: string | null
+          status?: Database["public"]["Enums"]["verification_status"] | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      users: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          name: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          name?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string | null
+        }
+        Relationships: []
+      }
+      wallet_settings: {
+        Row: {
+          id: number
+          updated_at: string
+          wallet_address: string
+        }
+        Insert: {
+          id?: number
+          updated_at?: string
+          wallet_address: string
+        }
+        Update: {
+          id?: number
+          updated_at?: string
+          wallet_address?: string
+        }
+        Relationships: []
+      }
+      withdrawals: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          status: string
+          user_id: string
+          wallet_address: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          status?: string
+          user_id: string
+          wallet_address: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          status?: string
+          user_id?: string
+          wallet_address?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -18,7 +360,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      verification_status: "not_verified" | "pending" | "verified"
     }
     CompositeTypes: {
       [_ in never]: never
