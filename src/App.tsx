@@ -10,6 +10,7 @@ const DashboardPage = lazy(() => import("./pages/dashboard"));
 const AccountPage = lazy(() => import("./pages/account"));
 const DepositPage = lazy(() => import("./pages/deposit"));
 const WithdrawalPage = lazy(() => import("./pages/withdrawal"));
+const HistoryPage = lazy(() => import("./pages/history"));
 const PrivacyPage = lazy(() => import("./pages/privacy"));
 const LegalPage = lazy(() => import("./pages/legal"));
 const TermsPage = lazy(() => import("./pages/terms"));
@@ -28,6 +29,7 @@ function App() {
           <Route path="/deposit" element={<DepositPage />} />
           <Route path="/copy-trading" element={<CopyTrading />} />
           <Route path="/withdrawal" element={<WithdrawalPage />} />
+          <Route path="/history" element={<HistoryPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/legal" element={<LegalPage />} />
           <Route path="/terms" element={<TermsPage />} />

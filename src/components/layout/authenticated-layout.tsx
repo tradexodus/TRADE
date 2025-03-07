@@ -72,137 +72,252 @@ export default function AuthenticatedLayout({
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header with Hamburger Menu */}
-      <header className="border-b">
-        <div className="flex items-center justify-between px-4 py-3">
+    <div className="min-h-screen bg-background flex">
+      {/* Sidebar for desktop */}
+      <div className="hidden md:flex flex-col w-[270px] border-r bg-gradient-to-r from-blue-900/30 to-blue-800/10 p-0 shadow-lg backdrop-blur-sm">
+        <div className="p-6 border-b border-blue-700/20 bg-blue-900/20 backdrop-filter backdrop-blur-sm">
+          <div className="space-y-1">
+            <h2 className="text-xl font-bold tracking-wide">neurotrade</h2>
+            <p className="text-sm text-white/90">{profile?.email}</p>
+            <p className="text-sm text-white/60">
+              Account ID: {loading ? "Loading..." : profile?.account_id}
+            </p>
+          </div>
+        </div>
+        <nav className="flex flex-col gap-3 p-4 flex-1">
           <Button
             variant="ghost"
-            className="p-0"
+            className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
+            onClick={() => navigate("/account")}
+          >
+            <div className="flex items-center gap-3">
+              <User className="h-5 w-5 text-blue-400" />
+              Account
+            </div>
+          </Button>
+          <Button
+            variant="ghost"
+            className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
             onClick={() => navigate("/dashboard")}
           >
-            <img
-              src="/images/tempo-image-20250222T194809206Z.png"
-              alt="NeuroTrade"
-              className="h-8"
-            />
+            <div className="flex items-center gap-3">
+              <LayoutDashboard className="h-5 w-5 text-blue-400" />
+              Dashboard
+            </div>
           </Button>
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <Menu className="h-6 w-6" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-80 bg-black p-0">
-              <SheetHeader className="p-6 border-b border-white/10">
-                <div className="space-y-1">
-                  <SheetTitle className="text-lg font-bold">
-                    neurotrade
-                  </SheetTitle>
-                  <p className="text-sm text-white/90">{profile?.email}</p>
-                  <p className="text-sm text-white/60">
-                    Account ID: {loading ? "Loading..." : profile?.account_id}
-                  </p>
-                </div>
-              </SheetHeader>
-              <nav>
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-white/10"
-                  onClick={() => navigate("/account")}
+          <Button
+            variant="ghost"
+            className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
+            onClick={() => navigate("/ai-trader")}
+          >
+            <div className="flex items-center gap-3">
+              <BrainCircuit className="h-5 w-5 text-blue-400" />
+              AI Trader
+            </div>
+          </Button>
+          <Button
+            variant="ghost"
+            className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
+            onClick={() => navigate("/copy-trading")}
+          >
+            <div className="flex items-center gap-3">
+              <Users className="h-5 w-5 text-blue-400" />
+              Copy Trading
+            </div>
+          </Button>
+          <Button
+            variant="ghost"
+            className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
+            onClick={() => navigate("/deposit")}
+          >
+            <div className="flex items-center gap-3">
+              <ArrowDownToLine className="h-5 w-5 text-blue-400" />
+              Deposit
+            </div>
+          </Button>
+          <Button
+            variant="ghost"
+            className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
+            onClick={() => navigate("/withdrawal")}
+          >
+            <div className="flex items-center gap-3">
+              <ArrowUpFromLine className="h-5 w-5 text-blue-400" />
+              Withdrawal
+            </div>
+          </Button>
+          <Button
+            variant="ghost"
+            className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
+            onClick={() => navigate("/history")}
+          >
+            <div className="flex items-center gap-3">
+              <History className="h-5 w-5 text-blue-400" />
+              Transaction History
+            </div>
+          </Button>
+          <Button
+            variant="ghost"
+            className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
+            onClick={() => navigate("/settings")}
+          >
+            <div className="flex items-center gap-3">
+              <Settings className="h-5 w-5 text-blue-400" />
+              Settings
+            </div>
+          </Button>
+          <div className="mt-auto">
+            <Button
+              variant="ghost"
+              className="w-full justify-start px-6 py-3 text-red-400 hover:text-red-300 hover:bg-red-900/30 rounded-lg transition-all duration-200 hover:translate-x-1 mt-2 border-t border-blue-800/30 pt-5"
+              onClick={handleSignOut}
+            >
+              <div className="flex items-center gap-3">
+                <LogOut className="h-5 w-5" />
+                Log out
+              </div>
+            </Button>
+          </div>
+        </nav>
+      </div>
+
+      <div className="flex-1 flex flex-col">
+        {/* Header with Hamburger Menu (mobile only) */}
+        <header className="border-b md:hidden">
+          <div className="flex items-center justify-between px-4 py-3">
+            <Button
+              variant="ghost"
+              className="p-0"
+              onClick={() => navigate("/dashboard")}
+            >
+              <img
+                src="/images/tempo-image-20250222T194809206Z.png"
+                alt="NeuroTrade"
+                className="h-8"
+              />
+            </Button>
+            <div className="md:hidden">
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <Menu className="h-6 w-6" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent
+                  side="right"
+                  className="w-80 bg-gradient-to-r from-blue-900/30 to-blue-800/10 p-0"
                 >
-                  <div className="flex items-center gap-2">
-                    <User className="h-4 w-4" />
-                    Account
-                  </div>
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-white/10"
-                  onClick={() => navigate("/dashboard")}
-                >
-                  <div className="flex items-center gap-2">
-                    <LayoutDashboard className="h-4 w-4" />
-                    Dashboard
-                  </div>
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-white/10"
-                  onClick={() => navigate("/ai-trader")}
-                >
-                  <div className="flex items-center gap-2">
-                    <BrainCircuit className="h-4 w-4" />
-                    AI Trader
-                  </div>
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-white/10"
-                  onClick={() => navigate("/copy-trading")}
-                >
-                  <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4" />
-                    Copy Trading
-                  </div>
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-white/10"
-                  onClick={() => navigate("/deposit")}
-                >
-                  <div className="flex items-center gap-2">
-                    <ArrowDownToLine className="h-4 w-4" />
-                    Deposit
-                  </div>
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-white/10"
-                  onClick={() => navigate("/withdrawal")}
-                >
-                  <div className="flex items-center gap-2">
-                    <ArrowUpFromLine className="h-4 w-4" />
-                    Withdrawal
-                  </div>
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-white/10"
-                  onClick={() => navigate("/history")}
-                >
-                  <div className="flex items-center gap-2">
-                    <History className="h-4 w-4" />
-                    Transaction History
-                  </div>
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-white/10"
-                  onClick={() => navigate("/settings")}
-                >
-                  <div className="flex items-center gap-2">
-                    <Settings className="h-4 w-4" />
-                    Settings
-                  </div>
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start px-6 py-3 text-red-500 hover:text-red-400 hover:bg-white/10"
-                  onClick={handleSignOut}
-                >
-                  <div className="flex items-center gap-2">
-                    <LogOut className="h-4 w-4" />
-                    Log out
-                  </div>
-                </Button>
-              </nav>
-            </SheetContent>
-          </Sheet>
-        </div>
-      </header>
-      {/* Main Content */}
-      <main className="p-6">{children}</main>
+                  <SheetHeader className="p-6 border-b border-blue-700/20 bg-blue-900/20">
+                    <div className="space-y-1">
+                      <SheetTitle className="text-xl font-bold tracking-wide">
+                        neurotrade
+                      </SheetTitle>
+                      <p className="text-sm text-white/90">{profile?.email}</p>
+                      <p className="text-sm text-white/60">
+                        Account ID:{" "}
+                        {loading ? "Loading..." : profile?.account_id}
+                      </p>
+                    </div>
+                  </SheetHeader>
+                  <nav className="flex flex-col gap-3 p-4">
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
+                      onClick={() => navigate("/account")}
+                    >
+                      <div className="flex items-center gap-3">
+                        <User className="h-5 w-5 text-blue-400" />
+                        Account
+                      </div>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
+                      onClick={() => navigate("/dashboard")}
+                    >
+                      <div className="flex items-center gap-3">
+                        <LayoutDashboard className="h-5 w-5 text-blue-400" />
+                        Dashboard
+                      </div>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
+                      onClick={() => navigate("/ai-trader")}
+                    >
+                      <div className="flex items-center gap-3">
+                        <BrainCircuit className="h-5 w-5 text-blue-400" />
+                        AI Trader
+                      </div>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
+                      onClick={() => navigate("/copy-trading")}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Users className="h-5 w-5 text-blue-400" />
+                        Copy Trading
+                      </div>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
+                      onClick={() => navigate("/deposit")}
+                    >
+                      <div className="flex items-center gap-3">
+                        <ArrowDownToLine className="h-5 w-5 text-blue-400" />
+                        Deposit
+                      </div>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
+                      onClick={() => navigate("/withdrawal")}
+                    >
+                      <div className="flex items-center gap-3">
+                        <ArrowUpFromLine className="h-5 w-5 text-blue-400" />
+                        Withdrawal
+                      </div>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
+                      onClick={() => navigate("/history")}
+                    >
+                      <div className="flex items-center gap-3">
+                        <History className="h-5 w-5 text-blue-400" />
+                        Transaction History
+                      </div>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
+                      onClick={() => navigate("/settings")}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Settings className="h-5 w-5 text-blue-400" />
+                        Settings
+                      </div>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start px-6 py-3 text-red-400 hover:text-red-300 hover:bg-red-900/30 rounded-lg transition-all duration-200 hover:translate-x-1 mt-2 border-t border-blue-800/30 pt-5"
+                      onClick={handleSignOut}
+                    >
+                      <div className="flex items-center gap-3">
+                        <LogOut className="h-5 w-5" />
+                        Log out
+                      </div>
+                    </Button>
+                  </nav>
+                </SheetContent>
+              </Sheet>
+            </div>
+          </div>
+        </header>
+        {/* Main Content */}
+        <main className="p-6 flex-1">{children}</main>
+      </div>
     </div>
   );
 }

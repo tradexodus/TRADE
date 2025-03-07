@@ -18,18 +18,23 @@ export default function LandingPage() {
     const element = document.getElementById(id);
     if (element) {
       element.scrollIntoView({ behavior: "smooth" });
+      setIsMobileMenuOpen(false);
     }
   };
 
   return (
-    <div className="w-full min-h-screen bg-black text-white font-inter">
+    <div className="w-full min-h-screen bg-black text-white font-inter relative overflow-hidden">
+      {/* Background Circle */}
+      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[1200px] h-[1200px] rounded-full bg-blue-600/20 blur-3xl z-0" />
+      {/* Another smaller circle for added depth */}
+      <div className="absolute bottom-[-200px] w-[500px] h-[500px] rounded-full bg-gradient-to-tr from-blue-500/20 to-indigo-600/5 blur-3xl left-[100px]" />
       {/* Navigation */}
-      <nav className="w-full py-2 px-4 md:px-16">
+      <nav className="w-full py-6 px-4 md:px-16">
         <div className="flex justify-between items-center">
           <img
             src="https://storage.googleapis.com/tempo-public-images/figma-exports%2Fgithub%7C196424230-1740190883034-node-14%3A79-1740180082712.png"
             alt="Logo"
-            className="h-6 md:h-8 w-[120px] md:w-[160px]"
+            className="h-6 md:h-8 w-[120px] md:w-[160px] flex"
           />
 
           <div className="hidden md:flex items-center space-x-6">
@@ -160,7 +165,7 @@ export default function LandingPage() {
           )}
         </div>
       </nav>
-      <hr className="border-white/5 mx-4 md:mx-32 mt-4" />
+      <hr className="border-white/5 mx-4 md:mx-32 mt-2 flex" />
       {/* Hero Section */}
       <section id="home" className="text-center px-4 md:px-16 mt-6 md:mt-12">
         <h1 className="text-3xl md:text-5xl font-extrabold leading-[1.2] tracking-tight">

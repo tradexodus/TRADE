@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Wallet } from "lucide-react";
 import AuthenticatedLayout from "@/components/layout/authenticated-layout";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
@@ -38,29 +39,34 @@ export default function Dashboard() {
   return (
     <AuthenticatedLayout>
       <div className="space-y-6">
-        <div className="grid gap-4 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Account ID</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-mono">
-                {loading ? "Loading..." : account?.account_id || "N/A"}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Balance</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-mono">
-                ${loading ? "Loading..." : (account?.balance || 0).toFixed(2)}
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+        <Card className="overflow-hidden">
+          <CardHeader className="bg-gradient-to-r from-blue-900/30 to-blue-800/10 pb-8">
+            <CardTitle className="flex items-center gap-2">
+              <Wallet className="h-5 w-5 text-blue-400" />
+              <span>Account Overview</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <div className="flex flex-col md:flex-row justify-between gap-6">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Account ID
+                </p>
+                <p className="text-2xl font-mono mt-1">
+                  {loading ? "Loading..." : account?.account_id || "N/A"}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Balance
+                </p>
+                <p className="text-2xl font-mono mt-1 text-blue-400">
+                  ${loading ? "Loading..." : (account?.balance || 0).toFixed(2)}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </AuthenticatedLayout>
   );

@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabase";
@@ -7,6 +9,7 @@ import { useToast } from "@/components/ui/use-toast";
 import VerificationDialog from "./verification-dialog";
 
 export default function AccountPage() {
+  const navigate = useNavigate();
   const [nickname, setNickname] = useState("");
   const [isVerified, setIsVerified] = useState<
     "not_verified" | "pending" | "verified"
@@ -76,7 +79,17 @@ export default function AccountPage() {
 
   return (
     <div className="container mx-auto p-6 space-y-8">
-      <h1 className="text-2xl font-bold">Account Settings</h1>
+      <div className="flex items-center gap-4">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => navigate(-1)}
+          className="rounded-full"
+        >
+          <ArrowLeft className="h-6 w-6" />
+        </Button>
+        <h1 className="text-2xl font-bold">Account Settings</h1>
+      </div>
 
       <div className="space-y-6 max-w-md">
         {/* Nickname */}
