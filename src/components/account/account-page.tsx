@@ -144,7 +144,13 @@ export default function AccountPage() {
               }
             </div>
             {isVerified === "not_verified" && (
-              <Button onClick={() => setIsDialogOpen(true)}>Verify Now</Button>
+              <Button
+                onClick={() => {
+                  setIsDialogOpen(true);
+                }}
+              >
+                Verify Now
+              </Button>
             )}
           </div>
         </div>

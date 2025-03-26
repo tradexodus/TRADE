@@ -95,6 +95,33 @@ export type Database = {
         }
         Relationships: []
       }
+      messages: {
+        Row: {
+          country: string | null
+          id: number
+          is_authenticated: boolean | null
+          text: string
+          timestamp: string
+          username: string
+        }
+        Insert: {
+          country?: string | null
+          id?: number
+          is_authenticated?: boolean | null
+          text: string
+          timestamp?: string
+          username: string
+        }
+        Update: {
+          country?: string | null
+          id?: number
+          is_authenticated?: boolean | null
+          text?: string
+          timestamp?: string
+          username?: string
+        }
+        Relationships: []
+      }
       trader_trades: {
         Row: {
           closed_at: string | null
@@ -178,24 +205,138 @@ export type Database = {
         }
         Relationships: []
       }
+      trades: {
+        Row: {
+          amount: number
+          closed_at: string | null
+          created_at: string | null
+          crypto_pair: string
+          id: string
+          profit_loss: number
+          status: string
+          trade_type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          closed_at?: string | null
+          created_at?: string | null
+          crypto_pair: string
+          id?: string
+          profit_loss: number
+          status: string
+          trade_type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          closed_at?: string | null
+          created_at?: string | null
+          crypto_pair?: string
+          id?: string
+          profit_loss?: number
+          status?: string
+          trade_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      trading_history: {
+        Row: {
+          amount: number
+          closed_at: string | null
+          created_at: string | null
+          crypto_pair: string
+          duration_minutes: string | null
+          id: string
+          profit_loss: number | null
+          status: string
+          trade_type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          closed_at?: string | null
+          created_at?: string | null
+          crypto_pair: string
+          duration_minutes?: string | null
+          id?: string
+          profit_loss?: number | null
+          status: string
+          trade_type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          closed_at?: string | null
+          created_at?: string | null
+          crypto_pair?: string
+          duration_minutes?: string | null
+          id?: string
+          profit_loss?: number | null
+          status?: string
+          trade_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      trading_settings: {
+        Row: {
+          created_at: string | null
+          id: string
+          max_loss_percentage: number
+          max_profit_percentage: number
+          min_profit_percentage: number
+          updated_at: string | null
+          user_id: string
+          win_probability: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          max_loss_percentage?: number
+          max_profit_percentage?: number
+          min_profit_percentage?: number
+          updated_at?: string | null
+          user_id: string
+          win_probability?: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          max_loss_percentage?: number
+          max_profit_percentage?: number
+          min_profit_percentage?: number
+          updated_at?: string | null
+          user_id?: string
+          win_probability?: number
+        }
+        Relationships: []
+      }
       user_accounts: {
         Row: {
           account_id: number
           balance: number | null
           created_at: string
           id: string
+          profit: number | null
+          role: string | null
         }
         Insert: {
           account_id?: number
           balance?: number | null
           created_at?: string
           id: string
+          profit?: number | null
+          role?: string | null
         }
         Update: {
           account_id?: number
           balance?: number | null
           created_at?: string
           id?: string
+          profit?: number | null
+          role?: string | null
         }
         Relationships: []
       }
@@ -286,27 +427,6 @@ export type Database = {
         }
         Relationships: []
       }
-      users: {
-        Row: {
-          created_at: string
-          email: string
-          id: string
-          name: string | null
-        }
-        Insert: {
-          created_at?: string
-          email: string
-          id?: string
-          name?: string | null
-        }
-        Update: {
-          created_at?: string
-          email?: string
-          id?: string
-          name?: string | null
-        }
-        Relationships: []
-      }
       wallet_settings: {
         Row: {
           id: number
@@ -357,7 +477,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_trading_settings: {
+        Args: {
+          p_user_id: string
+        }
+        Returns: {
+          win_probability: number
+          max_profit_percentage: number
+          max_loss_percentage: number
+        }[]
+      }
     }
     Enums: {
       verification_status: "not_verified" | "pending" | "verified"

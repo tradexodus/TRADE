@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 type UserAccount = {
   account_id: number;
   balance: number;
+  profit?: number;
 };
 
 export default function Dashboard() {
@@ -62,6 +63,18 @@ export default function Dashboard() {
                 </p>
                 <p className="text-2xl font-mono mt-1 text-blue-400">
                   ${loading ? "Loading..." : (account?.balance || 0).toFixed(2)}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Profit
+                </p>
+                <p className="text-2xl font-mono mt-1 text-green-500">
+                  $
+                  {loading
+                    ? "Loading..."
+                    : ((account?.profit || 0) > 0 ? "+" : "") +
+                      (account?.profit || 0).toFixed(2)}
                 </p>
               </div>
             </div>

@@ -38,7 +38,11 @@ export default function SettingsPage() {
   const [email, setEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
-  const [withdrawalPassword, setWithdrawalPassword] = useState("");
+  const [currentWithdrawalPassword, setCurrentWithdrawalPassword] =
+    useState("");
+  const [newWithdrawalPassword, setNewWithdrawalPassword] = useState("");
+  const [hasExistingWithdrawalPassword, setHasExistingWithdrawalPassword] =
+    useState(false);
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [loginHistory, setLoginHistory] = useState<any[]>([]);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
@@ -62,6 +66,9 @@ export default function SettingsPage() {
 
       if (securitySettings) {
         setTwoFactorEnabled(securitySettings.two_factor_enabled);
+        setHasExistingWithdrawalPassword(
+          !!securitySettings.withdrawal_password,
+        );
       }
     }
   }
@@ -162,9 +169,34 @@ export default function SettingsPage() {
         .eq("id", user.id)
         .single();
 
+      // Verify current password if one exists
+      if (hasExistingWithdrawalPassword) {
+        if (!currentWithdrawalPassword) {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Current withdrawal password is required",
+          });
+          setLoading(false);
+          return;
+        }
+
+        if (
+          existingSettings?.withdrawal_password !== currentWithdrawalPassword
+        ) {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Current withdrawal password is incorrect",
+          });
+          setLoading(false);
+          return;
+        }
+      }
+
       const { error } = await supabase.from("user_security_settings").upsert({
         id: user.id,
-        withdrawal_password: withdrawalPassword,
+        withdrawal_password: newWithdrawalPassword,
         two_factor_enabled: existingSettings?.two_factor_enabled || false,
       });
 
@@ -173,8 +205,11 @@ export default function SettingsPage() {
       toast({
         title: "Success",
         description: "Withdrawal password updated successfully",
+        variant: "default",
       });
-      setWithdrawalPassword("");
+      setCurrentWithdrawalPassword("");
+      setNewWithdrawalPassword("");
+      setHasExistingWithdrawalPassword(true);
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -363,20 +398,40 @@ export default function SettingsPage() {
               <CardTitle>Withdrawal Password</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {hasExistingWithdrawalPassword && (
+                <div className="space-y-2">
+                  <Label>Current Withdrawal Password</Label>
+                  <Input
+                    type="password"
+                    value={currentWithdrawalPassword}
+                    onChange={(e) =>
+                      setCurrentWithdrawalPassword(e.target.value)
+                    }
+                    placeholder="Enter current withdrawal password"
+                  />
+                </div>
+              )}
               <div className="space-y-2">
-                <Label>Set Withdrawal Password</Label>
+                <Label>
+                  {hasExistingWithdrawalPassword ? "New" : "Set"} Withdrawal
+                  Password
+                </Label>
                 <Input
                   type="password"
-                  value={withdrawalPassword}
-                  onChange={(e) => setWithdrawalPassword(e.target.value)}
-                  placeholder="Enter withdrawal password"
+                  value={newWithdrawalPassword}
+                  onChange={(e) => setNewWithdrawalPassword(e.target.value)}
+                  placeholder={`Enter ${hasExistingWithdrawalPassword ? "new" : ""} withdrawal password`}
                 />
               </div>
               <Button
                 onClick={handleWithdrawalPasswordUpdate}
-                disabled={loading || !withdrawalPassword}
+                disabled={
+                  loading ||
+                  !newWithdrawalPassword ||
+                  (hasExistingWithdrawalPassword && !currentWithdrawalPassword)
+                }
               >
-                Set Password
+                {hasExistingWithdrawalPassword ? "Update" : "Set"} Password
               </Button>
             </CardContent>
           </Card>

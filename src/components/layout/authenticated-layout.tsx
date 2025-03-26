@@ -17,6 +17,7 @@ import {
   History,
   Settings,
   LogOut,
+  TrendingUp,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../ui/button";
@@ -155,6 +156,7 @@ export default function AuthenticatedLayout({
               Transaction History
             </div>
           </Button>
+
           <Button
             variant="ghost"
             className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
@@ -289,6 +291,7 @@ export default function AuthenticatedLayout({
                         Transaction History
                       </div>
                     </Button>
+
                     <Button
                       variant="ghost"
                       className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"

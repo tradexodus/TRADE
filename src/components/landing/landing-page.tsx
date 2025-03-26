@@ -390,7 +390,7 @@ export default function LandingPage() {
           </div>
 
           <div className="space-y-5">
-            <h4 className="text-xl font-semibold font-poppins">Sesterce</h4>
+            <h4 className="text-xl font-semibold font-poppins">Service</h4>
             <div className="space-y-2.5">
               <p className="text-base font-normal font-poppins leading-loose">
                 Explore

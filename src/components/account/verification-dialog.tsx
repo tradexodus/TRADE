@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
+import { ToastAction } from "@/components/ui/toast";
 
 interface VerificationDialogProps {
   open: boolean;
@@ -104,9 +105,11 @@ export default function VerificationDialog({
       if (error) throw error;
 
       toast({
-        title: "Verification Submitted",
+        title: "Verification Request Sent!",
         description:
           "Your verification request has been submitted and is pending review.",
+        variant: "default",
+        action: <ToastAction altText="View status">View Status</ToastAction>,
       });
 
       onVerificationSubmitted();
@@ -114,8 +117,9 @@ export default function VerificationDialog({
       console.error("Error:", error);
       toast({
         variant: "destructive",
-        title: "Error",
+        title: "Verification Failed",
         description: "Failed to submit verification request. Please try again.",
+        action: <ToastAction altText="Try again">Try Again</ToastAction>,
       });
     } finally {
       setIsSubmitting(false);
