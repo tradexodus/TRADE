@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { TradingViewAdvancedChart } from "@/components/dashboard/trading-view-advanced-chart";
 import {
   Sheet,
   SheetContent,
@@ -244,6 +245,22 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         </div>
+
+        <Card className="w-full">
+          <CardHeader>
+            <CardTitle>Market Overview</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[500px]">
+              <TradingViewAdvancedChart
+                symbol="NASDAQ:AAPL"
+                height={500}
+                theme="dark"
+                allowSymbolChange={true}
+              />
+            </div>
+          </CardContent>
+        </Card>
       </main>
     </div>
   );

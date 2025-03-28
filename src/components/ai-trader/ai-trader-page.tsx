@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
 import {
   ArrowUpDown,
   BrainCircuit,
@@ -48,6 +49,7 @@ type TradeHistory = {
   created_at: string;
   closed_at: string | null;
   duration_minutes: string | null;
+  expiration_time?: string | null;
 };
 
 export default function AITraderPage() {
@@ -76,14 +78,35 @@ export default function AITraderPage() {
   const { toast } = useToast();
 
   useEffect(() => {
+    // Add a global flag to prevent multiple simultaneous trade processing
+    window.isProcessingTrade = false;
+
     fetchAccountData();
     fetchTradingSettings();
     fetchTradeHistory();
+
+    // Listen for trade processing events from AuthenticatedLayout
+    const handleTradesProcessed = (event: CustomEvent) => {
+      console.log(
+        `${event.detail.count} trades were processed, refreshing data`,
+      );
+      fetchAccountData();
+      fetchTradeHistory();
+    };
+
+    window.addEventListener(
+      "tradesProcessed",
+      handleTradesProcessed as EventListener,
+    );
 
     return () => {
       if (timerRef.current) {
         clearInterval(timerRef.current);
       }
+      window.removeEventListener(
+        "tradesProcessed",
+        handleTradesProcessed as EventListener,
+      );
     };
   }, []);
 
@@ -114,15 +137,18 @@ export default function AITraderPage() {
 
       if (!user) return;
 
+      // Get the account data
       const { data: accountData } = await supabase
         .from("user_accounts")
         .select("*")
         .eq("id", user.id)
         .single();
 
-      if (accountData) {
-        setAccount(accountData);
-      }
+      if (!accountData) return;
+
+      // Set account data - we don't check for pending trades here anymore
+      // as that's handled by the AuthenticatedLayout component
+      setAccount(accountData);
     } catch (error) {
       console.error("Error fetching account data:", error);
     } finally {
@@ -364,7 +390,7 @@ export default function AITraderPage() {
     }
   }
 
-  function startAutoTrading() {
+  async function startAutoTrading() {
     if (!account) return;
 
     const tradeAmount = parseFloat(amount);
@@ -387,19 +413,58 @@ export default function AITraderPage() {
       return;
     }
 
-    // Set timer based on selected duration
-    const durationInSeconds = parseInt(tradeDuration) * 60;
-    setTimeRemaining(durationInSeconds);
-    setAutoTradeActive(true);
-    setTradeResult(null);
+    setIsTrading(true);
 
-    toast({
-      title: "Auto Trading Started",
-      description: `Trading will complete in ${formatDuration(durationInSeconds)}`,
-    });
+    try {
+      // Immediately deduct the trade amount from user's balance
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-    // Create a pending trade record
-    createPendingTrade(tradeAmount);
+      if (!user) throw new Error("User not authenticated");
+
+      // Update account balance in database
+      const newBalance = account.balance - tradeAmount;
+      const { error: updateError } = await supabase
+        .from("user_accounts")
+        .update({
+          balance: newBalance,
+        })
+        .eq("id", user.id);
+
+      if (updateError) throw updateError;
+
+      // Update local account state
+      setAccount({
+        ...account,
+        balance: newBalance,
+      });
+
+      // Set timer based on selected duration
+      const durationInSeconds = parseInt(tradeDuration) * 60;
+      setTimeRemaining(durationInSeconds);
+      setAutoTradeActive(true);
+      setTradeResult(null);
+
+      toast({
+        title: "Auto Trading Started",
+        description: `Trading will complete in ${formatDuration(durationInSeconds)}`,
+      });
+
+      // Create a pending trade record
+      await createPendingTrade(tradeAmount);
+    } catch (error: any) {
+      console.error("Failed to start auto trading:", error);
+      toast({
+        variant: "destructive",
+        title: "Failed to start trading",
+        description: error.message || "Something went wrong",
+      });
+      setAutoTradeActive(false);
+      setTimeRemaining(0);
+    } finally {
+      setIsTrading(false);
+    }
   }
 
   async function createPendingTrade(tradeAmount: number) {
@@ -411,6 +476,12 @@ export default function AITraderPage() {
       if (!user) return;
 
       const now = new Date();
+      const durationMinutes = parseInt(tradeDuration);
+      const expiryTime = new Date(now.getTime() + durationMinutes * 60 * 1000);
+
+      console.log(
+        `Creating trade with expiry time: ${expiryTime.toISOString()}`,
+      );
 
       // Insert into trading_history table as pending
       const { error: historyError, data: newTrade } = await supabase
@@ -425,12 +496,33 @@ export default function AITraderPage() {
           created_at: now.toISOString(),
           closed_at: null,
           duration_minutes: tradeDuration,
+          expiration_time: expiryTime.toISOString(), // Store the exact expiry time
         })
         .select()
         .single();
 
       if (historyError) {
         console.error("Error creating pending trade record:", historyError);
+
+        // If we failed to create the trade record, refund the user's balance
+        const { error: refundError } = await supabase
+          .from("user_accounts")
+          .update({
+            balance: account!.balance + tradeAmount, // Refund the amount
+          })
+          .eq("id", user.id);
+
+        if (refundError) {
+          console.error("Error refunding balance:", refundError);
+        } else {
+          // Update local account state
+          setAccount({
+            ...account!,
+            balance: account!.balance + tradeAmount,
+          });
+        }
+
+        throw new Error("Failed to create trade record");
       } else {
         // Instead of using setTimeout which won't work if the page is closed,
         // we'll rely on the checkPendingTrades function that runs periodically
@@ -444,12 +536,20 @@ export default function AITraderPage() {
       }
     } catch (error) {
       console.error("Error creating pending trade:", error);
+      throw error; // Rethrow to handle in the calling function
     }
   }
 
-  async function executeAutoTrade() {
-    if (!account || !autoTradeActive) return;
+  async function executeAutoTrade(tradeId?: string) {
+    // Set a flag to track if this function is already running
+    if (window.isProcessingTrade) {
+      console.log(
+        "Trade processing already in progress, skipping duplicate call",
+      );
+      return;
+    }
 
+    window.isProcessingTrade = true;
     setIsTrading(true);
 
     try {
@@ -459,19 +559,53 @@ export default function AITraderPage() {
 
       if (!user) throw new Error("User not authenticated");
 
-      const tradeAmount = parseFloat(amount);
       const now = new Date();
 
-      // Find the pending trade
-      const { data: pendingTrades } = await supabase
+      // Find the pending trade - don't rely on local state
+      let query = supabase
         .from("trading_history")
         .select("*")
         .eq("user_id", user.id)
-        .eq("status", "pending")
-        .order("created_at", { ascending: false });
+        .eq("status", "pending");
+
+      // If a specific trade ID is provided, use it
+      if (tradeId) {
+        query = query.eq("id", tradeId);
+      }
+
+      const { data: pendingTrades } = await query.order("created_at", {
+        ascending: false,
+      });
 
       if (pendingTrades && pendingTrades.length > 0) {
         const pendingTrade = pendingTrades[0];
+
+        // Verify that the trade has actually expired
+        const createdAt = new Date(pendingTrade.created_at);
+        const durationMinutes = parseInt(pendingTrade.duration_minutes);
+        const expiryTime = new Date(
+          createdAt.getTime() + durationMinutes * 60 * 1000,
+        );
+
+        if (now.getTime() < expiryTime.getTime()) {
+          console.log(
+            `Trade ${pendingTrade.id} has not expired yet. Expires at ${expiryTime.toISOString()}`,
+          );
+
+          // If this is an auto trade that was triggered by the UI timer, update the UI
+          if (autoTradeActive) {
+            // Calculate remaining time and update UI
+            const remainingMs = expiryTime.getTime() - now.getTime();
+            setTimeRemaining(Math.floor(remainingMs / 1000));
+          }
+
+          setIsTrading(false);
+          return;
+        }
+
+        console.log(
+          `Processing expired trade ${pendingTrade.id}. Expired at ${expiryTime.toISOString()}`,
+        );
 
         // Process the trade directly instead of using the edge function
         try {
@@ -505,6 +639,22 @@ export default function AITraderPage() {
 
           const profitAmount = (pendingTrade.amount * profitPercentage) / 100;
           const roundedProfit = Math.round(profitAmount * 100) / 100;
+
+          // Check if the trade has already been processed
+          const { data: existingTrade } = await supabase
+            .from("trading_history")
+            .select("status, closed_at")
+            .eq("id", pendingTrade.id)
+            .single();
+
+          // Only process the trade if it's still pending
+          if (existingTrade && existingTrade.status !== "pending") {
+            console.log(
+              `Trade ${pendingTrade.id} has already been processed, skipping`,
+            );
+            setIsTrading(false);
+            return;
+          }
 
           // Update the trade record
           const { error: updateError } = await supabase
@@ -547,10 +697,14 @@ export default function AITraderPage() {
           if (accountError) throw new Error("Failed to fetch account data");
 
           // Calculate new balance and profit values
-          const newBalance =
-            roundedProfit < 0
-              ? accountData.balance + roundedProfit
-              : accountData.balance;
+          // For profit trades: add the profit to the balance
+          // For loss trades: subtract the loss from the balance
+          // Don't add back the initial investment as it's already in the balance
+          let newBalance = accountData.balance;
+
+          // Add profit or subtract loss
+          newBalance += roundedProfit;
+
           const newProfit =
             roundedProfit > 0
               ? (accountData.profit || 0) + roundedProfit
@@ -589,7 +743,7 @@ export default function AITraderPage() {
             description:
               roundedProfit > 0
                 ? `You made a profit of ${roundedProfit.toFixed(2)}`
-                : `You had a loss of ${Math.abs(roundedProfit).toFixed(2)}`,
+                : `You lost ${Math.abs(roundedProfit).toFixed(2)}`,
             variant: roundedProfit > 0 ? "default" : "destructive",
           });
         } catch (processError: any) {
@@ -609,6 +763,8 @@ export default function AITraderPage() {
       setIsTrading(false);
       setAutoTradeActive(false);
       setAmount("");
+      // Reset the processing flag
+      window.isProcessingTrade = false;
     }
   }
 
@@ -643,394 +799,415 @@ export default function AITraderPage() {
   }
 
   return (
-    <div className="container mx-auto space-y-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">AI Trader</h1>
+    <div className="container mx-auto px-4 space-y-6">
+      <div className="flex items-center justify-between py-2">
+        <h1 className="text-xl sm:text-2xl font-bold">AI Trader</h1>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
-        <div className="md:col-span-2 space-y-6">
-          {/* TradingView Widget */}
-          <Card className="overflow-hidden">
-            <CardHeader className="bg-gradient-to-r from-blue-900/30 to-blue-800/10">
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-blue-400" />
-                <span>Live Chart</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0 h-[400px]">
-              <div className="h-full flex items-center justify-center bg-gray-800 rounded-md">
-                <div className="text-center p-6">
-                  <TrendingUp className="h-12 w-12 text-blue-400 mx-auto mb-4" />
-                  <h3 className="text-xl font-medium text-white mb-2">
-                    Live Chart
-                  </h3>
-                  <p className="text-gray-400 mb-4">
-                    Trading pair: {cryptoPair}
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    Chart visualization is currently simplified for performance
-                    reasons.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+      {/* Mobile Tabs for switching between sections */}
+      <div className="block md:hidden">
+        <Tabs defaultValue="trading" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="trading">Trading</TabsTrigger>
+            <TabsTrigger value="account">Account</TabsTrigger>
+            <TabsTrigger value="charts">Charts</TabsTrigger>
+          </TabsList>
 
-          {/* Market Overview */}
-          <Card>
-            <CardHeader className="bg-gradient-to-r from-blue-900/30 to-blue-800/10">
-              <CardTitle className="flex items-center gap-2">
-                <ArrowUpDown className="h-5 w-5 text-blue-400" />
-                <span>Crypto Market Overview</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0 h-[400px] overflow-auto">
-              <div className="w-full h-full p-4 bg-gray-800 rounded-md">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-3 border border-gray-700 rounded-md">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center text-black font-bold">
-                        ₿
-                      </div>
-                      <div>
-                        <div className="font-medium">Bitcoin</div>
-                        <div className="text-sm text-gray-400">BTC</div>
-                      </div>
+          <TabsContent value="trading" className="mt-4 space-y-4">
+            {/* AI Trading Interface */}
+            <Card className="overflow-hidden border-0 shadow-lg">
+              <CardHeader className="bg-gradient-to-r from-blue-900/30 to-blue-800/10 py-3">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <BrainCircuit className="h-4 w-4 text-blue-400" />
+                  <span>AI Trading</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-4">
+                <Tabs defaultValue="manual" className="space-y-4">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="manual">Manual</TabsTrigger>
+                    <TabsTrigger value="auto">Auto</TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="manual" className="space-y-3">
+                    <div className="space-y-1">
+                      <Label className="text-sm">Crypto Pair</Label>
+                      <Select value={cryptoPair} onValueChange={setCryptoPair}>
+                        <SelectTrigger className="h-9">
+                          <SelectValue placeholder="Select crypto pair" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="BTC/USDT">BTC/USDT</SelectItem>
+                          <SelectItem value="ETH/USDT">ETH/USDT</SelectItem>
+                          <SelectItem value="SOL/USDT">SOL/USDT</SelectItem>
+                          <SelectItem value="BNB/USDT">BNB/USDT</SelectItem>
+                          <SelectItem value="XRP/USDT">XRP/USDT</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
-                    <div className="text-right">
-                      <div className="font-medium">$63,245.82</div>
-                      <div className="text-sm text-green-500">+2.4%</div>
+
+                    <div className="space-y-1">
+                      <Label className="text-sm">Trade Type</Label>
+                      <Select value={tradeType} onValueChange={setTradeType}>
+                        <SelectTrigger className="h-9">
+                          <SelectValue placeholder="Select trade type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="buy">Buy</SelectItem>
+                          <SelectItem value="sell">Sell</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
-                  </div>
 
-                  <div className="flex items-center justify-between p-3 border border-gray-700 rounded-md">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
-                        Ξ
-                      </div>
-                      <div>
-                        <div className="font-medium">Ethereum</div>
-                        <div className="text-sm text-gray-400">ETH</div>
-                      </div>
+                    <div className="space-y-1">
+                      <Label className="text-sm">Amount (USDT)</Label>
+                      <Input
+                        type="number"
+                        placeholder="Enter amount"
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value)}
+                        className="h-9"
+                      />
                     </div>
-                    <div className="text-right">
-                      <div className="font-medium">$3,452.17</div>
-                      <div className="text-sm text-green-500">+1.8%</div>
-                    </div>
-                  </div>
 
-                  <div className="flex items-center justify-between p-3 border border-gray-700 rounded-md">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center text-white font-bold">
-                        S
-                      </div>
-                      <div>
-                        <div className="font-medium">Solana</div>
-                        <div className="text-sm text-gray-400">SOL</div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-medium">$142.89</div>
-                      <div className="text-sm text-red-500">-0.7%</div>
-                    </div>
-                  </div>
+                    <Button
+                      className="w-full h-10 mt-2"
+                      onClick={handleTrade}
+                      disabled={isTrading || loading || !amount}
+                    >
+                      {isTrading ? "Processing..." : "Execute Trade"}
+                    </Button>
 
-                  <div className="flex items-center justify-between p-3 border border-gray-700 rounded-md">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-yellow-600 rounded-full flex items-center justify-center text-white font-bold">
-                        B
-                      </div>
-                      <div>
-                        <div className="font-medium">Binance Coin</div>
-                        <div className="text-sm text-gray-400">BNB</div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-medium">$567.32</div>
-                      <div className="text-sm text-green-500">+0.9%</div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between p-3 border border-gray-700 rounded-md">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-blue-400 rounded-full flex items-center justify-center text-white font-bold">
-                        X
-                      </div>
-                      <div>
-                        <div className="font-medium">Ripple</div>
-                        <div className="text-sm text-gray-400">XRP</div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-medium">$0.5423</div>
-                      <div className="text-sm text-red-500">-1.2%</div>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 text-center text-xs text-gray-500">
-                    Market data updated: {new Date().toLocaleString()}
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="space-y-6">
-          {/* Account Info */}
-          <Card>
-            <CardHeader className="bg-gradient-to-r from-blue-900/30 to-blue-800/10">
-              <CardTitle className="flex items-center gap-2">
-                <span>Account Overview</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-6">
-              <div className="space-y-4">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Balance
-                  </p>
-                  <p className="text-2xl font-mono mt-1 text-blue-400">
-                    $
-                    {loading
-                      ? "Loading..."
-                      : (account?.balance || 0).toFixed(2)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Total Winnings
-                  </p>
-                  <p className="text-2xl font-mono mt-1 text-green-500">
-                    $
-                    {loading
-                      ? "Loading..."
-                      : "+" + (account?.profit || 0).toFixed(2)}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Trading Settings */}
-          <Card>
-            <CardHeader className="bg-gradient-to-r from-blue-900/30 to-blue-800/10">
-              <CardTitle className="flex items-center gap-2">
-                <Settings className="h-5 w-5 text-blue-400" />
-                <span>Trading Settings</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-6">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Win Probability (%)</Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    max="100"
-                    value={tradingSettings.win_probability * 100}
-                    onChange={(e) => {
-                      const value = parseFloat(e.target.value);
-                      if (!isNaN(value) && value >= 0 && value <= 100) {
-                        setTradingSettings((prev) => ({
-                          ...prev,
-                          win_probability: value / 100,
-                        }));
-                      }
-                    }}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Min Profit Percentage (%)</Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    value={tradingSettings.min_profit_percentage}
-                    onChange={(e) => {
-                      const value = parseFloat(e.target.value);
-                      if (!isNaN(value) && value >= 0) {
-                        setTradingSettings((prev) => ({
-                          ...prev,
-                          min_profit_percentage: value,
-                        }));
-                      }
-                    }}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Max Profit Percentage (%)</Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    value={tradingSettings.max_profit_percentage}
-                    onChange={(e) => {
-                      const value = parseFloat(e.target.value);
-                      if (!isNaN(value) && value >= 0) {
-                        setTradingSettings((prev) => ({
-                          ...prev,
-                          max_profit_percentage: value,
-                        }));
-                      }
-                    }}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Max Loss Percentage (%)</Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    value={tradingSettings.max_loss_percentage}
-                    onChange={(e) => {
-                      const value = parseFloat(e.target.value);
-                      if (!isNaN(value) && value >= 0) {
-                        setTradingSettings((prev) => ({
-                          ...prev,
-                          max_loss_percentage: value,
-                        }));
-                      }
-                    }}
-                  />
-                </div>
-
-                <Button
-                  className="w-full"
-                  onClick={async () => {
-                    try {
-                      const {
-                        data: { user },
-                      } = await supabase.auth.getUser();
-                      if (!user) return;
-
-                      const { error } = await supabase
-                        .from("trading_settings")
-                        .update({
-                          win_probability: tradingSettings.win_probability,
-                          min_profit_percentage:
-                            tradingSettings.min_profit_percentage,
-                          max_profit_percentage:
-                            tradingSettings.max_profit_percentage,
-                          max_loss_percentage:
-                            tradingSettings.max_loss_percentage,
-                          updated_at: new Date().toISOString(),
-                        })
-                        .eq("user_id", user.id);
-
-                      if (error) {
-                        console.error("Error updating settings:", error);
-                        toast({
-                          variant: "destructive",
-                          title: "Settings Update Failed",
-                          description: "Failed to update trading settings",
-                        });
-                      } else {
-                        toast({
-                          title: "Settings Updated",
-                          description:
-                            "Your trading settings have been updated",
-                        });
-                      }
-                    } catch (error) {
-                      console.error("Settings update error:", error);
-                    }
-                  }}
-                >
-                  Save Settings
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Trading History */}
-          <Card>
-            <CardHeader className="bg-gradient-to-r from-blue-900/30 to-blue-800/10">
-              <CardTitle className="flex items-center gap-2">
-                <History className="h-5 w-5 text-blue-400" />
-                <span>Trading History</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <ScrollArea className="h-[400px] p-4">
-                {tradeHistory.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    No trading history yet
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {tradeHistory.map((trade) => (
+                    {tradeResult && (
                       <div
-                        key={trade.id}
-                        className="border rounded-md p-3 space-y-2"
+                        className={`p-2 text-sm rounded-md mt-2 ${tradeResult.success ? "bg-green-500/20 text-green-500" : "bg-red-500/20 text-red-500"}`}
                       >
-                        <div className="flex justify-between items-center">
-                          <div className="font-medium">{trade.crypto_pair}</div>
-                          <div
-                            className={`font-medium ${getStatusColor(trade.status)}`}
-                          >
-                            {trade.status === "pending"
-                              ? "PENDING"
-                              : trade.profit_loss && trade.profit_loss > 0
-                                ? "PROFIT"
-                                : "LOSS"}
-                          </div>
-                        </div>
+                        {tradeResult.message}
+                      </div>
+                    )}
+                  </TabsContent>
 
-                        <div className="flex justify-between text-sm">
-                          <div className="text-muted-foreground">
-                            {trade.trade_type.toUpperCase()} $
-                            {trade.amount.toFixed(2)}
-                          </div>
-                          <div
-                            className={
-                              trade.status === "pending"
-                                ? "text-yellow-500"
-                                : trade.profit_loss && trade.profit_loss > 0
-                                  ? "text-green-500"
-                                  : "text-red-500"
+                  <TabsContent value="auto" className="space-y-3">
+                    <div className="space-y-1">
+                      <Label className="text-sm">
+                        AI Trading Amount (USDT)
+                      </Label>
+                      <Input
+                        type="number"
+                        placeholder="Enter amount"
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value)}
+                        disabled={autoTradeActive}
+                        className="h-9"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <Label className="text-sm">Trading Duration</Label>
+                      <Select
+                        value={tradeDuration}
+                        onValueChange={setTradeDuration}
+                        disabled={autoTradeActive}
+                      >
+                        <SelectTrigger className="h-9">
+                          <SelectValue placeholder="Select trading duration" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1">1 minute</SelectItem>
+                          <SelectItem value="10">10 minutes</SelectItem>
+                          <SelectItem value="30">30 minutes</SelectItem>
+                          <SelectItem value="60">1 hour</SelectItem>
+                          <SelectItem value="180">3 hours</SelectItem>
+                          <SelectItem value="360">6 hours</SelectItem>
+                          <SelectItem value="720">12 hours</SelectItem>
+                          <SelectItem value="1440">24 hours</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-1">
+                      <Label className="text-sm">Risk Level</Label>
+                      <Select defaultValue="medium" disabled={autoTradeActive}>
+                        <SelectTrigger className="h-9">
+                          <SelectValue placeholder="Select risk level" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="low">Low Risk</SelectItem>
+                          <SelectItem value="medium">Medium Risk</SelectItem>
+                          <SelectItem value="high">High Risk</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {autoTradeActive && (
+                      <div className="flex items-center justify-center gap-2 p-2 text-sm bg-blue-500/10 rounded-md">
+                        <Clock className="h-4 w-4 text-blue-400 animate-pulse" />
+                        <span>Trading: {formatDuration(timeRemaining)}</span>
+                      </div>
+                    )}
+
+                    <Button
+                      className="w-full h-10 mt-2"
+                      onClick={
+                        autoTradeActive
+                          ? () => {
+                              if (timerRef.current) {
+                                clearInterval(timerRef.current);
+                              }
+                              setAutoTradeActive(false);
+                              setTimeRemaining(0);
+                              toast({
+                                title: "Auto Trading Cancelled",
+                                description: "Auto trading has been cancelled",
+                              });
                             }
-                          >
-                            {trade.status === "pending"
-                              ? "In Progress"
-                              : trade.profit_loss
-                                ? (trade.profit_loss > 0 ? "+" : "") +
-                                  trade.profit_loss.toFixed(2)
-                                : ""}
-                          </div>
-                        </div>
+                          : startAutoTrading
+                      }
+                      disabled={
+                        (!autoTradeActive && (loading || !amount)) || isTrading
+                      }
+                      variant={autoTradeActive ? "destructive" : "default"}
+                    >
+                      {isTrading
+                        ? "Processing..."
+                        : autoTradeActive
+                          ? "Cancel Auto Trading"
+                          : "Start AI Trading"}
+                    </Button>
 
-                        <div className="flex justify-between text-xs text-muted-foreground">
-                          <div>
-                            Started:{" "}
-                            {format(
-                              new Date(trade.created_at),
-                              "MMM dd, HH:mm:ss",
-                            )}
+                    {tradeResult && (
+                      <div
+                        className={`p-2 text-sm rounded-md mt-2 ${tradeResult.success ? "bg-green-500/20 text-green-500" : "bg-red-500/20 text-red-500"}`}
+                      >
+                        {tradeResult.message}
+                      </div>
+                    )}
+                  </TabsContent>
+                </Tabs>
+              </CardContent>
+            </Card>
+
+            {/* Account Info - Mobile */}
+            <Card>
+              <CardHeader className="bg-gradient-to-r from-blue-900/30 to-blue-800/10 py-3">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <span>Account Overview</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground">
+                      Balance
+                    </p>
+                    <p className="text-xl font-mono mt-1 text-blue-400">
+                      $
+                      {loading
+                        ? "Loading..."
+                        : (account?.balance || 0).toFixed(2)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground">
+                      Total Winnings
+                    </p>
+                    <p className="text-xl font-mono mt-1 text-green-500">
+                      $
+                      {loading
+                        ? "Loading..."
+                        : "+" + (account?.profit || 0).toFixed(2)}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="account" className="mt-4 space-y-4">
+            {/* Trading History - Mobile */}
+            <Card>
+              <CardHeader className="bg-gradient-to-r from-blue-900/30 to-blue-800/10 py-3">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <History className="h-4 w-4 text-blue-400" />
+                  <span>Trading History</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <ScrollArea className="h-[300px] p-3">
+                  {tradeHistory.length === 0 ? (
+                    <div className="text-center py-6 text-muted-foreground text-sm">
+                      No trading history yet
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {tradeHistory.map((trade) => (
+                        <div
+                          key={trade.id}
+                          className="border rounded-md p-2 space-y-1"
+                        >
+                          <div className="flex justify-between items-center">
+                            <div className="font-medium text-sm">
+                              {trade.crypto_pair}
+                            </div>
+                            <div
+                              className={`font-medium text-sm ${getStatusColor(trade.status)}`}
+                            >
+                              {trade.status === "pending"
+                                ? "PENDING"
+                                : trade.profit_loss && trade.profit_loss > 0
+                                  ? "PROFIT"
+                                  : "LOSS"}
+                            </div>
                           </div>
-                          {trade.closed_at ? (
+
+                          <div className="flex justify-between text-xs">
+                            <div className="text-muted-foreground">
+                              {trade.trade_type.toUpperCase()} $
+                              {trade.amount.toFixed(2)}
+                            </div>
+                            <div
+                              className={
+                                trade.status === "pending"
+                                  ? "text-yellow-500"
+                                  : trade.profit_loss && trade.profit_loss > 0
+                                    ? "text-green-500"
+                                    : "text-red-500"
+                              }
+                            >
+                              {trade.status === "pending"
+                                ? "In Progress"
+                                : trade.profit_loss
+                                  ? (trade.profit_loss > 0 ? "+" : "") +
+                                    trade.profit_loss.toFixed(2)
+                                  : ""}
+                            </div>
+                          </div>
+
+                          <div className="flex flex-col text-xs text-muted-foreground">
                             <div>
-                              Completed:{" "}
+                              Started:{" "}
                               {format(
-                                new Date(trade.closed_at),
-                                "MMM dd, HH:mm:ss",
+                                new Date(trade.created_at),
+                                "MMM dd, HH:mm",
                               )}
                             </div>
-                          ) : (
-                            <div>Duration: {trade.duration_minutes} min</div>
-                          )}
+                            {trade.closed_at ? (
+                              <div>
+                                Completed:{" "}
+                                {format(
+                                  new Date(trade.closed_at),
+                                  "MMM dd, HH:mm",
+                                )}
+                              </div>
+                            ) : (
+                              <div>Duration: {trade.duration_minutes} min</div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="charts" className="mt-4 space-y-4">
+            {/* TradingView Widget - Mobile */}
+            <Card className="overflow-hidden">
+              <CardHeader className="bg-gradient-to-r from-blue-900/30 to-blue-800/10 py-3">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <TrendingUp className="h-4 w-4 text-blue-400" />
+                  <span>Live Chart</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0 h-[250px]">
+                <div className="h-full w-full bg-gray-800 rounded-md overflow-hidden">
+                  <iframe
+                    src={`https://s.tradingview.com/widgetembed/?frameElementId=tradingview_widget&symbol=${cryptoPair.replace("/", "")}&interval=D&hidesidetoolbar=1&symboledit=0&saveimage=0&toolbarbg=f1f3f6&studies=%5B%5D&theme=dark&style=1&timezone=exchange&withdateranges=0&showpopupbutton=1&studies_overrides=%7B%7D&overrides=%7B%7D&enabled_features=%5B%5D&disabled_features=%5B%5D&locale=en&utm_source=www.tradingview.com&utm_medium=widget_new&utm_campaign=chart&utm_term=BTCUSDT`}
+                    style={{ width: "100%", height: "100%" }}
+                    frameBorder="0"
+                    allowTransparency
+                  ></iframe>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* AI Analysis - Mobile */}
+            <Card className="overflow-hidden border-0 shadow-lg">
+              <CardHeader className="bg-gradient-to-r from-blue-900/30 to-blue-800/10 py-3">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <BrainCircuit className="h-4 w-4 text-blue-400" />
+                  <span>AI Market Analysis</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0 h-[250px] overflow-auto bg-gradient-to-b from-gray-900 to-gray-950">
+                <div className="w-full h-full">
+                  <div className="space-y-2 p-3">
+                    <div className="flex items-center justify-between p-2 border border-gray-700 rounded-md hover:bg-gray-800/30 transition-colors">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-full flex items-center justify-center text-black font-bold shadow-md">
+                          ₿
+                        </div>
+                        <div>
+                          <div className="font-medium text-sm">Bitcoin</div>
+                          <div className="text-xs text-gray-400">BTC/USDT</div>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </ScrollArea>
-            </CardContent>
-          </Card>
+                      <div className="text-right">
+                        <div className="font-medium text-xs">AI Prediction</div>
+                        <div className="text-xs text-green-500">Strong Buy</div>
+                      </div>
+                    </div>
 
+                    <div className="flex items-center justify-between p-2 border border-gray-700 rounded-md hover:bg-gray-800/30 transition-colors">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold shadow-md">
+                          Ξ
+                        </div>
+                        <div>
+                          <div className="font-medium text-sm">Ethereum</div>
+                          <div className="text-xs text-gray-400">ETH/USDT</div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-medium text-xs">AI Prediction</div>
+                        <div className="text-xs text-green-500">Buy</div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between p-2 border border-gray-700 rounded-md hover:bg-gray-800/30 transition-colors">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold shadow-md">
+                          S
+                        </div>
+                        <div>
+                          <div className="font-medium text-sm">Solana</div>
+                          <div className="text-xs text-gray-400">SOL/USDT</div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-medium text-xs">AI Prediction</div>
+                        <div className="text-xs text-yellow-500">Neutral</div>
+                      </div>
+                    </div>
+
+                    <div className="p-2 text-center text-xs text-gray-500">
+                      AI analysis updated: {new Date().toLocaleString()}
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+
+      {/* Desktop Layout */}
+      <div className="hidden md:grid gap-6 md:grid-cols-3">
+        <div className="md:col-span-1 space-y-6">
           {/* AI Trading Interface */}
-          <Card>
+          <Card className="overflow-hidden border-0 shadow-lg">
             <CardHeader className="bg-gradient-to-r from-blue-900/30 to-blue-800/10">
               <CardTitle className="flex items-center gap-2">
                 <BrainCircuit className="h-5 w-5 text-blue-400" />
@@ -1197,6 +1374,247 @@ export default function AITraderPage() {
                   )}
                 </TabsContent>
               </Tabs>
+            </CardContent>
+          </Card>
+
+          {/* Account Info */}
+          <Card>
+            <CardHeader className="bg-gradient-to-r from-blue-900/30 to-blue-800/10">
+              <CardTitle className="flex items-center gap-2">
+                <span>Account Overview</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Balance
+                  </p>
+                  <p className="text-2xl font-mono mt-1 text-blue-400">
+                    $
+                    {loading
+                      ? "Loading..."
+                      : (account?.balance || 0).toFixed(2)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Total Winnings
+                  </p>
+                  <p className="text-2xl font-mono mt-1 text-green-500">
+                    $
+                    {loading
+                      ? "Loading..."
+                      : "+" + (account?.profit || 0).toFixed(2)}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Trading History */}
+          <Card>
+            <CardHeader className="bg-gradient-to-r from-blue-900/30 to-blue-800/10">
+              <CardTitle className="flex items-center gap-2">
+                <History className="h-5 w-5 text-blue-400" />
+                <span>Trading History</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <ScrollArea className="h-[400px] p-4">
+                {tradeHistory.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No trading history yet
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {tradeHistory.map((trade) => (
+                      <div
+                        key={trade.id}
+                        className="border rounded-md p-3 space-y-2"
+                      >
+                        <div className="flex justify-between items-center">
+                          <div className="font-medium">{trade.crypto_pair}</div>
+                          <div
+                            className={`font-medium ${getStatusColor(trade.status)}`}
+                          >
+                            {trade.status === "pending"
+                              ? "PENDING"
+                              : trade.profit_loss && trade.profit_loss > 0
+                                ? "PROFIT"
+                                : "LOSS"}
+                          </div>
+                        </div>
+
+                        <div className="flex justify-between text-sm">
+                          <div className="text-muted-foreground">
+                            {trade.trade_type.toUpperCase()} $
+                            {trade.amount.toFixed(2)}
+                          </div>
+                          <div
+                            className={
+                              trade.status === "pending"
+                                ? "text-yellow-500"
+                                : trade.profit_loss && trade.profit_loss > 0
+                                  ? "text-green-500"
+                                  : "text-red-500"
+                            }
+                          >
+                            {trade.status === "pending"
+                              ? "In Progress"
+                              : trade.profit_loss
+                                ? (trade.profit_loss > 0 ? "+" : "") +
+                                  trade.profit_loss.toFixed(2)
+                                : ""}
+                          </div>
+                        </div>
+
+                        <div className="flex justify-between text-xs text-muted-foreground">
+                          <div>
+                            Started:{" "}
+                            {format(
+                              new Date(trade.created_at),
+                              "MMM dd, HH:mm:ss",
+                            )}
+                          </div>
+                          {trade.closed_at ? (
+                            <div>
+                              Completed:{" "}
+                              {format(
+                                new Date(trade.closed_at),
+                                "MMM dd, HH:mm:ss",
+                              )}
+                            </div>
+                          ) : (
+                            <div>Duration: {trade.duration_minutes} min</div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="md:col-span-2 space-y-6">
+          {/* TradingView Widget */}
+          <Card className="overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-blue-900/30 to-blue-800/10">
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-blue-400" />
+                <span>Live Chart</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0 h-[400px]">
+              <div className="h-full w-full bg-gray-800 rounded-md overflow-hidden">
+                <iframe
+                  src={`https://s.tradingview.com/widgetembed/?frameElementId=tradingview_widget&symbol=${cryptoPair.replace("/", "")}&interval=D&hidesidetoolbar=0&symboledit=1&saveimage=1&toolbarbg=f1f3f6&studies=%5B%5D&theme=dark&style=1&timezone=exchange&withdateranges=1&showpopupbutton=1&studies_overrides=%7B%7D&overrides=%7B%7D&enabled_features=%5B%5D&disabled_features=%5B%5D&locale=en&utm_source=www.tradingview.com&utm_medium=widget_new&utm_campaign=chart&utm_term=BTCUSDT`}
+                  style={{ width: "100%", height: "100%" }}
+                  frameBorder="0"
+                  allowTransparency
+                ></iframe>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* AI Analysis */}
+          <Card className="overflow-hidden border-0 shadow-lg">
+            <CardHeader className="bg-gradient-to-r from-blue-900/30 to-blue-800/10">
+              <CardTitle className="flex items-center gap-2">
+                <BrainCircuit className="h-5 w-5 text-blue-400" />
+                <span>AI Market Analysis</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0 h-[400px] overflow-auto bg-gradient-to-b from-gray-900 to-gray-950">
+              <div className="w-full h-full">
+                <div className="space-y-4 p-4">
+                  <div className="flex items-center justify-between p-3 border border-gray-700 rounded-md hover:bg-gray-800/30 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-full flex items-center justify-center text-black font-bold shadow-md">
+                        ₿
+                      </div>
+                      <div>
+                        <div className="font-medium">Bitcoin</div>
+                        <div className="text-xs text-gray-400">BTC/USDT</div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-medium">AI Prediction</div>
+                      <div className="text-sm text-green-500">Strong Buy</div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 border border-gray-700 rounded-md hover:bg-gray-800/30 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold shadow-md">
+                        Ξ
+                      </div>
+                      <div>
+                        <div className="font-medium">Ethereum</div>
+                        <div className="text-xs text-gray-400">ETH/USDT</div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-medium">AI Prediction</div>
+                      <div className="text-sm text-green-500">Buy</div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 border border-gray-700 rounded-md hover:bg-gray-800/30 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold shadow-md">
+                        S
+                      </div>
+                      <div>
+                        <div className="font-medium">Solana</div>
+                        <div className="text-xs text-gray-400">SOL/USDT</div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-medium">AI Prediction</div>
+                      <div className="text-sm text-yellow-500">Neutral</div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 border border-gray-700 rounded-md hover:bg-gray-800/30 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-yellow-600 to-yellow-700 rounded-full flex items-center justify-center text-white font-bold shadow-md">
+                        B
+                      </div>
+                      <div>
+                        <div className="font-medium">Binance Coin</div>
+                        <div className="text-xs text-gray-400">BNB/USDT</div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-medium">AI Prediction</div>
+                      <div className="text-sm text-red-500">Sell</div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 border border-gray-700 rounded-md hover:bg-gray-800/30 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-500 rounded-full flex items-center justify-center text-white font-bold shadow-md">
+                        X
+                      </div>
+                      <div>
+                        <div className="font-medium">Ripple</div>
+                        <div className="text-xs text-gray-400">XRP/USDT</div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-medium">AI Prediction</div>
+                      <div className="text-sm text-green-500">Buy</div>
+                    </div>
+                  </div>
+
+                  <div className="p-4 text-center text-xs text-gray-500">
+                    AI analysis updated: {new Date().toLocaleString()}
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>

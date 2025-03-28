@@ -1,22 +1,58 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import WithdrawalPasswordDialog from "./withdrawal-password-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Wallet, TrendingUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function WithdrawalPage() {
   const [amount, setAmount] = useState("");
   const [walletAddress, setWalletAddress] = useState("");
   const [loading, setLoading] = useState(false);
+  const [accountData, setAccountData] = useState<{
+    balance: number;
+    profit: number;
+  } | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [withdrawalType, setWithdrawalType] = useState<"balance" | "profit">(
+    "balance",
+  );
 
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+
+  useEffect(() => {
+    async function fetchAccountData() {
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user) {
+          navigate("/login");
+          return;
+        }
+
+        const { data } = await supabase
+          .from("user_accounts")
+          .select("balance, profit")
+          .eq("id", user.id)
+          .single();
+
+        if (data) {
+          setAccountData(data);
+        }
+      } catch (error) {
+        console.error("Error fetching account data:", error);
+      }
+    }
+
+    fetchAccountData();
+  }, [navigate]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -32,26 +68,43 @@ export default function WithdrawalPage() {
       } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      // Get user's current balance
+      // Get user's current balance and profit
       const { data: accountData } = await supabase
         .from("user_accounts")
-        .select("balance")
+        .select("balance, profit")
         .eq("id", user.id)
         .single();
 
       if (!accountData) throw new Error("Account not found");
 
       const withdrawalAmount = parseFloat(amount);
-      if (withdrawalAmount > accountData.balance) {
-        throw new Error("Insufficient balance");
+      let fromProfit = 0;
+      let fromBalance = 0;
+
+      // Determine withdrawal source based on selected type
+      if (withdrawalType === "profit") {
+        // Check if there's enough profit
+        if (withdrawalAmount > (accountData.profit || 0)) {
+          throw new Error("Insufficient profit balance");
+        }
+        fromProfit = withdrawalAmount;
+      } else {
+        // Check if there's enough balance
+        if (withdrawalAmount > (accountData.balance || 0)) {
+          throw new Error("Insufficient balance");
+        }
+        fromBalance = withdrawalAmount;
       }
 
+      // Create withdrawal record
       const { error } = await supabase.from("withdrawals").insert([
         {
           user_id: user.id,
           amount: withdrawalAmount,
           wallet_address: walletAddress,
           status: "pending",
+          from_profit: fromProfit,
+          from_balance: fromBalance,
         },
       ]);
 
@@ -59,7 +112,8 @@ export default function WithdrawalPage() {
 
       toast({
         title: "Withdrawal request submitted",
-        description: "Your withdrawal request is being processed.",
+        description:
+          "Your withdrawal request is being processed. Funds will be deducted once approved.",
       });
 
       navigate("/dashboard");
@@ -89,12 +143,79 @@ export default function WithdrawalPage() {
         <h1 className="text-2xl font-bold">Withdraw USDT</h1>
       </div>
 
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex justify-center items-center">
+              <div>
+                <p className="text-sm text-muted-foreground text-center">
+                  Balance
+                </p>
+                <p className="text-2xl font-bold">
+                  {accountData ? accountData.balance.toFixed(2) : "--"} USDT
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex justify-center items-center">
+              <div>
+                <p className="text-sm text-muted-foreground text-center">
+                  Profit
+                </p>
+                <p className="text-2xl font-bold text-green-500">
+                  {accountData ? accountData.profit.toFixed(2) : "--"} USDT
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       <form onSubmit={handleSubmit} className="space-y-6">
         <Card>
           <CardHeader>
             <CardTitle>Withdrawal Details</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            <Tabs
+              defaultValue="balance"
+              className="w-full"
+              onValueChange={(value) =>
+                setWithdrawalType(value as "balance" | "profit")
+              }
+            >
+              <TabsList className="grid w-full grid-cols-2 mb-4">
+                <TabsTrigger
+                  value="balance"
+                  className="flex items-center gap-2"
+                >
+                  <Wallet className="h-4 w-4" />
+                  <span>From Balance</span>
+                </TabsTrigger>
+                <TabsTrigger value="profit" className="flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4" />
+                  <span>From Profit</span>
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="balance">
+                <p className="text-sm text-muted-foreground mb-4">
+                  Withdraw from your main balance. Available:{" "}
+                  {accountData ? accountData.balance.toFixed(2) : "--"} USDT
+                </p>
+              </TabsContent>
+
+              <TabsContent value="profit">
+                <p className="text-sm text-muted-foreground mb-4">
+                  Withdraw from your accumulated profits. Available:{" "}
+                  {accountData ? accountData.profit.toFixed(2) : "--"} USDT
+                </p>
+              </TabsContent>
+            </Tabs>
             <div className="space-y-2">
               <Label>Amount (USDT)</Label>
               <Input

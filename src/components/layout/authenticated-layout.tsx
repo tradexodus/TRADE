@@ -22,7 +22,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { Button } from "../ui/button";
 import { supabase } from "@/lib/supabase";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 type UserProfile = {
   name?: string;
@@ -38,8 +38,12 @@ export default function AuthenticatedLayout({
   const navigate = useNavigate();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const checkPendingTradesIntervalRef = useRef<number | null>(null);
 
   useEffect(() => {
+    // Add a global flag to prevent multiple simultaneous checks
+    window.isCheckingPendingTrades = false;
+
     async function fetchUserData() {
       const {
         data: { user },
@@ -65,6 +69,89 @@ export default function AuthenticatedLayout({
     }
 
     fetchUserData();
+
+    // Set up interval to check for pending trades
+    async function checkPendingTrades() {
+      // Prevent multiple simultaneous checks
+      if (window.isCheckingPendingTrades) {
+        console.log("Already checking pending trades, skipping");
+        return;
+      }
+
+      window.isCheckingPendingTrades = true;
+      try {
+        // Get all pending trades first to check if they need processing
+        const { data: pendingTrades, error: fetchError } = await supabase
+          .from("trading_history")
+          .select("*")
+          .eq("status", "pending");
+
+        if (fetchError) {
+          console.error("Error fetching pending trades:", fetchError);
+          return;
+        }
+
+        // Only call the processing function if there are pending trades that need processing
+        if (pendingTrades && pendingTrades.length > 0) {
+          const now = new Date();
+          let needsProcessing = false;
+
+          // Check if any trades have expired
+          for (const trade of pendingTrades) {
+            const expiryTime = trade.expiration_time
+              ? new Date(trade.expiration_time)
+              : new Date(
+                  new Date(trade.created_at).getTime() +
+                    parseInt(trade.duration_minutes) * 60 * 1000,
+                );
+
+            if (now.getTime() >= expiryTime.getTime()) {
+              needsProcessing = true;
+              break;
+            }
+          }
+
+          if (needsProcessing) {
+            // Call the database function to process expired trades
+            const { data, error } = await supabase.rpc(
+              "process_expired_trades",
+            );
+
+            if (error) {
+              console.error("Error processing expired trades:", error);
+            } else {
+              console.log("Successfully processed expired trades");
+              // Dispatch a custom event to refresh data in components
+              window.dispatchEvent(
+                new CustomEvent("tradesProcessed", {
+                  detail: { count: pendingTrades.length },
+                }),
+              );
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error checking pending trades:", error);
+      } finally {
+        window.isCheckingPendingTrades = false;
+      }
+    }
+
+    // Check immediately on page load, but with a slight delay to avoid race conditions
+    setTimeout(checkPendingTrades, 1000);
+
+    // Then check every 30 seconds to be more responsive
+    const intervalId = setInterval(
+      checkPendingTrades,
+      30000,
+    ) as unknown as number;
+    checkPendingTradesIntervalRef.current = intervalId;
+
+    return () => {
+      if (checkPendingTradesIntervalRef.current) {
+        clearInterval(checkPendingTradesIntervalRef.current);
+      }
+    };
   }, [navigate]);
 
   const handleSignOut = async () => {
