@@ -22,32 +22,26 @@ export const TradingViewSymbolWidget: React.FC<
   const containerId = `tradingview_widget_${Math.random().toString(36).substring(2, 15)}`;
 
   React.useEffect(() => {
-    const script = document.createElement("script");
-    script.src = "https://s3.tradingview.com/tv.js";
-    script.async = true;
-    script.onload = () => {
-      if (typeof window.TradingView !== "undefined") {
-        new window.TradingView.widget({
-          width: width,
-          height: height,
-          symbol: symbol,
-          interval: "D",
-          timezone: "Etc/UTC",
-          theme: colorTheme,
-          style: "1",
-          locale: locale,
-          toolbar_bg: "#f1f3f6",
-          enable_publishing: false,
-          allow_symbol_change: true,
-          container_id: containerId,
-        });
-      }
-    };
-    document.head.appendChild(script);
+    // Use iframe approach instead of script injection
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    // Clear any existing content
+    container.innerHTML = "";
+
+    // Create iframe element
+    const iframe = document.createElement("iframe");
+    iframe.style.width = typeof width === "number" ? `${width}px` : width;
+    iframe.style.height = typeof height === "number" ? `${height}px` : height;
+    iframe.style.border = "none";
+    iframe.title = "TradingView Widget";
+    iframe.src = `https://s.tradingview.com/widgetembed/?frameElementId=${containerId}&symbol=${symbol}&interval=D&hidesidetoolbar=0&symboledit=1&saveimage=1&toolbarbg=f1f3f6&theme=${colorTheme}&style=1&timezone=Etc/UTC&withdateranges=1&studies=%5B%5D&locale=${locale}`;
+
+    container.appendChild(iframe);
 
     return () => {
-      if (script.parentNode) {
-        script.parentNode.removeChild(script);
+      if (container) {
+        container.innerHTML = "";
       }
     };
   }, [symbol, width, height, colorTheme, locale, containerId]);

@@ -40,6 +40,9 @@ export default defineConfig({
   server: {
     // @ts-ignore
     allowedHosts: true,
+    hmr: {
+      overlay: false, // Disable HMR overlay for better debugging
+    },
     fs: {
       // Allow serving files from one level up to the project root
       allow: ["..", "./"],

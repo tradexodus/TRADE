@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, BrainCircuit } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
 import VerificationDialog from "./verification-dialog";
+import TradingStatistics from "./trading-statistics";
 
 export default function AccountPage() {
   const navigate = useNavigate();
@@ -16,6 +17,9 @@ export default function AccountPage() {
   >("not_verified");
   const [isEmailVerified, setIsEmailVerified] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<
+    "trading" | "identity" | "neurons"
+  >("trading");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -88,72 +92,139 @@ export default function AccountPage() {
         >
           <ArrowLeft className="h-6 w-6" />
         </Button>
-        <h1 className="text-2xl font-bold">Account Settings</h1>
+        <h1 className="text-2xl font-bold">Profile</h1>
       </div>
 
-      <div className="space-y-6 max-w-md">
-        {/* Nickname */}
-        <div className="space-y-2">
-          <Label>Nickname</Label>
-          <div className="flex gap-2">
-            <Input
-              value={nickname}
-              onChange={(e) => setNickname(e.target.value)}
-              placeholder="Enter nickname"
-            />
-            <Button onClick={updateNickname}>Save</Button>
+      <div className="space-y-6 max-w-3xl">
+        {/* Tabs for multi-menu design */}
+        <div className="border-b">
+          <div className="flex space-x-6">
+            <button
+              onClick={() => setActiveTab("trading")}
+              className={`pb-2 font-medium text-sm transition-colors ${activeTab === "trading" ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground"}`}
+            >
+              Trading Profile
+            </button>
+            <button
+              onClick={() => setActiveTab("identity")}
+              className={`pb-2 font-medium text-sm transition-colors ${activeTab === "identity" ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground"}`}
+            >
+              Identity Info
+            </button>
+            <button
+              onClick={() => setActiveTab("neurons")}
+              className={`pb-2 font-medium text-sm transition-colors ${activeTab === "neurons" ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground"}`}
+            >
+              Neurons Level
+            </button>
           </div>
         </div>
 
-        {/* Email Verification Status */}
-        <div className="space-y-2">
-          <Label>Email Status</Label>
-          <div className="flex items-center gap-2">
-            <div
-              className={`px-2 py-1 rounded text-sm ${isEmailVerified ? "bg-green-500/20 text-green-500" : "bg-yellow-500/20 text-yellow-500"}`}
-            >
-              {isEmailVerified ? "Verified" : "Not Verified"}
+        {/* Trading Profile Tab */}
+        {activeTab === "trading" && (
+          <div className="space-y-6">
+            <h2 className="text-xl font-semibold">Trading Profile</h2>
+            <div className="space-y-4">
+              {/* Nickname */}
+              <div className="space-y-2">
+                <Label>Nickname</Label>
+                <div className="flex gap-2">
+                  <Input
+                    value={nickname}
+                    onChange={(e) => setNickname(e.target.value)}
+                    placeholder="Enter nickname"
+                  />
+                  <Button onClick={updateNickname}>Save</Button>
+                </div>
+              </div>
             </div>
-            {!isEmailVerified && (
-              <Button variant="outline" size="sm">
-                Resend Verification
-              </Button>
-            )}
           </div>
-        </div>
+        )}
 
-        {/* ID Verification Status */}
-        <div className="space-y-2">
-          <Label>ID Verification Status</Label>
-          <div className="flex items-center gap-2">
-            <div
-              className={`px-2 py-1 rounded text-sm ${
-                {
-                  not_verified: "bg-red-500/20 text-red-500",
-                  pending: "bg-yellow-500/20 text-yellow-500",
-                  verified: "bg-green-500/20 text-green-500",
-                }[isVerified]
-              }`}
-            >
-              {
-                {
-                  not_verified: "Not Verified",
-                  pending: "Pending",
-                  verified: "Verified",
-                }[isVerified]
-              }
+        {/* Identity Info Tab */}
+        {activeTab === "identity" && (
+          <div className="space-y-6">
+            <h2 className="text-xl font-semibold">Identity Info</h2>
+            <div className="space-y-4">
+              {/* Email Verification Status */}
+              <div className="space-y-2">
+                <Label>Email Status</Label>
+                <div className="flex items-center gap-2">
+                  <div
+                    className={`px-2 py-1 rounded text-sm ${isEmailVerified ? "bg-green-500/20 text-green-500" : "bg-yellow-500/20 text-yellow-500"}`}
+                  >
+                    {isEmailVerified ? "Verified" : "Not Verified"}
+                  </div>
+                  {!isEmailVerified && (
+                    <Button variant="outline" size="sm">
+                      Resend Verification
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              {/* ID Verification Status */}
+              <div className="space-y-2">
+                <Label>ID Verification Status</Label>
+                <div className="flex items-center gap-2">
+                  <div
+                    className={`px-2 py-1 rounded text-sm ${
+                      {
+                        not_verified: "bg-red-500/20 text-red-500",
+                        pending: "bg-yellow-500/20 text-yellow-500",
+                        verified: "bg-green-500/20 text-green-500",
+                      }[isVerified]
+                    }`}
+                  >
+                    {
+                      {
+                        not_verified: "Not Verified",
+                        pending: "Pending",
+                        verified: "Verified",
+                      }[isVerified]
+                    }
+                  </div>
+                  {isVerified === "not_verified" && (
+                    <Button
+                      onClick={() => {
+                        setIsDialogOpen(true);
+                      }}
+                    >
+                      Verify Now
+                    </Button>
+                  )}
+                </div>
+              </div>
             </div>
-            {isVerified === "not_verified" && (
-              <Button
-                onClick={() => {
-                  setIsDialogOpen(true);
-                }}
-              >
-                Verify Now
-              </Button>
-            )}
           </div>
-        </div>
+        )}
+
+        {/* Neurons Level Tab */}
+        {activeTab === "neurons" && (
+          <div className="space-y-6">
+            <h2 className="text-xl font-semibold">Neurons Level</h2>
+            <div className="p-6 border rounded-lg bg-card">
+              <div className="text-center space-y-4">
+                <div className="inline-flex p-4 rounded-full bg-primary/10">
+                  <BrainCircuit className="h-10 w-10 text-primary" />
+                </div>
+                <h3 className="text-lg font-medium">Beginner Level</h3>
+                <p className="text-sm text-muted-foreground">
+                  Complete more trades to increase your neurons level
+                </p>
+                <div className="w-full bg-secondary h-2 rounded-full overflow-hidden">
+                  <div
+                    className="bg-primary h-full"
+                    style={{ width: "15%" }}
+                  ></div>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  15% to next level
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       <VerificationDialog

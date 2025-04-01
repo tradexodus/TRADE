@@ -20,31 +20,26 @@ export const TradingViewAdvancedChart: React.FC<
   const containerId = `tradingview_advanced_${Math.random().toString(36).substring(2, 15)}`;
 
   React.useEffect(() => {
-    const script = document.createElement("script");
-    script.src =
-      "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
-    script.async = true;
-    script.innerHTML = JSON.stringify({
-      autosize: false,
-      height: height,
-      symbol: symbol,
-      interval: interval,
-      timezone: "Etc/UTC",
-      theme: theme,
-      style: "1",
-      locale: "en",
-      allow_symbol_change: allowSymbolChange,
-      support_host: "https://www.tradingview.com",
-    });
-
+    // Use iframe approach instead of script injection
     const container = document.getElementById(containerId);
-    if (container) {
-      container.appendChild(script);
-    }
+    if (!container) return;
+
+    // Clear any existing content
+    container.innerHTML = "";
+
+    // Create iframe element
+    const iframe = document.createElement("iframe");
+    iframe.style.width = "100%";
+    iframe.style.height = typeof height === "number" ? `${height}px` : height;
+    iframe.style.border = "none";
+    iframe.title = "TradingView Advanced Chart";
+    iframe.src = `https://s.tradingview.com/widgetembed/?frameElementId=${containerId}&symbol=${symbol}&interval=${interval}&hidesidetoolbar=0&symboledit=${allowSymbolChange ? 1 : 0}&saveimage=1&toolbarbg=f1f3f6&theme=${theme}&style=1&timezone=Etc/UTC&withdateranges=1&studies=%5B%5D&locale=en`;
+
+    container.appendChild(iframe);
 
     return () => {
-      if (container && script.parentNode === container) {
-        container.removeChild(script);
+      if (container) {
+        container.innerHTML = "";
       }
     };
   }, [symbol, height, theme, allowSymbolChange, interval, containerId]);

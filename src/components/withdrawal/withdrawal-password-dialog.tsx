@@ -2,114 +2,87 @@ import { useState } from "react";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { supabase } from "@/lib/supabase";
-import { useToast } from "@/components/ui/use-toast";
+import { Lock } from "lucide-react";
 
 interface WithdrawalPasswordDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onConfirm: () => void;
+  onConfirm: (password: string) => void;
+  onCancel: () => void;
+  isLoading: boolean;
 }
 
-export default function WithdrawalPasswordDialog({
+export function WithdrawalPasswordDialog({
   open,
   onOpenChange,
   onConfirm,
+  onCancel,
+  isLoading,
 }: WithdrawalPasswordDialogProps) {
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
+  const handleConfirm = () => {
+    onConfirm(password);
+    // Don't reset password or close dialog here as we want to show loading state
+  };
 
-    try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+  const handleCancel = () => {
+    setPassword("");
+    onCancel();
+  };
 
-      // Get the user's withdrawal password
-      const { data: settings } = await supabase
-        .from("user_security_settings")
-        .select("withdrawal_password")
-        .eq("id", user.id)
-        .single();
-
-      if (!settings?.withdrawal_password) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Please set up a withdrawal password in settings first",
-        });
-        return;
-      }
-
-      if (password !== settings.withdrawal_password) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Incorrect withdrawal password",
-        });
-        return;
-      }
-
-      onConfirm();
-      onOpenChange(false);
+  // Reset password when dialog closes
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
       setPassword("");
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message,
-      });
-    } finally {
-      setLoading(false);
     }
-  }
+    onOpenChange(open);
+  };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Enter Withdrawal Password</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <Lock className="h-5 w-5" />
+            Enter Withdrawal Password
+          </DialogTitle>
+          <DialogDescription>
+            Please enter your withdrawal password to confirm this transaction.
+          </DialogDescription>
         </DialogHeader>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label>Withdrawal Password</Label>
+            <Label htmlFor="withdrawal-password">Withdrawal Password</Label>
             <Input
+              id="withdrawal-password"
               type="password"
+              placeholder="Enter your withdrawal password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your withdrawal password"
-              required
+              autoComplete="current-password"
             />
           </div>
-
-          <div className="flex justify-end gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                onOpenChange(false);
-                setPassword("");
-              }}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? "Verifying..." : "Confirm"}
-            </Button>
-          </div>
-        </form>
+        </div>
+        <DialogFooter className="flex space-x-2 justify-end">
+          <Button variant="outline" onClick={handleCancel} disabled={isLoading}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleConfirm}
+            disabled={isLoading || !password.trim()}
+          >
+            {isLoading ? "Verifying..." : "Confirm"}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

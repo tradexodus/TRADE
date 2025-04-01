@@ -17,10 +17,26 @@ import "@fontsource/manrope/700.css";
 import { TempoDevtools } from "tempo-devtools";
 TempoDevtools.init();
 
+// Global error handler for better debugging
+window.addEventListener("error", function (event) {
+  console.error("Global error caught:", {
+    message: event.message,
+    source: event.filename,
+    lineno: event.lineno,
+    colno: event.colno,
+    error: event.error,
+  });
+});
+
+// Handle unhandled promise rejections
+window.addEventListener("unhandledrejection", function (event) {
+  console.error("Unhandled promise rejection:", event.reason);
+});
+
 const basename = import.meta.env.BASE_URL;
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>
+  <React.StrictMode className="fixed">
     <BrowserRouter basename={basename}>
       <App />
     </BrowserRouter>

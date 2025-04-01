@@ -13,7 +13,6 @@ import {
   Users,
   Wallet,
   ArrowDownToLine,
-  ArrowUpFromLine,
   History,
   Settings,
   LogOut,
@@ -180,7 +179,7 @@ export default function AuthenticatedLayout({
           >
             <div className="flex items-center gap-3">
               <User className="h-5 w-5 text-blue-400" />
-              Account
+              Profile
             </div>
           </Button>
           <Button
@@ -226,16 +225,6 @@ export default function AuthenticatedLayout({
           <Button
             variant="ghost"
             className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
-            onClick={() => navigate("/withdrawal")}
-          >
-            <div className="flex items-center gap-3">
-              <ArrowUpFromLine className="h-5 w-5 text-blue-400" />
-              Withdrawal
-            </div>
-          </Button>
-          <Button
-            variant="ghost"
-            className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
             onClick={() => navigate("/history")}
           >
             <div className="flex items-center gap-3">
@@ -244,6 +233,16 @@ export default function AuthenticatedLayout({
             </div>
           </Button>
 
+          <Button
+            variant="ghost"
+            className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
+            onClick={() => navigate("/withdrawal")}
+          >
+            <div className="flex items-center gap-3">
+              <Wallet className="h-5 w-5 text-blue-400" />
+              Withdrawal
+            </div>
+          </Button>
           <Button
             variant="ghost"
             className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
@@ -315,7 +314,7 @@ export default function AuthenticatedLayout({
                     >
                       <div className="flex items-center gap-3">
                         <User className="h-5 w-5 text-blue-400" />
-                        Account
+                        Profile
                       </div>
                     </Button>
                     <Button
@@ -361,16 +360,6 @@ export default function AuthenticatedLayout({
                     <Button
                       variant="ghost"
                       className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
-                      onClick={() => navigate("/withdrawal")}
-                    >
-                      <div className="flex items-center gap-3">
-                        <ArrowUpFromLine className="h-5 w-5 text-blue-400" />
-                        Withdrawal
-                      </div>
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
                       onClick={() => navigate("/history")}
                     >
                       <div className="flex items-center gap-3">
@@ -379,6 +368,16 @@ export default function AuthenticatedLayout({
                       </div>
                     </Button>
 
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
+                      onClick={() => navigate("/withdrawal")}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Wallet className="h-5 w-5 text-blue-400" />
+                        Withdrawal
+                      </div>
+                    </Button>
                     <Button
                       variant="ghost"
                       className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"

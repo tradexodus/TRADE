@@ -1,269 +1,482 @@
 import { useState, useEffect } from "react";
-import WithdrawalPasswordDialog from "./withdrawal-password-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { ArrowLeft, Wallet, TrendingUp } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/components/ui/use-toast";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Wallet } from "lucide-react";
+import { WithdrawalPasswordDialog } from "./withdrawal-password-dialog";
 
 export default function WithdrawalPage() {
-  const [amount, setAmount] = useState("");
-  const [walletAddress, setWalletAddress] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [accountData, setAccountData] = useState<{
-    balance: number;
-    profit: number;
-  } | null>(null);
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const [withdrawalType, setWithdrawalType] = useState<"balance" | "profit">(
-    "balance",
+  const [withdrawalType, setWithdrawalType] = useState<"profit" | "balance">(
+    "profit",
   );
-
-  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [amount, setAmount] = useState<string>("");
+  const [walletAddress, setWalletAddress] = useState<string>("");
+  const [userBalance, setUserBalance] = useState<number>(0);
+  const [userProfit, setUserProfit] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState<boolean>(false);
+  const [showPasswordDialog, setShowPasswordDialog] = useState<boolean>(false);
+  const [isVerified, setIsVerified] = useState<boolean>(false);
+  const [hasWithdrawalPassword, setHasWithdrawalPassword] =
+    useState<boolean>(false);
+  const { toast } = useToast();
 
   useEffect(() => {
-    async function fetchAccountData() {
+    async function fetchUserData() {
       try {
         const {
           data: { user },
         } = await supabase.auth.getUser();
-        if (!user) {
-          navigate("/login");
-          return;
-        }
 
-        const { data } = await supabase
+        if (!user) return;
+
+        // Fetch user account data
+        const { data: accountData, error: accountError } = await supabase
           .from("user_accounts")
           .select("balance, profit")
           .eq("id", user.id)
           .single();
 
-        if (data) {
-          setAccountData(data);
+        if (accountError) throw accountError;
+
+        if (accountData) {
+          setUserBalance(accountData.balance || 0);
+          setUserProfit(accountData.profit || 0);
+        }
+
+        // Check if user is verified
+        const { data: verificationData, error: verificationError } =
+          await supabase
+            .from("user_verifications")
+            .select("status")
+            .eq("id", user.id)
+            .single();
+
+        if (!verificationError && verificationData) {
+          setIsVerified(verificationData.status === "verified");
+        }
+
+        // Check if user has a withdrawal password set
+        const { data: securitySettings, error: securityError } = await supabase
+          .from("user_security_settings")
+          .select("withdrawal_password")
+          .eq("id", user.id)
+          .single();
+
+        if (!securityError && securitySettings) {
+          setHasWithdrawalPassword(!!securitySettings.withdrawal_password);
         }
       } catch (error) {
-        console.error("Error fetching account data:", error);
+        console.error("Error fetching user data:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load account information",
+        });
       }
     }
 
-    fetchAccountData();
-  }, [navigate]);
+    fetchUserData();
+  }, [toast]);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setShowPasswordDialog(true);
-  }
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // Only allow numbers and decimals
+    if (/^\d*\.?\d*$/.test(value) || value === "") {
+      setAmount(value);
+    }
+  };
 
-  async function processWithdrawal() {
-    setLoading(true);
+  const validateWithdrawal = () => {
+    if (!walletAddress) {
+      toast({
+        variant: "destructive",
+        title: "Invalid Wallet Address",
+        description: "Please enter a valid TRC20 wallet address",
+      });
+      return false;
+    }
 
+    if (!amount || parseFloat(amount) <= 0) {
+      toast({
+        variant: "destructive",
+        title: "Invalid Amount",
+        description: "Please enter a valid withdrawal amount",
+      });
+      return false;
+    }
+
+    const amountValue = parseFloat(amount);
+
+    if (withdrawalType === "profit" && amountValue > userProfit) {
+      toast({
+        variant: "destructive",
+        title: "Insufficient Profit",
+        description: "You cannot withdraw more than your available profit",
+      });
+      return false;
+    }
+
+    if (withdrawalType === "balance" && amountValue > userBalance) {
+      toast({
+        variant: "destructive",
+        title: "Insufficient Balance",
+        description: "You cannot withdraw more than your available balance",
+      });
+      return false;
+    }
+
+    if (!isVerified) {
+      toast({
+        variant: "destructive",
+        title: "Account Not Verified",
+        description:
+          "You need to verify your account before making withdrawals",
+      });
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleSubmit = () => {
+    if (validateWithdrawal()) {
+      setShowConfirmDialog(true);
+    }
+  };
+
+  const handleConfirmWithdrawal = () => {
+    if (hasWithdrawalPassword) {
+      // If user has a withdrawal password, show password dialog
+      setShowPasswordDialog(true);
+    } else {
+      // If no withdrawal password is set, proceed with withdrawal
+      processWithdrawal();
+    }
+  };
+
+  const handlePasswordConfirm = async (password: string) => {
+    setIsLoading(true);
     try {
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      if (!user) throw new Error("User not authenticated");
 
-      // Get user's current balance and profit
+      // Verify the withdrawal password
+      const { data: securitySettings, error } = await supabase
+        .from("user_security_settings")
+        .select("withdrawal_password")
+        .eq("id", user.id)
+        .single();
+
+      if (error) throw error;
+
+      if (securitySettings?.withdrawal_password !== password) {
+        toast({
+          variant: "destructive",
+          title: "Incorrect Password",
+          description: "The withdrawal password you entered is incorrect.",
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      // Password is correct, proceed with withdrawal
+      await processWithdrawal();
+    } catch (error: any) {
+      console.error("Error verifying withdrawal password:", error);
+      toast({
+        variant: "destructive",
+        title: "Verification Failed",
+        description: error.message || "Failed to verify withdrawal password",
+      });
+      setIsLoading(false);
+    }
+  };
+
+  const handlePasswordCancel = () => {
+    setShowPasswordDialog(false);
+    setShowConfirmDialog(false);
+  };
+
+  const processWithdrawal = async () => {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+
+      const amountValue = parseFloat(amount);
+      let fromBalance = 0;
+      let fromProfit = 0;
+
+      if (withdrawalType === "profit") {
+        fromProfit = amountValue;
+      } else {
+        // For balance withdrawal, we take directly from balance
+        fromBalance = amountValue;
+      }
+
+      // Create withdrawal record
+      const { data, error } = await supabase.from("withdrawals").insert({
+        user_id: user.id,
+        amount: amountValue,
+        wallet_address: walletAddress,
+        status: "pending",
+        from_balance: fromBalance,
+        from_profit: fromProfit,
+      });
+
+      if (error) throw error;
+
+      // No longer updating user account balance immediately
+      // Balance and profit will only be updated after withdrawal approval
+
+      toast({
+        title: "Withdrawal Request Submitted",
+        description:
+          "Your withdrawal request has been submitted and is being processed",
+      });
+
+      // Reset form
+      setAmount("");
+      setWalletAddress("");
+
+      // Refresh user data
       const { data: accountData } = await supabase
         .from("user_accounts")
         .select("balance, profit")
         .eq("id", user.id)
         .single();
 
-      if (!accountData) throw new Error("Account not found");
-
-      const withdrawalAmount = parseFloat(amount);
-      let fromProfit = 0;
-      let fromBalance = 0;
-
-      // Determine withdrawal source based on selected type
-      if (withdrawalType === "profit") {
-        // Check if there's enough profit
-        if (withdrawalAmount > (accountData.profit || 0)) {
-          throw new Error("Insufficient profit balance");
-        }
-        fromProfit = withdrawalAmount;
-      } else {
-        // Check if there's enough balance
-        if (withdrawalAmount > (accountData.balance || 0)) {
-          throw new Error("Insufficient balance");
-        }
-        fromBalance = withdrawalAmount;
+      if (accountData) {
+        setUserBalance(accountData.balance || 0);
+        setUserProfit(accountData.profit || 0);
       }
-
-      // Create withdrawal record
-      const { error } = await supabase.from("withdrawals").insert([
-        {
-          user_id: user.id,
-          amount: withdrawalAmount,
-          wallet_address: walletAddress,
-          status: "pending",
-          from_profit: fromProfit,
-          from_balance: fromBalance,
-        },
-      ]);
-
-      if (error) throw error;
-
-      toast({
-        title: "Withdrawal request submitted",
-        description:
-          "Your withdrawal request is being processed. Funds will be deducted once approved.",
-      });
-
-      navigate("/dashboard");
-    } catch (error: any) {
-      console.error("Error:", error);
+    } catch (error) {
+      console.error("Error processing withdrawal:", error);
       toast({
         variant: "destructive",
-        title: "Error",
-        description: error.message || "Failed to submit withdrawal request.",
+        title: "Withdrawal Failed",
+        description: "There was an error processing your withdrawal request",
       });
     } finally {
-      setLoading(false);
+      setIsLoading(false);
+      setShowConfirmDialog(false);
+      setShowPasswordDialog(false);
     }
-  }
+  };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-8">
-      <div className="flex items-center gap-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => navigate(-1)}
-          className="rounded-full"
-        >
-          <ArrowLeft className="h-6 w-6" />
-        </Button>
-        <h1 className="text-2xl font-bold">Withdraw USDT</h1>
-      </div>
+    <div className="container max-w-4xl mx-auto px-2 sm:px-6">
+      <div className="flex flex-col gap-8">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-3xl font-bold">Withdraw Funds</h1>
+          <p className="text-muted-foreground">
+            Withdraw your funds to your TRC20 wallet
+          </p>
+        </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex justify-center items-center">
-              <div>
-                <p className="text-sm text-muted-foreground text-center">
-                  Balance
-                </p>
-                <p className="text-2xl font-bold">
-                  {accountData ? accountData.balance.toFixed(2) : "--"} USDT
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Summary Section */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+          <div className="bg-card p-4 sm:p-6 rounded-lg border border-border w-full">
+            <h3 className="text-lg font-medium mb-2">Available Balance</h3>
+            <p className="text-3xl font-bold">${userBalance.toFixed(2)}</p>
+          </div>
+          <div className="bg-card p-4 sm:p-6 rounded-lg border border-border w-full">
+            <h3 className="text-lg font-medium mb-2">Available Profit</h3>
+            <p className="text-3xl font-bold">${userProfit.toFixed(2)}</p>
+          </div>
+        </div>
 
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex justify-center items-center">
-              <div>
-                <p className="text-sm text-muted-foreground text-center">
-                  Profit
-                </p>
-                <p className="text-2xl font-bold text-green-500">
-                  {accountData ? accountData.profit.toFixed(2) : "--"} USDT
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Withdrawal Details</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Tabs
-              defaultValue="balance"
-              className="w-full"
-              onValueChange={(value) =>
-                setWithdrawalType(value as "balance" | "profit")
-              }
+        {/* Withdrawal Type Selection */}
+        <div className="bg-card p-4 sm:p-6 rounded-lg border border-border w-full">
+          <h3 className="text-xl font-medium mb-4">Withdrawal Type</h3>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Button
+              variant={withdrawalType === "profit" ? "default" : "outline"}
+              className="flex-1 h-20"
+              onClick={() => setWithdrawalType("profit")}
             >
-              <TabsList className="grid w-full grid-cols-2 mb-4">
-                <TabsTrigger
-                  value="balance"
-                  className="flex items-center gap-2"
-                >
-                  <Wallet className="h-4 w-4" />
-                  <span>From Balance</span>
-                </TabsTrigger>
-                <TabsTrigger value="profit" className="flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4" />
-                  <span>From Profit</span>
-                </TabsTrigger>
-              </TabsList>
+              <div className="flex flex-col items-center gap-2">
+                <span className="text-lg font-medium">Profit Withdrawal</span>
+                <span className="text-sm text-muted-foreground">
+                  Withdraw only from your trading profits
+                </span>
+              </div>
+            </Button>
+            <Button
+              variant={withdrawalType === "balance" ? "default" : "outline"}
+              className="flex-1 h-20"
+              onClick={() => setWithdrawalType("balance")}
+            >
+              <div className="flex flex-col items-center gap-2">
+                <span className="text-lg font-medium">Balance Withdrawal</span>
+                <span className="text-sm text-muted-foreground">
+                  Withdraw from your total account balance
+                </span>
+              </div>
+            </Button>
+          </div>
+        </div>
 
-              <TabsContent value="balance">
-                <p className="text-sm text-muted-foreground mb-4">
-                  Withdraw from your main balance. Available:{" "}
-                  {accountData ? accountData.balance.toFixed(2) : "--"} USDT
-                </p>
-              </TabsContent>
-
-              <TabsContent value="profit">
-                <p className="text-sm text-muted-foreground mb-4">
-                  Withdraw from your accumulated profits. Available:{" "}
-                  {accountData ? accountData.profit.toFixed(2) : "--"} USDT
-                </p>
-              </TabsContent>
-            </Tabs>
-            <div className="space-y-2">
-              <Label>Amount (USDT)</Label>
+        {/* Withdrawal Form */}
+        <div className="bg-card p-4 sm:p-6 rounded-lg border border-border w-full">
+          <h3 className="text-xl font-medium mb-4">Withdrawal Details</h3>
+          <div className="space-y-4">
+            <div>
+              <label
+                htmlFor="amount"
+                className="block text-sm font-medium mb-1"
+              >
+                Amount to Withdraw ($)
+              </label>
               <Input
-                type="number"
-                required
-                min="1"
-                step="any"
+                id="amount"
+                type="text"
                 value={amount}
-                onChange={(e) => setAmount(e.target.value)}
+                onChange={handleAmountChange}
                 placeholder="Enter amount"
+                className="w-full"
               />
+              <p className="text-sm text-muted-foreground mt-1">
+                Maximum: $
+                {withdrawalType === "profit"
+                  ? userProfit.toFixed(2)
+                  : userBalance.toFixed(2)}
+              </p>
             </div>
 
-            <div className="space-y-2">
-              <Label>Wallet Address (TRC20)</Label>
+            <div>
+              <label
+                htmlFor="wallet"
+                className="block text-sm font-medium mb-1"
+              >
+                TRC20 Wallet Address
+              </label>
               <Input
-                required
+                id="wallet"
+                type="text"
                 value={walletAddress}
                 onChange={(e) => setWalletAddress(e.target.value)}
-                placeholder="Enter your USDT wallet address"
+                placeholder="Enter your TRC20 wallet address"
+                className="w-full"
               />
             </div>
-          </CardContent>
-        </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Important Notes</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground">
-              <li>Make sure to enter the correct wallet address</li>
-              <li>Withdrawals are processed within 24 hours</li>
-              <li>Minimum withdrawal amount is 1 USDT</li>
-              <li>Only TRC20 network is supported</li>
-            </ul>
-          </CardContent>
-        </Card>
+            <div className="pt-4">
+              <Button
+                onClick={handleSubmit}
+                disabled={isLoading || !isVerified || !hasWithdrawalPassword}
+                className="w-full"
+              >
+                {isLoading ? "Processing..." : "Request Withdrawal"}
+              </Button>
+              {!isVerified && (
+                <p className="text-sm text-destructive mt-2">
+                  You need to verify your account before making withdrawals.
+                  Please visit the Account page.
+                </p>
+              )}
+              {!hasWithdrawalPassword && (
+                <p className="text-sm text-destructive mt-2">
+                  You need to set a withdrawal password before making
+                  withdrawals. Please visit the Settings page to set up your
+                  withdrawal password.
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
 
-        <Button type="submit" className="w-full" disabled={loading}>
-          {loading ? "Processing..." : "Confirm Withdrawal"}
-        </Button>
-      </form>
+        {/* Important Information */}
+        <div className="bg-secondary/50 p-4 sm:p-6 rounded-lg border border-border w-full">
+          <div className="flex items-start gap-4">
+            <Wallet className="h-6 w-6 text-primary mt-1" />
+            <div>
+              <h4 className="text-lg font-medium mb-2">
+                Important Information
+              </h4>
+              <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground">
+                <li>Withdrawals are typically processed within 24-48 hours</li>
+                <li>Minimum withdrawal amount is $50</li>
+                <li>
+                  Make sure your wallet address is correct - incorrect addresses
+                  may result in permanent loss of funds
+                </li>
+                <li>
+                  For security reasons, withdrawals to new wallet addresses may
+                  require additional verification
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
 
+      {/* Confirmation Dialog */}
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Withdrawal</AlertDialogTitle>
+            <AlertDialogDescription>
+              You are about to withdraw ${amount} from your{" "}
+              {withdrawalType === "profit" ? "profits" : "balance"} to the
+              following wallet address:
+              <div className="mt-2 p-2 bg-secondary rounded-md overflow-x-auto">
+                <code className="text-xs">{walletAddress}</code>
+              </div>
+              <p className="mt-2">
+                Please verify this information is correct before proceeding.
+              </p>
+              {hasWithdrawalPassword && (
+                <p className="mt-2 text-sm font-medium text-amber-500">
+                  You will need to enter your withdrawal password to complete
+                  this transaction.
+                </p>
+              )}
+              {!hasWithdrawalPassword && (
+                <p className="mt-2 text-sm font-medium text-amber-500">
+                  For added security, consider setting a withdrawal password in
+                  your account settings.
+                </p>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmWithdrawal}
+              disabled={isLoading}
+            >
+              {isLoading ? "Processing..." : "Confirm Withdrawal"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Withdrawal Password Dialog */}
       <WithdrawalPasswordDialog
         open={showPasswordDialog}
         onOpenChange={setShowPasswordDialog}
-        onConfirm={processWithdrawal}
+        onConfirm={handlePasswordConfirm}
+        onCancel={handlePasswordCancel}
+        isLoading={isLoading}
       />
     </div>
   );
