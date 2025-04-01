@@ -17,9 +17,9 @@ export default function AccountPage() {
   >("not_verified");
   const [isEmailVerified, setIsEmailVerified] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<
-    "trading" | "identity" | "neurons"
-  >("trading");
+  const [activeTab, setActiveTab] = useState<"identity" | "neurons">(
+    "identity",
+  );
   const { toast } = useToast();
 
   useEffect(() => {
@@ -99,12 +99,6 @@ export default function AccountPage() {
         {/* Tabs for multi-menu design */}
         <div className="border-b">
           <div className="flex space-x-6">
-            <button
-              onClick={() => setActiveTab("trading")}
-              className={`pb-2 font-medium text-sm transition-colors ${activeTab === "trading" ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground"}`}
-            >
-              Trading Profile
-            </button>
             <button
               onClick={() => setActiveTab("identity")}
               className={`pb-2 font-medium text-sm transition-colors ${activeTab === "identity" ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground"}`}

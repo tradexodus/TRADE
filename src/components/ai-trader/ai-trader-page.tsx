@@ -822,10 +822,33 @@ export default function AITraderPage() {
   return (
     <div className="container mx-auto px-3 md:px-4 space-y-4 md:space-y-6">
       <div className="flex items-center justify-between py-2">
-        <h1 className="text-lg sm:text-2xl font-bold flex items-center gap-2">
-          <BrainCircuit className="h-5 w-5 text-blue-400 md:hidden" />
-          AI Trader
-        </h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-lg sm:text-2xl font-bold flex items-center gap-2">
+            <BrainCircuit className="h-5 w-5 text-blue-400 md:hidden" />
+            AI Trader
+          </h1>
+          {/* Mobile Balance Card - Next to Title */}
+          <div className="md:hidden bg-gray-900/80 rounded-lg p-1.5 shadow-md ml-2">
+            <div className="flex gap-2">
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">
+                  Balance
+                </p>
+                <p className="text-xs font-mono text-blue-400">
+                  ${loading ? "..." : (account?.balance || 0).toFixed(2)}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">
+                  Profit
+                </p>
+                <p className="text-xs font-mono text-green-500">
+                  ${loading ? "..." : "+" + (account?.profit || 0).toFixed(2)}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
         <div className="hidden md:block">
           <div className="bg-gray-900/80 rounded-lg p-2 shadow-md">
             <div className="flex gap-4">
@@ -852,30 +875,6 @@ export default function AITraderPage() {
 
       {/* Mobile View - Combined Layout */}
       <div className="block md:hidden space-y-3">
-        {/* Balance and Profit Info - Top Right */}
-        <div className="flex justify-end mb-2">
-          <div className="bg-gray-900/80 rounded-lg p-2 shadow-md">
-            <div className="flex gap-3">
-              <div>
-                <p className="text-xs font-medium text-muted-foreground">
-                  Balance
-                </p>
-                <p className="text-sm font-mono text-blue-400">
-                  ${loading ? "..." : (account?.balance || 0).toFixed(2)}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs font-medium text-muted-foreground">
-                  Profit
-                </p>
-                <p className="text-sm font-mono text-green-500">
-                  ${loading ? "..." : "+" + (account?.profit || 0).toFixed(2)}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* AI Trading Interface */}
         <Card className="overflow-hidden border-0 shadow-md w-full max-w-[400px] mx-auto">
           <CardHeader className="bg-gradient-to-r from-blue-900/30 to-blue-800/10 py-3">
