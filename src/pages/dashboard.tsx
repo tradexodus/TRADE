@@ -7,9 +7,12 @@ import {
   Users,
   User,
   BrainCircuit,
+  LineChart,
 } from "lucide-react";
 import { AiMarketAnalysisCard } from "@/components/dashboard/AiMarketAnalysisCard";
+import { TradingViewMarketOverview } from "@/components/dashboard/trading-view-market-overview";
 import { useEffect, useState, useRef } from "react";
+import { getNeuronLevel } from "@/lib/neuron-levels";
 import { supabase } from "@/lib/supabase";
 
 export default function Dashboard() {
@@ -198,50 +201,78 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent className="pt-2 sm:pt-3 p-3 sm:p-4">
               <div className="space-y-2">
-                <div className="flex flex-col gap-1">
-                  <p className="text-xs sm:text-sm font-medium text-muted-foreground">
-                    ID:{" "}
-                    {loading ? "Loading..." : accountData?.account_id || "N/A"}
-                  </p>
-                  {!loading && (
-                    <div className="flex items-center gap-1">
-                      <div className="h-2 w-2 rounded-full bg-green-500"></div>
-                      <p className="text-xs text-green-500 font-medium">
-                        Active
-                      </p>
+                {/* Account ID */}
+                <div className="flex flex-col">
+                  <span className="text-xs text-muted-foreground">
+                    Account ID
+                  </span>
+                  <span className="text-sm font-mono truncate">
+                    {accountData?.account_id || "Not available"}
+                  </span>
+                </div>
+
+                {/* Neuron Level Progress */}
+                {balance !== null && (
+                  <div className="space-y-1">
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-muted-foreground">
+                        Neuron Level
+                      </span>
+                      <span
+                        className="text-xs font-medium"
+                        style={{ color: getNeuronLevel(balance).color }}
+                      >
+                        {getNeuronLevel(balance).name}
+                      </span>
                     </div>
-                  )}
+                    <div
+                      className="h-1.5 w-full rounded-full overflow-hidden"
+                      style={{
+                        backgroundColor: `${getNeuronLevel(balance).bgColor}50`,
+                      }}
+                    >
+                      <div
+                        className="h-full rounded-full"
+                        style={{
+                          width: `${getNeuronLevel(balance).progressPercentage}%`,
+                          backgroundColor: getNeuronLevel(balance).color,
+                        }}
+                      ></div>
+                    </div>
+                    <div className="flex justify-between text-[10px] text-muted-foreground">
+                      <span>Progress</span>
+                      <span>{getNeuronLevel(balance).progressPercentage}%</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Account Status */}
+                <div className="flex items-center justify-between pt-1">
+                  <span className="text-xs text-muted-foreground">Status</span>
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-900/30 text-green-400">
+                    <span className="w-1.5 h-1.5 mr-1 rounded-full bg-green-400"></span>
+                    Active
+                  </span>
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
+      </div>
 
-        {/* TradingView Crypto Pricing Widget - Adjusted height for mobile */}
-        <div className="mt-4 sm:mt-6">
-          <Card className="overflow-hidden border-0 shadow-lg">
-            <CardHeader className="bg-gradient-to-r from-blue-900/30 to-blue-800/10 py-2 sm:py-3">
-              <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
-                <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-blue-400" />
-                <span>Crypto Market Overview</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div
-                style={{ height: "300px" }}
-                className="sm:h-[350px] md:h-[400px]"
-              >
-                <iframe
-                  src="https://s.tradingview.com/widgetembed/?frameElementId=tradingview_76d87&symbol=BINANCE%3ABTCUSDT&interval=D&hidesidetoolbar=0&symboledit=1&saveimage=1&toolbarbg=f1f3f6&studies=%5B%5D&theme=dark&style=1&timezone=exchange&withdateranges=1&studies_overrides=%7B%7D&overrides=%7B%7D&enabled_features=%5B%5D&disabled_features=%5B%5D&locale=en&utm_source=www.tradingview.com&utm_medium=widget_new&utm_campaign=chart&utm_term=BINANCE%3ABTCUSDT"
-                  style={{ width: "100%", height: "100%" }}
-                  frameBorder="0"
-                  allowTransparency={true}
-                  title="TradingView Widget"
-                ></iframe>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+      {/* Market Overview Widget - Full width at the bottom */}
+      <div className="mt-4 sm:mt-6">
+        <Card className="overflow-hidden border-0 shadow-lg">
+          <CardHeader className="bg-gradient-to-r from-blue-900/30 to-blue-800/10 py-2 sm:py-3">
+            <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+              <LineChart className="h-3 w-3 sm:h-4 sm:w-4 text-blue-400" />
+              <span>Market Overview</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <TradingViewMarketOverview />
+          </CardContent>
+        </Card>
       </div>
     </AuthenticatedLayout>
   );

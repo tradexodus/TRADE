@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getNeuronLevel } from "@/lib/neuron-levels";
 
 export default function DepositPage() {
   const [amount, setAmount] = useState("");
@@ -52,10 +53,13 @@ export default function DepositPage() {
         screenshotUrl = data.path;
       }
 
+      const depositAmount = parseFloat(amount);
+
+      // Insert the deposit record - neuron level will be updated only after approval
       const { error } = await supabase.from("deposits").insert([
         {
           user_id: user.id,
-          amount: parseFloat(amount),
+          amount: depositAmount,
           status: "pending",
           screenshot_url: screenshotUrl,
         },

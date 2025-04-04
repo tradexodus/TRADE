@@ -8,6 +8,7 @@ import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
 import VerificationDialog from "./verification-dialog";
 import TradingStatistics from "./trading-statistics";
+import { getNeuronLevel, NEURON_LEVELS } from "@/lib/neuron-levels";
 
 export default function AccountPage() {
   const navigate = useNavigate();
@@ -20,6 +21,8 @@ export default function AccountPage() {
   const [activeTab, setActiveTab] = useState<"identity" | "neurons">(
     "identity",
   );
+  const [totalDepositAmount, setTotalDepositAmount] = useState(0);
+  const [neuronLevel, setNeuronLevel] = useState(NEURON_LEVELS[0]);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -41,6 +44,14 @@ export default function AccountPage() {
 
     if (profile) {
       setNickname(profile.nickname || "");
+
+      // Set total deposit amount and neuron level
+      const depositAmount = profile.total_deposit_amount || 0;
+      setTotalDepositAmount(depositAmount);
+
+      // Get neuron level based on total deposit amount
+      const level = getNeuronLevel(depositAmount);
+      setNeuronLevel(level);
     }
 
     // Get verification status
@@ -197,24 +208,137 @@ export default function AccountPage() {
         {activeTab === "neurons" && (
           <div className="space-y-6">
             <h2 className="text-xl font-semibold">Neurons Level</h2>
-            <div className="p-6 border rounded-lg bg-card">
+            <div className="p-6 border rounded-lg bg-black">
               <div className="text-center space-y-4">
-                <div className="inline-flex p-4 rounded-full bg-primary/10">
-                  <BrainCircuit className="h-10 w-10 text-primary" />
+                <div
+                  className="inline-flex p-4 rounded-full"
+                  style={{ backgroundColor: `${neuronLevel.bgColor}40` }}
+                >
+                  <BrainCircuit
+                    className="h-10 w-10"
+                    style={{ color: neuronLevel.color }}
+                  />
                 </div>
-                <h3 className="text-lg font-medium">Beginner Level</h3>
+                <h3
+                  className="text-lg font-medium"
+                  style={{ color: neuronLevel.color }}
+                >
+                  {neuronLevel.name} Level
+                </h3>
                 <p className="text-sm text-muted-foreground">
-                  Complete more trades to increase your neurons level
+                  {neuronLevel.name === "Elite"
+                    ? "You've reached the highest level!"
+                    : "Deposit more to increase your neurons level"}
                 </p>
-                <div className="w-full bg-secondary h-2 rounded-full overflow-hidden">
+                <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                  <span>${neuronLevel.minAmount.toLocaleString()}</span>
+                  {neuronLevel.maxAmount ? (
+                    <span>${neuronLevel.maxAmount.toLocaleString()}</span>
+                  ) : (
+                    <span>∞</span>
+                  )}
+                </div>
+                <div className="w-full bg-gray-800 h-2 rounded-full overflow-hidden">
                   <div
-                    className="bg-primary h-full"
-                    style={{ width: "15%" }}
+                    className="h-full"
+                    style={{
+                      width: `${neuronLevel.progressPercentage}%`,
+                      backgroundColor: neuronLevel.color,
+                    }}
                   ></div>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  15% to next level
-                </p>
+                <div className="flex justify-between items-center">
+                  <p className="text-xs text-muted-foreground">
+                    {neuronLevel.name === "Elite"
+                      ? "Maximum level achieved"
+                      : `${neuronLevel.progressPercentage}% to next level`}
+                  </p>
+                  <div
+                    className="px-2 py-1 rounded-full text-xs font-medium"
+                    style={{
+                      backgroundColor: `${neuronLevel.bgColor}80`,
+                      color: neuronLevel.color,
+                    }}
+                  >
+                    {neuronLevel.percentage}% Rate
+                  </div>
+                </div>
+                <div className="mt-4 pt-4 border-t border-gray-800">
+                  <p className="text-sm font-medium text-gray-300">
+                    Total Deposits
+                  </p>
+                  <p
+                    className="text-xl font-bold"
+                    style={{ color: neuronLevel.color }}
+                  >
+                    ${totalDepositAmount.toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Neuron Levels</h3>
+              <div className="space-y-3">
+                {NEURON_LEVELS.map((level) => (
+                  <div
+                    key={level.name}
+                    className="flex justify-between items-center p-4 border rounded-lg transition-all duration-200 hover:scale-[1.02] cursor-pointer"
+                    style={{
+                      backgroundColor: "#121212",
+                      borderColor: level.color,
+                    }}
+                    onClick={() => {
+                      // This is just for interactivity, doesn't change actual level
+                      if (totalDepositAmount >= level.minAmount) {
+                        toast({
+                          title: `${level.name} Level`,
+                          description: `You are ${level.name === neuronLevel.name ? "currently at" : "eligible for"} this level.`,
+                        });
+                      } else {
+                        toast({
+                          title: `${level.name} Level`,
+                          description: `You need ${(level.minAmount - totalDepositAmount).toLocaleString()} more to reach this level.`,
+                          variant: "destructive",
+                        });
+                      }
+                    }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="p-2 rounded-full"
+                        style={{ backgroundColor: `${level.bgColor}80` }}
+                      >
+                        <BrainCircuit
+                          className="h-5 w-5"
+                          style={{ color: level.color }}
+                        />
+                      </div>
+                      <div>
+                        <p
+                          className="font-medium"
+                          style={{ color: level.color }}
+                        >
+                          {level.name}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {level.maxAmount
+                            ? `${level.minAmount.toLocaleString()} - ${level.maxAmount.toLocaleString()}`
+                            : `${level.minAmount.toLocaleString()}+`}
+                        </p>
+                      </div>
+                    </div>
+                    <div
+                      className="px-2 py-1 rounded-full text-xs font-medium"
+                      style={{
+                        backgroundColor: `${level.bgColor}40`,
+                        color: level.color,
+                      }}
+                    >
+                      {level.percentage}%
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
