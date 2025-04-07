@@ -8,6 +8,8 @@ import { AuthLayout } from "./components/layout";
 
 const LoginPage = lazy(() => import("./pages/login"));
 const SignupPage = lazy(() => import("./pages/signup"));
+const ForgotPasswordPage = lazy(() => import("./pages/forgot-password"));
+const ResetPasswordPage = lazy(() => import("./pages/reset-password"));
 const DashboardPage = lazy(() => import("./pages/dashboard"));
 const AccountPage = lazy(() => import("./pages/account"));
 const DepositPage = lazy(() => import("./pages/deposit"));
@@ -28,6 +30,8 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
           {/* Wrap authenticated routes with AuthLayout */}
           <Route element={<AuthLayout />}>
             <Route path="/dashboard" element={<DashboardPage />} />

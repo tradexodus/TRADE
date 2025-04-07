@@ -18,11 +18,11 @@ import { useToast } from "@/components/ui/use-toast";
 
 const formSchema = z.object({
   email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
-export default function LoginForm() {
+export default function ForgotPasswordForm() {
   const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -30,42 +30,88 @@ export default function LoginForm() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       email: "",
-      password: "",
     },
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       setIsLoading(true);
-      const { error } = await supabase.auth.signInWithPassword({
-        email: values.email,
-        password: values.password,
-      });
+
+      // Use Supabase's resetPasswordForEmail function
+      const { error } = await supabase.auth.resetPasswordForEmail(
+        values.email,
+        {
+          redirectTo: `${window.location.origin}/reset-password`,
+        },
+      );
 
       if (error) {
-        form.setError("password", {
-          type: "manual",
-          message: "The email or password you entered is incorrect.",
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: error.message,
         });
         return;
       }
 
-      navigate("/dashboard");
+      // Show success message
+      setIsSubmitted(true);
+      toast({
+        title: "Password reset email sent",
+        description: "Check your email for a password reset link",
+      });
     } catch (error) {
-      form.setError("password", {
-        type: "manual",
-        message: "Something went wrong. Please try again.",
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Something went wrong. Please try again.",
       });
     } finally {
       setIsLoading(false);
     }
   }
 
+  if (isSubmitted) {
+    return (
+      <div className="w-full max-w-md space-y-8 p-8 bg-card rounded-lg border">
+        <div className="space-y-2 text-center">
+          <h1 className="text-2xl font-bold">Check your email</h1>
+          <p className="text-muted-foreground">
+            We've sent you a password reset link. Please check your email.
+          </p>
+        </div>
+        <div className="space-y-4">
+          <Button
+            onClick={() => navigate("/login")}
+            className="w-full"
+            variant="outline"
+          >
+            Back to login
+          </Button>
+          <div className="text-center text-sm">
+            Didn't receive an email?{" "}
+            <button
+              onClick={() => {
+                setIsSubmitted(false);
+                form.reset();
+              }}
+              className="text-primary hover:underline"
+            >
+              Try again
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full max-w-md space-y-8 p-8 bg-card rounded-lg border">
       <div className="space-y-2 text-center">
-        <h1 className="text-2xl font-bold">Welcome back</h1>
-        <p className="text-muted-foreground">Enter your credentials to login</p>
+        <h1 className="text-2xl font-bold">Forgot Password</h1>
+        <p className="text-muted-foreground">
+          Enter your email and we'll send you a password reset link
+        </p>
       </div>
 
       <Form {...form}>
@@ -88,40 +134,13 @@ export default function LoginForm() {
             )}
           />
 
-          <FormField
-            control={form.control}
-            name="password"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Password</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder="Enter your password"
-                    {...field}
-                    type="password"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
           <div className="space-y-4">
             <Button type="submit" className="w-full" disabled={isLoading}>
-              Login
+              Send Reset Link
             </Button>
-            <div className="text-center mt-2">
-              <Link
-                to="/forgot-password"
-                className="text-primary hover:underline text-sm"
-              >
-                Forgot password?
-              </Link>
-            </div>
             <div className="text-center text-sm">
-              Don't have an account?{" "}
-              <Link to="/signup" className="text-primary hover:underline">
-                Sign up
+              <Link to="/login" className="text-primary hover:underline">
+                Back to login
               </Link>
             </div>
           </div>

@@ -176,13 +176,13 @@ export default function Dashboard() {
             <CardContent className="pt-2 sm:pt-3 p-3 sm:p-4">
               <div className="space-y-3">
                 <a href="/deposit" className="w-full max-w-none">
-                  <button className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground h-9 px-4 py-2 rounded-md text-sm font-medium transition-all duration-200">
+                  <button className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground h-14 px-4 py-2 rounded-md text-sm font-medium transition-all duration-200">
                     <ArrowUpDown className="h-4 w-4" />
                     Deposit
                   </button>
                 </a>
                 <a href="/withdrawal" className="w-full max-w-none static">
-                  <button className="w-full flex items-center justify-center gap-2 bg-secondary hover:bg-secondary/80 text-secondary-foreground h-9 px-4 py-2 rounded-md text-sm font-medium transition-all duration-200">
+                  <button className="w-full flex items-center justify-center gap-2 bg-secondary hover:bg-secondary/80 text-secondary-foreground h-14 px-4 py-2 rounded-md text-sm font-medium transition-all duration-200">
                     <ArrowUpDown className="h-4 w-4" />
                     Withdraw
                   </button>
