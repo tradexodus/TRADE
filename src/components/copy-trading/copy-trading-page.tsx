@@ -6,6 +6,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LineChart, TrendingUp, Users } from "lucide-react";
+import { ApplicationRequirementsDialog } from "./application-requirements-dialog";
+import { useNavigate } from "react-router-dom";
 
 type Trader = {
   id: string;
@@ -18,11 +20,19 @@ type Trader = {
 };
 
 export default function CopyTradingPage() {
+  const navigate = useNavigate();
   console.log("Rendering CopyTradingPage");
   const [traders, setTraders] = useState<Trader[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [followedTraders, setFollowedTraders] = useState<string[]>([]);
+  const [showRequirementsDialog, setShowRequirementsDialog] = useState(false);
+  const [userRequirements, setUserRequirements] = useState<{
+    tradesCount: number;
+    balance: number;
+    isVerified: boolean;
+  } | null>(null);
+  const [isLoadingRequirements, setIsLoadingRequirements] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -146,10 +156,102 @@ export default function CopyTradingPage() {
     return <div className="p-4 text-muted-foreground">Loading traders...</div>;
   }
 
+  const handleApplyNowClick = async () => {
+    setIsLoadingRequirements(true);
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        toast({
+          variant: "destructive",
+          title: "Authentication Required",
+          description: "Please login to apply as a trader",
+        });
+        return;
+      }
+
+      // Fetch user's trade count
+      const { data: tradesData, error: tradesError } = await supabase
+        .from("trading_history")
+        .select("id", { count: "exact" })
+        .eq("user_id", user.id);
+
+      if (tradesError) throw tradesError;
+
+      // Fetch user's balance
+      const { data: userData, error: userError } = await supabase
+        .from("user_accounts")
+        .select("balance")
+        .eq("id", user.id)
+        .single();
+
+      if (userError) throw userError;
+
+      // Fetch user verification status from user_verifications table
+      const { data: verificationData } = await supabase
+        .from("user_verifications")
+        .select("status")
+        .eq("id", user.id)
+        .single();
+
+      setUserRequirements({
+        tradesCount: tradesData?.length || 0,
+        balance: userData?.balance || 0,
+        isVerified: verificationData?.status === "verified",
+      });
+
+      setShowRequirementsDialog(true);
+    } catch (error: any) {
+      console.error("Error fetching user requirements:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to check application eligibility",
+      });
+    } finally {
+      setIsLoadingRequirements(false);
+    }
+  };
+
+  const handleSubmitApplication = async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
+    const { error } = await supabase.from("trader_applications").insert({
+      user_id: user.id,
+      status: "pending",
+      created_at: new Date().toISOString(),
+    });
+
+    if (error) throw error;
+  };
+
   return (
     <div className="container mx-auto space-y-8 bg-background text-foreground">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Copy Trading</h1>
+      </div>
+
+      <div className="">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="space-y-2">
+            <h2 className="text-xl font-semibold">Be a Futures Lead Trader</h2>
+            <p className="text-muted-foreground">
+              Share your trading expertise and earn from followers copying your
+              trades
+            </p>
+          </div>
+          <Button
+            onClick={handleApplyNowClick}
+            className="bg-blue-500 hover:bg-blue-600"
+          >
+            Apply Now
+          </Button>
+        </div>
       </div>
 
       <Tabs defaultValue="top-traders" className="space-y-6">
@@ -167,7 +269,11 @@ export default function CopyTradingPage() {
         <TabsContent value="top-traders" className="space-y-6">
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {traders.map((trader) => (
-              <Card key={trader.id}>
+              <Card
+                key={trader.id}
+                className="cursor-pointer transition-all hover:shadow-md"
+                onClick={() => navigate(`/copy-trading/${trader.id}`)}
+              >
                 <CardHeader>
                   <div className="flex items-center gap-4">
                     <Avatar className="h-12 w-12">
@@ -202,22 +308,24 @@ export default function CopyTradingPage() {
                     <LineChart className="h-full w-full text-muted-foreground/30" />
                   </div>
 
-                  {followedTraders.includes(trader.id) ? (
-                    <Button
-                      variant="destructive"
-                      className="w-full"
-                      onClick={() => handleStopCopying(trader.id)}
-                    >
-                      Stop Copying
-                    </Button>
-                  ) : (
-                    <Button
-                      className="w-full"
-                      onClick={() => handleCopyTrader(trader.id)}
-                    >
-                      Copy Trader
-                    </Button>
-                  )}
+                  <div onClick={(e) => e.stopPropagation()}>
+                    {followedTraders.includes(trader.id) ? (
+                      <Button
+                        variant="destructive"
+                        className="w-full"
+                        onClick={() => handleStopCopying(trader.id)}
+                      >
+                        Stop Copying
+                      </Button>
+                    ) : (
+                      <Button
+                        className="w-full"
+                        onClick={() => handleCopyTrader(trader.id)}
+                      >
+                        Copy Trader
+                      </Button>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             ))}
@@ -229,7 +337,11 @@ export default function CopyTradingPage() {
             {traders
               .filter((trader) => followedTraders.includes(trader.id))
               .map((trader) => (
-                <Card key={trader.id}>
+                <Card
+                  key={trader.id}
+                  className="cursor-pointer transition-all hover:shadow-md"
+                  onClick={() => navigate(`/copy-trading/${trader.id}`)}
+                >
                   <CardHeader>
                     <div className="flex items-center gap-4">
                       <Avatar className="h-12 w-12">
@@ -264,19 +376,27 @@ export default function CopyTradingPage() {
                       <LineChart className="h-full w-full text-muted-foreground/30" />
                     </div>
 
-                    <Button
-                      variant="destructive"
-                      className="w-full"
-                      onClick={() => handleStopCopying(trader.id)}
-                    >
-                      Stop Copying
-                    </Button>
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <Button
+                        variant="destructive"
+                        className="w-full"
+                        onClick={() => handleStopCopying(trader.id)}
+                      >
+                        Stop Copying
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               ))}
           </div>
         </TabsContent>
       </Tabs>
+      <ApplicationRequirementsDialog
+        open={showRequirementsDialog}
+        onOpenChange={setShowRequirementsDialog}
+        userRequirements={userRequirements}
+        onSubmitApplication={handleSubmitApplication}
+      />
     </div>
   );
 }

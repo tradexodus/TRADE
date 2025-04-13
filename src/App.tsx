@@ -38,6 +38,7 @@ function App() {
             <Route path="/account" element={<AccountPage />} />
             <Route path="/deposit" element={<DepositPage />} />
             <Route path="/copy-trading" element={<CopyTrading />} />
+            <Route path="/copy-trading/:traderId" element={<CopyTrading />} />
             <Route path="/history" element={<HistoryPage />} />
             <Route path="/trade-history" element={<HistoryPage />} />
             <Route path="/settings" element={<SettingsPage />} />

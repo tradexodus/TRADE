@@ -2,12 +2,13 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { ArrowLeft, ExternalLink } from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getNeuronLevel } from "@/lib/neuron-levels";
+import { Separator } from "@/components/ui/separator";
 
 export default function DepositPage() {
   const [amount, setAmount] = useState("");
@@ -173,6 +174,82 @@ export default function DepositPage() {
             {loading ? "Processing..." : "Confirm Deposit"}
           </Button>
         </form>
+      </div>
+
+      {/* Partnership Logos */}
+      <Card className="mt-8">
+        <CardHeader>
+          <CardTitle>Supported Payment Methods</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap justify-center gap-6 items-center">
+            <div className="flex flex-col items-center">
+              <img
+                src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/200px-Mastercard-logo.svg.png"
+                alt="Mastercard"
+                className="h-12 object-contain"
+              />
+              <span className="text-xs text-muted-foreground mt-1">
+                Mastercard
+              </span>
+            </div>
+            <div className="flex flex-col items-center">
+              <img
+                src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/200px-Visa_Inc._logo.svg.png"
+                alt="Visa"
+                className="h-12 object-contain"
+              />
+              <span className="text-xs text-muted-foreground mt-1">Visa</span>
+            </div>
+            <div className="flex flex-col items-center">
+              <img
+                src="https://cryptologos.cc/logos/tether-usdt-logo.png"
+                alt="Tether"
+                className="h-12 object-contain"
+              />
+              <span className="text-xs text-muted-foreground mt-1">Tether</span>
+            </div>
+            <div className="flex flex-col items-center">
+              <img
+                src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/PayPal.svg/200px-PayPal.svg.png"
+                alt="PayPal"
+                className="h-12 object-contain"
+              />
+              <span className="text-xs text-muted-foreground mt-1">PayPal</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Policies and Terms */}
+      <div className="mt-8 text-center space-y-4">
+        <Separator />
+        <div className="text-sm text-muted-foreground flex flex-wrap justify-center gap-x-6 gap-y-2">
+          <Link
+            to="/terms"
+            className="flex items-center hover:text-primary transition-colors"
+          >
+            <span>Terms of Service</span>
+            <ExternalLink className="ml-1 h-3 w-3" />
+          </Link>
+          <Link
+            to="/privacy"
+            className="flex items-center hover:text-primary transition-colors"
+          >
+            <span>Privacy Policy</span>
+            <ExternalLink className="ml-1 h-3 w-3" />
+          </Link>
+          <Link
+            to="/legal"
+            className="flex items-center hover:text-primary transition-colors"
+          >
+            <span>Legal Notice</span>
+            <ExternalLink className="ml-1 h-3 w-3" />
+          </Link>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          By using our deposit service, you agree to our terms and conditions.
+        </p>
       </div>
     </div>
   );

@@ -88,13 +88,7 @@ export default function TransactionHistoryPage() {
 
         if (tradingError) throw tradingError;
 
-        // Fetch trades from trades table
-        const { data: tradesData, error: tradesError } = await supabase
-          .from("trades")
-          .select("*")
-          .eq("user_id", user.id);
-
-        if (tradesError) throw tradesError;
+        // We're no longer fetching trades data as requested
 
         // Combine and format transactions
         const formattedDeposits =
@@ -118,11 +112,8 @@ export default function TransactionHistoryPage() {
             new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
         );
 
-        // Combine trading history and trades
-        const allTrades = [
-          ...(tradingHistory || []),
-          ...(tradesData || []),
-        ].sort(
+        // Only using trading history, not including trades
+        const allTrades = [...(tradingHistory || [])].sort(
           (a, b) =>
             new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
         );

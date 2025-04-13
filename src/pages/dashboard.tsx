@@ -17,6 +17,7 @@ import { supabase } from "@/lib/supabase";
 
 export default function Dashboard() {
   const [balance, setBalance] = useState<number | null>(null);
+  const [profit, setProfit] = useState<number | null>(null);
   const [activeTrades, setActiveTrades] = useState<number>(0);
   const [totalTradeValue, setTotalTradeValue] = useState<number>(0);
   const [followedTraders, setFollowedTraders] = useState<number>(0);
@@ -43,12 +44,13 @@ export default function Dashboard() {
         // Fetch account balance and data
         const { data: userData } = await supabase
           .from("user_accounts")
-          .select("balance, account_id")
+          .select("balance, account_id, profit")
           .eq("id", user.id)
           .single();
 
         if (userData) {
           setBalance(userData.balance || 0);
+          setProfit(userData.profit || 0);
           setAccountData(userData);
         }
 
@@ -140,9 +142,14 @@ export default function Dashboard() {
                     Loading...
                   </p>
                 ) : (
-                  <p className="text-xl sm:text-2xl font-mono text-blue-400">
-                    ${balance?.toFixed(2) || "0.00"}
-                  </p>
+                  <>
+                    <p className="text-xl sm:text-2xl font-mono text-blue-400">
+                      ${balance?.toFixed(2) || "0.00"}
+                    </p>
+                    <p className="text-sm font-mono text-green-500">
+                      Profit: ${profit?.toFixed(2) || "0.00"}
+                    </p>
+                  </>
                 )}
                 <div className="flex items-center text-xs text-muted-foreground">
                   <ArrowUpDown className="h-3 w-3 mr-1" />

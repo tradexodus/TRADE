@@ -294,40 +294,46 @@ export default function WithdrawalPage() {
 
         {/* Summary Section */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-          <div className="bg-card p-4 sm:p-6 rounded-lg border border-border w-full">
-            <h3 className="text-lg font-medium mb-2">Available Balance</h3>
+          <div className="bg-card/80 p-4 sm:p-6 rounded-xl shadow-sm border-0 w-full">
+            <h3 className="text-lg font-medium mb-2 text-muted-foreground">
+              Available Balance
+            </h3>
             <p className="text-3xl font-bold">${userBalance.toFixed(2)}</p>
           </div>
-          <div className="bg-card p-4 sm:p-6 rounded-lg border border-border w-full">
-            <h3 className="text-lg font-medium mb-2">Available Profit</h3>
+          <div className="bg-card/80 p-4 sm:p-6 rounded-xl shadow-sm border-0 w-full">
+            <h3 className="text-lg font-medium mb-2 text-muted-foreground">
+              Available Profit
+            </h3>
             <p className="text-3xl font-bold">${userProfit.toFixed(2)}</p>
           </div>
         </div>
 
         {/* Withdrawal Type Selection */}
-        <div className="bg-card p-4 sm:p-6 rounded-lg border border-border w-full">
-          <h3 className="text-xl font-medium mb-4">Withdrawal Type</h3>
+        <div className="bg-card/80 p-4 sm:p-6 rounded-xl shadow-sm border-0 w-full">
+          <h3 className="text-xl font-medium mb-4 text-muted-foreground">
+            Withdrawal Type
+          </h3>
           <div className="flex flex-col sm:flex-row gap-4">
             <Button
-              variant={withdrawalType === "profit" ? "default" : "outline"}
-              className="flex-1 h-20"
+              variant={withdrawalType === "profit" ? "default" : "secondary"}
+              className={`flex-1 h-16 rounded-xl transition-all ${withdrawalType === "profit" ? "shadow-md" : "shadow-none"}`}
               onClick={() => setWithdrawalType("profit")}
             >
-              <div className="flex flex-col items-center gap-2">
+              <div className="flex flex-col items-center gap-1">
                 <span className="text-lg font-medium">Profit Withdrawal</span>
-                <span className="text-sm text-muted-foreground">
+                <span className="text-xs text-muted-foreground">
                   Withdraw only from your trading profits
                 </span>
               </div>
             </Button>
             <Button
-              variant={withdrawalType === "balance" ? "default" : "outline"}
-              className="flex-1 h-20"
+              variant={withdrawalType === "balance" ? "default" : "secondary"}
+              className={`flex-1 h-16 rounded-xl transition-all ${withdrawalType === "balance" ? "shadow-md" : "shadow-none"}`}
               onClick={() => setWithdrawalType("balance")}
             >
-              <div className="flex flex-col items-center gap-2">
+              <div className="flex flex-col items-center gap-1">
                 <span className="text-lg font-medium">Balance Withdrawal</span>
-                <span className="text-sm text-muted-foreground">
+                <span className="text-xs text-muted-foreground">
                   Withdraw from your total account balance
                 </span>
               </div>
@@ -336,13 +342,15 @@ export default function WithdrawalPage() {
         </div>
 
         {/* Withdrawal Form */}
-        <div className="bg-card p-4 sm:p-6 rounded-lg border border-border w-full">
-          <h3 className="text-xl font-medium mb-4">Withdrawal Details</h3>
-          <div className="space-y-4">
+        <div className="bg-card/80 p-4 sm:p-6 rounded-xl shadow-sm border-0 w-full">
+          <h3 className="text-xl font-medium mb-4 text-muted-foreground">
+            Withdrawal Details
+          </h3>
+          <div className="space-y-6">
             <div>
               <label
                 htmlFor="amount"
-                className="block text-sm font-medium mb-1"
+                className="block text-sm font-medium mb-2 text-muted-foreground"
               >
                 Amount to Withdraw ($)
               </label>
@@ -352,9 +360,9 @@ export default function WithdrawalPage() {
                 value={amount}
                 onChange={handleAmountChange}
                 placeholder="Enter amount"
-                className="w-full"
+                className="w-full bg-background/50 border-muted rounded-lg h-12"
               />
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="text-sm text-muted-foreground mt-2">
                 Maximum: $
                 {withdrawalType === "profit"
                   ? userProfit.toFixed(2)
@@ -365,7 +373,7 @@ export default function WithdrawalPage() {
             <div>
               <label
                 htmlFor="wallet"
-                className="block text-sm font-medium mb-1"
+                className="block text-sm font-medium mb-2 text-muted-foreground"
               >
                 TRC20 Wallet Address
               </label>
@@ -375,26 +383,26 @@ export default function WithdrawalPage() {
                 value={walletAddress}
                 onChange={(e) => setWalletAddress(e.target.value)}
                 placeholder="Enter your TRC20 wallet address"
-                className="w-full"
+                className="w-full bg-background/50 border-muted rounded-lg h-12"
               />
             </div>
 
-            <div className="pt-4">
+            <div className="pt-2">
               <Button
                 onClick={handleSubmit}
                 disabled={isLoading || !isVerified || !hasWithdrawalPassword}
-                className="w-full"
+                className="w-full h-12 rounded-lg shadow-md"
               >
                 {isLoading ? "Processing..." : "Request Withdrawal"}
               </Button>
               {!isVerified && (
-                <p className="text-sm text-destructive mt-2">
+                <p className="text-sm text-destructive/90 mt-3 px-2">
                   You need to verify your account before making withdrawals.
                   Please visit the Account page.
                 </p>
               )}
               {!hasWithdrawalPassword && (
-                <p className="text-sm text-destructive mt-2">
+                <p className="text-sm text-destructive/90 mt-3 px-2">
                   You need to set a withdrawal password before making
                   withdrawals. Please visit the Settings page to set up your
                   withdrawal password.
