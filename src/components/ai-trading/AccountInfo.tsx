@@ -1,0 +1,156 @@
+import { useEffect, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Wallet, ArrowUpDown, TrendingUp } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { getNeuronLevel } from "@/lib/neuron-levels";
+
+type UserAccount = {
+  balance: number;
+  profit: number;
+  account_id: number;
+};
+
+export default function AccountInfo() {
+  const [account, setAccount] = useState<UserAccount | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchAccountData() {
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (!user) return;
+
+        const { data, error } = await supabase
+          .from("user_accounts")
+          .select("balance, profit, account_id")
+          .eq("id", user.id)
+          .single();
+
+        if (error) {
+          console.error("Error fetching account data:", error);
+          return;
+        }
+
+        setAccount(data);
+      } catch (error) {
+        console.error("Error in fetchAccountData:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchAccountData();
+
+    // Set up a subscription to listen for changes to the user's account
+    const channel = supabase
+      .channel("account_changes")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "user_accounts",
+          filter: `id=eq.${supabase.auth.getUser().then(({ data }) => data.user?.id)}`,
+        },
+        (payload) => {
+          setAccount(payload.new as UserAccount);
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  return (
+    <Card className="overflow-hidden border-0 shadow-lg">
+      <CardHeader className="bg-gradient-to-r from-blue-900/30 to-blue-800/10 py-3">
+        <CardTitle className="flex items-center gap-2">
+          <Wallet className="h-4 w-4 text-blue-400" />
+          <span>Account Information</span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-4 space-y-4">
+        {loading ? (
+          <div className="space-y-2">
+            <div className="h-6 bg-muted rounded animate-pulse"></div>
+            <div className="h-8 bg-muted rounded animate-pulse"></div>
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">
+                  Balance
+                </p>
+                <p className="text-2xl font-mono text-blue-400">
+                  ${account?.balance?.toFixed(2) || "0.00"}
+                </p>
+                <div className="flex items-center text-xs text-muted-foreground">
+                  <ArrowUpDown className="h-3 w-3 mr-1" />
+                  <span>Updated just now</span>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">
+                  Profit
+                </p>
+                <p className="text-2xl font-mono text-green-500">
+                  ${account?.profit?.toFixed(2) || "0.00"}
+                </p>
+                <div className="flex items-center text-xs text-muted-foreground">
+                  <TrendingUp className="h-3 w-3 mr-1" />
+                  <span>Cumulative gains</span>
+                </div>
+              </div>
+            </div>
+
+            {account?.balance !== null && (
+              <div className="space-y-1 pt-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-muted-foreground">
+                    Neuron Level
+                  </span>
+                  <span
+                    className="text-xs font-medium"
+                    style={{
+                      color: getNeuronLevel(account?.balance || 0).color,
+                    }}
+                  >
+                    {getNeuronLevel(account?.balance || 0).name}
+                  </span>
+                </div>
+                <div
+                  className="h-1.5 w-full rounded-full overflow-hidden"
+                  style={{
+                    backgroundColor: `${getNeuronLevel(account?.balance || 0).bgColor}50`,
+                  }}
+                >
+                  <div
+                    className="h-full rounded-full"
+                    style={{
+                      width: `${getNeuronLevel(account?.balance || 0).progressPercentage}%`,
+                      backgroundColor: getNeuronLevel(account?.balance || 0)
+                        .color,
+                    }}
+                  ></div>
+                </div>
+                <div className="flex justify-between text-[10px] text-muted-foreground">
+                  <span>Progress</span>
+                  <span>
+                    {getNeuronLevel(account?.balance || 0).progressPercentage}%
+                  </span>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}

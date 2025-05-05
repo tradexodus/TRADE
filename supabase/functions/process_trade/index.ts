@@ -13,13 +13,9 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Get environment variables from request headers if not available in Deno.env
-    const supabaseUrl =
-      Deno.env.get("SUPABASE_URL") || req.headers.get("x-supabase-url") || "";
-    const supabaseServiceKey =
-      Deno.env.get("SUPABASE_SERVICE_KEY") ||
-      req.headers.get("x-supabase-service-key") ||
-      "";
+    // Get environment variables
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_KEY") || "";
 
     if (!supabaseUrl || !supabaseServiceKey) {
       throw new Error("Missing environment variables");
@@ -27,23 +23,41 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Get request body
     const { tradeId, userId } = await req.json();
 
     if (!tradeId || !userId) {
-      throw new Error("Missing required parameters");
+      throw new Error("Missing trade ID or user ID");
     }
 
-    // Get the trade details
+    // Get trade details
     const { data: tradeData, error: tradeError } = await supabase
       .from("trading_history")
       .select("*")
       .eq("id", tradeId)
       .eq("user_id", userId)
-      .eq("status", "pending")
       .single();
 
-    if (tradeError || !tradeData) {
-      throw new Error("Trade not found or already processed");
+    if (tradeError) {
+      throw tradeError;
+    }
+
+    if (!tradeData) {
+      throw new Error("Trade not found");
+    }
+
+    // Check if trade is already processed
+    if (tradeData.status !== "pending") {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "Trade already processed",
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400,
+        },
+      );
     }
 
     // Get user's trading settings
@@ -53,9 +67,21 @@ Deno.serve(async (req) => {
       .eq("user_id", userId)
       .single();
 
-    if (settingsError || !settingsData) {
-      throw new Error("Trading settings not found");
+    if (settingsError && settingsError.code !== "PGRST116") {
+      // PGRST116 is "no rows returned" error
+      throw settingsError;
     }
+
+    // Default settings if none found
+    const defaultSettings = {
+      win_probability: 0.65, // 65% chance to win
+      min_profit_percentage: 0.8, // 0.8%
+      max_profit_percentage: 1.5, // 1.5%
+      max_loss_percentage: 0.95, // 0.95%
+    };
+
+    // Use settings from database or defaults
+    const settings = settingsData || defaultSettings;
 
     // Get user's account data
     const { data: accountData, error: accountError } = await supabase
@@ -64,42 +90,36 @@ Deno.serve(async (req) => {
       .eq("id", userId)
       .single();
 
-    if (accountError || !accountData) {
-      throw new Error("User account not found");
+    if (accountError) {
+      throw accountError;
     }
 
-    // Use user's trading settings to determine outcome
-    const isWin = Math.random() < settingsData.win_probability;
+    // Determine if the trade is a win or loss based on probability
+    const isWin = Math.random() < settings.win_probability;
 
-    // Calculate profit or loss based on settings
+    // Calculate profit or loss
     let profitPercentage;
     if (isWin) {
       // Generate profit between min and max profit percentage
       profitPercentage =
         Math.random() *
-          (settingsData.max_profit_percentage -
-            settingsData.min_profit_percentage) +
-        settingsData.min_profit_percentage;
+          (settings.max_profit_percentage - settings.min_profit_percentage) +
+        settings.min_profit_percentage;
     } else {
       // Generate loss up to max loss percentage (negative value)
-      profitPercentage =
-        -1 * (Math.random() * settingsData.max_loss_percentage);
+      profitPercentage = -1 * (Math.random() * settings.max_loss_percentage);
     }
 
     const profitAmount = (tradeData.amount * profitPercentage) / 100;
     const roundedProfit = Math.round(profitAmount * 100) / 100;
 
-    // Calculate new balance and profit values
-    const newBalance =
-      roundedProfit < 0
-        ? accountData.balance + roundedProfit
-        : accountData.balance;
+    // IMPORTANT: Return the pending amount to the user's balance
+    // Calculate new balance by adding back the original trade amount plus any profit/loss
+    const newBalance = accountData.balance + tradeData.amount;
     const newProfit =
       roundedProfit > 0
         ? (accountData.profit || 0) + roundedProfit
         : accountData.profit || 0;
-
-    const now = new Date();
 
     // Update the trade record
     const { error: updateError } = await supabase
@@ -107,12 +127,12 @@ Deno.serve(async (req) => {
       .update({
         profit_loss: roundedProfit,
         status: roundedProfit > 0 ? "profit" : "loss",
-        closed_at: now.toISOString(),
+        closed_at: new Date().toISOString(),
       })
       .eq("id", tradeId);
 
     if (updateError) {
-      throw new Error(`Failed to update trade: ${updateError.message}`);
+      throw updateError;
     }
 
     // Create a record in trades table
@@ -124,7 +144,7 @@ Deno.serve(async (req) => {
       profit_loss: roundedProfit,
       status: roundedProfit > 0 ? "profit" : "loss",
       created_at: tradeData.created_at,
-      closed_at: now.toISOString(),
+      closed_at: new Date().toISOString(),
     });
 
     if (tradeInsertError) {
@@ -141,19 +161,17 @@ Deno.serve(async (req) => {
       .eq("id", userId);
 
     if (accountUpdateError) {
-      throw new Error(
-        `Failed to update account: ${accountUpdateError.message}`,
-      );
+      throw accountUpdateError;
     }
 
     return new Response(
       JSON.stringify({
         success: true,
-        trade: {
-          id: tradeId,
+        message: "Trade processed successfully",
+        result: {
+          tradeId: tradeId,
           profit_loss: roundedProfit,
           status: roundedProfit > 0 ? "profit" : "loss",
-          closed_at: now.toISOString(),
         },
       }),
       {

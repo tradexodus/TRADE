@@ -18,8 +18,9 @@ const PrivacyPage = lazy(() => import("./pages/privacy"));
 const LegalPage = lazy(() => import("./pages/legal"));
 const TermsPage = lazy(() => import("./pages/terms"));
 const SettingsPage = lazy(() => import("./pages/settings"));
-const AITraderPage = lazy(() => import("./pages/ai-trader"));
+
 const WithdrawalPage = lazy(() => import("./pages/withdrawal"));
+const AiTradingPage = lazy(() => import("./pages/ai-trading"));
 
 function App() {
   return (
@@ -42,8 +43,9 @@ function App() {
             <Route path="/history" element={<HistoryPage />} />
             <Route path="/trade-history" element={<HistoryPage />} />
             <Route path="/settings" element={<SettingsPage />} />
-            <Route path="/ai-trader" element={<AITraderPage />} />
+
             <Route path="/withdrawal" element={<WithdrawalPage />} />
+            <Route path="/ai-trading" element={<AiTradingPage />} />
           </Route>
           {/* Public routes */}
           <Route path="/privacy" element={<PrivacyPage />} />

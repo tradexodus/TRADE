@@ -6,7 +6,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import {
@@ -103,27 +108,27 @@ export default function TraderDetailPage() {
     const now = new Date();
     let cumulativeRoi = 0;
     let cumulativePnl = 0;
-    
+
     // Generate data for the last 30 days
     for (let i = 30; i >= 0; i--) {
       const date = new Date(now);
       date.setDate(date.getDate() - i);
-      
+
       // Random daily ROI between -1.5% and +2.5%
       const dailyRoiChange = (Math.random() * 4 - 1.5) / 100;
       cumulativeRoi += dailyRoiChange;
-      
+
       // Random daily PnL between -$300 and +$500
       const dailyPnlChange = Math.random() * 800 - 300;
       cumulativePnl += dailyPnlChange;
-      
+
       data.push({
-        date: date.toISOString().split('T')[0], // Format as YYYY-MM-DD
+        date: date.toISOString().split("T")[0], // Format as YYYY-MM-DD
         roi: parseFloat((cumulativeRoi * 100).toFixed(2)), // Convert to percentage and round to 2 decimal places
         pnl: parseFloat(cumulativePnl.toFixed(2)), // Round to 2 decimal places
       });
     }
-    
+
     return data;
   }
 
@@ -140,16 +145,46 @@ export default function TraderDetailPage() {
 
       // Enhance trader data with mock data for now
       const mockPerformanceData = generateMockPerformanceData();
-      
+
       // Generate mock asset allocation data
       const mockAssetAllocation = [
-        { name: "Bitcoin", symbol: "BTC", percentage: 45, value: 155250, color: "#F7931A" },
-        { name: "Ethereum", symbol: "ETH", percentage: 30, value: 103500, color: "#627EEA" },
-        { name: "Solana", symbol: "SOL", percentage: 15, value: 51750, color: "#00FFA3" },
-        { name: "Cardano", symbol: "ADA", percentage: 5, value: 17250, color: "#0033AD" },
-        { name: "Polkadot", symbol: "DOT", percentage: 5, value: 17250, color: "#E6007A" }
+        {
+          name: "Bitcoin",
+          symbol: "BTC",
+          percentage: 45,
+          value: 155250,
+          color: "#F7931A",
+        },
+        {
+          name: "Ethereum",
+          symbol: "ETH",
+          percentage: 30,
+          value: 103500,
+          color: "#627EEA",
+        },
+        {
+          name: "Solana",
+          symbol: "SOL",
+          percentage: 15,
+          value: 51750,
+          color: "#00FFA3",
+        },
+        {
+          name: "Cardano",
+          symbol: "ADA",
+          percentage: 5,
+          value: 17250,
+          color: "#0033AD",
+        },
+        {
+          name: "Polkadot",
+          symbol: "DOT",
+          percentage: 5,
+          value: 17250,
+          color: "#E6007A",
+        },
       ];
-      
+
       const enhancedTrader = {
         ...data,
         days_trading: 120,
@@ -398,21 +433,31 @@ export default function TraderDetailPage() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1">
-                    <span className="font-medium">Return on Investment (ROI)</span>
+                    <span className="font-medium">
+                      Return on Investment (ROI)
+                    </span>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Info className="h-4 w-4 text-muted-foreground cursor-help" />
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p className="w-[200px]">Percentage return on investment since account inception</p>
+                        <p className="w-[200px]">
+                          Percentage return on investment since account
+                          inception
+                        </p>
                       </TooltipContent>
                     </Tooltip>
                   </div>
-                  <span className="font-bold text-green-500">+{trader.roi}%</span>
+                  <span className="font-bold text-green-500">
+                    +{trader.roi}%
+                  </span>
                 </div>
-                <Progress value={Math.min(trader.roi || 0, 100)} className="h-2" />
+                <Progress
+                  value={Math.min(trader.roi || 0, 100)}
+                  className="h-2"
+                />
               </div>
-              
+
               {/* Sharpe Ratio */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -423,15 +468,21 @@ export default function TraderDetailPage() {
                         <Info className="h-4 w-4 text-muted-foreground cursor-help" />
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p className="w-[200px]">Measures risk-adjusted return. Higher is better (>1 is good)</p>
+                        <p className="w-[200px]">
+                          Measures risk-adjusted return. Higher is better ({">"}
+                          1 is good)
+                        </p>
                       </TooltipContent>
                     </Tooltip>
                   </div>
                   <span className="font-bold">{trader.sharpe_ratio}</span>
                 </div>
-                <Progress value={Math.min((trader.sharpe_ratio || 0) * 33, 100)} className="h-2" />
+                <Progress
+                  value={Math.min((trader.sharpe_ratio || 0) * 33, 100)}
+                  className="h-2"
+                />
               </div>
-              
+
               {/* Max Drawdown */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -442,15 +493,22 @@ export default function TraderDetailPage() {
                         <Info className="h-4 w-4 text-muted-foreground cursor-help" />
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p className="w-[200px]">Largest drop from peak to trough. Lower is better</p>
+                        <p className="w-[200px]">
+                          Largest drop from peak to trough. Lower is better
+                        </p>
                       </TooltipContent>
                     </Tooltip>
                   </div>
-                  <span className="font-bold text-red-500">-{trader.max_drawdown}%</span>
+                  <span className="font-bold text-red-500">
+                    -{trader.max_drawdown}%
+                  </span>
                 </div>
-                <Progress value={Math.min(trader.max_drawdown || 0, 100)} className="h-2" />
+                <Progress
+                  value={Math.min(trader.max_drawdown || 0, 100)}
+                  className="h-2"
+                />
               </div>
-              
+
               {/* Win Rate */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -461,15 +519,22 @@ export default function TraderDetailPage() {
                         <Info className="h-4 w-4 text-muted-foreground cursor-help" />
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p className="w-[200px]">Percentage of trades that are profitable</p>
+                        <p className="w-[200px]">
+                          Percentage of trades that are profitable
+                        </p>
                       </TooltipContent>
                     </Tooltip>
                   </div>
-                  <span className="font-bold">{(trader.win_rate || 0) * 100}%</span>
+                  <span className="font-bold">
+                    {(trader.win_rate || 0) * 100}%
+                  </span>
                 </div>
-                <Progress value={(trader.win_rate || 0) * 100} className="h-2" />
+                <Progress
+                  value={(trader.win_rate || 0) * 100}
+                  className="h-2"
+                />
               </div>
-              
+
               {/* Profit Factor */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -480,15 +545,21 @@ export default function TraderDetailPage() {
                         <Info className="h-4 w-4 text-muted-foreground cursor-help" />
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p className="w-[200px]">Ratio of gross profit to gross loss. Higher is better (>1.5 is good)</p>
+                        <p className="w-[200px]">
+                          Ratio of gross profit to gross loss. Higher is better
+                          ({">"}1.5 is good)
+                        </p>
                       </TooltipContent>
                     </Tooltip>
                   </div>
                   <span className="font-bold">{trader.profit_factor}</span>
                 </div>
-                <Progress value={Math.min((trader.profit_factor || 0) * 33, 100)} className="h-2" />
+                <Progress
+                  value={Math.min((trader.profit_factor || 0) * 33, 100)}
+                  className="h-2"
+                />
               </div>
-              
+
               {/* Risk/Reward Ratio */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -499,13 +570,21 @@ export default function TraderDetailPage() {
                         <Info className="h-4 w-4 text-muted-foreground cursor-help" />
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p className="w-[200px]">Average profit on winning trades vs average loss on losing trades</p>
+                        <p className="w-[200px]">
+                          Average profit on winning trades vs average loss on
+                          losing trades
+                        </p>
                       </TooltipContent>
                     </Tooltip>
                   </div>
-                  <span className="font-bold">{trader.risk_reward_ratio}:1</span>
+                  <span className="font-bold">
+                    {trader.risk_reward_ratio}:1
+                  </span>
                 </div>
-                <Progress value={Math.min((trader.risk_reward_ratio || 0) * 33, 100)} className="h-2" />
+                <Progress
+                  value={Math.min((trader.risk_reward_ratio || 0) * 33, 100)}
+                  className="h-2"
+                />
               </div>
             </TooltipProvider>
           </CardContent>
@@ -521,41 +600,47 @@ export default function TraderDetailPage() {
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-2">
-                <Switch 
-                  id="chart-view" 
+                <Switch
+                  id="chart-view"
                   checked={chartView === "pnl"}
-                  onCheckedChange={(checked) => setChartView(checked ? "pnl" : "roi")}
+                  onCheckedChange={(checked) =>
+                    setChartView(checked ? "pnl" : "roi")
+                  }
                 />
                 <Label htmlFor="chart-view">
                   {chartView === "roi" ? "ROI (%)" : "Profit & Loss ($)"}
                 </Label>
               </div>
-              <div className="text-sm text-muted-foreground">
-                Last 30 days
-              </div>
+              <div className="text-sm text-muted-foreground">Last 30 days</div>
             </div>
-            
+
             <div className="h-[300px] w-full">
-              {trader?.performance_data && trader.performance_data.length > 0 ? (
+              {trader?.performance_data &&
+              trader.performance_data.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <RechartsLineChart
                     data={trader.performance_data}
                     margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                    <XAxis 
-                      dataKey="date" 
+                    <XAxis
+                      dataKey="date"
                       tickFormatter={(date) => {
                         const d = new Date(date);
                         return `${d.getDate()}/${d.getMonth() + 1}`;
                       }}
                     />
-                    <YAxis 
-                      tickFormatter={(value) => chartView === "roi" ? `${value}%` : `${value}`}
+                    <YAxis
+                      tickFormatter={(value) =>
+                        chartView === "roi" ? `${value}%` : `${value}`
+                      }
                     />
-                    <RechartsTooltip 
+                    <RechartsTooltip
                       formatter={(value, name) => {
-                        return [chartView === "roi" ? `${value}%` : `${value}`, chartView === "roi" ? "ROI" : "P&L"];
+                        return [
+                          chartView === "roi" ? `${value}%` : `${value}`,
+                          chartView === "roi" ? "ROI" : "P&L",
+                        ];
                       }}
                       labelFormatter={(label) => {
                         const date = new Date(label);
@@ -563,10 +648,14 @@ export default function TraderDetailPage() {
                       }}
                     />
                     <Legend />
-                    <Line 
-                      type="monotone" 
+                    <Line
+                      type="monotone"
                       dataKey={chartView === "roi" ? "roi" : "pnl"}
-                      name={chartView === "roi" ? "Return on Investment" : "Profit & Loss"}
+                      name={
+                        chartView === "roi"
+                          ? "Return on Investment"
+                          : "Profit & Loss"
+                      }
                       stroke={chartView === "roi" ? "#10b981" : "#6366f1"}
                       activeDot={{ r: 8 }}
                       strokeWidth={2}
@@ -575,7 +664,9 @@ export default function TraderDetailPage() {
                 </ResponsiveContainer>
               ) : (
                 <div className="flex items-center justify-center h-full">
-                  <p className="text-muted-foreground">No performance data available</p>
+                  <p className="text-muted-foreground">
+                    No performance data available
+                  </p>
                 </div>
               )}
             </div>
@@ -603,14 +694,18 @@ export default function TraderDetailPage() {
                         <Info className="h-4 w-4 text-muted-foreground cursor-help" />
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p className="w-[200px]">Total profit and loss generated for copiers</p>
+                        <p className="w-[200px]">
+                          Total profit and loss generated for copiers
+                        </p>
                       </TooltipContent>
                     </Tooltip>
                   </div>
-                  <span className="font-bold text-green-500">${trader.copier_pnl?.toLocaleString()}</span>
+                  <span className="font-bold text-green-500">
+                    ${trader.copier_pnl?.toLocaleString()}
+                  </span>
                 </div>
               </div>
-              
+
               {/* AUM */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -621,14 +716,18 @@ export default function TraderDetailPage() {
                         <Info className="h-4 w-4 text-muted-foreground cursor-help" />
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p className="w-[200px]">Total value of assets being managed by this trader</p>
+                        <p className="w-[200px]">
+                          Total value of assets being managed by this trader
+                        </p>
                       </TooltipContent>
                     </Tooltip>
                   </div>
-                  <span className="font-bold">${trader.aum?.toLocaleString()}</span>
+                  <span className="font-bold">
+                    ${trader.aum?.toLocaleString()}
+                  </span>
                 </div>
               </div>
-              
+
               {/* Profit Sharing */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -639,14 +738,16 @@ export default function TraderDetailPage() {
                         <Info className="h-4 w-4 text-muted-foreground cursor-help" />
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p className="w-[200px]">Percentage of profits shared with the trader</p>
+                        <p className="w-[200px]">
+                          Percentage of profits shared with the trader
+                        </p>
                       </TooltipContent>
                     </Tooltip>
                   </div>
                   <span className="font-bold">{trader.profit_sharing}%</span>
                 </div>
               </div>
-              
+
               {/* Leading Margin Balance */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -657,14 +758,18 @@ export default function TraderDetailPage() {
                         <Info className="h-4 w-4 text-muted-foreground cursor-help" />
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p className="w-[200px]">Trader's own capital at risk</p>
+                        <p className="w-[200px]">
+                          Trader's own capital at risk
+                        </p>
                       </TooltipContent>
                     </Tooltip>
                   </div>
-                  <span className="font-bold">${trader.leading_margin_balance?.toLocaleString()}</span>
+                  <span className="font-bold">
+                    ${trader.leading_margin_balance?.toLocaleString()}
+                  </span>
                 </div>
               </div>
-              
+
               {/* Minimum Copy Amount */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -675,11 +780,15 @@ export default function TraderDetailPage() {
                         <Info className="h-4 w-4 text-muted-foreground cursor-help" />
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p className="w-[200px]">Minimum amount required to copy this trader</p>
+                        <p className="w-[200px]">
+                          Minimum amount required to copy this trader
+                        </p>
                       </TooltipContent>
                     </Tooltip>
                   </div>
-                  <span className="font-bold">${trader.min_copy_amount?.toLocaleString()}</span>
+                  <span className="font-bold">
+                    ${trader.min_copy_amount?.toLocaleString()}
+                  </span>
                 </div>
               </div>
             </TooltipProvider>
@@ -716,22 +825,30 @@ export default function TraderDetailPage() {
                       <RechartsTooltip
                         formatter={(value, name, props) => {
                           const entry = props.payload;
-                          return [`${value}% (${entry.value.toLocaleString()})`, entry.name];
+                          return [
+                            `${value}% (${entry.value.toLocaleString()})`,
+                            entry.name,
+                          ];
                         }}
                       />
                     </RechartsPieChart>
                   </ResponsiveContainer>
                 </div>
-                
+
                 <div className="space-y-2 mt-4">
                   {trader.asset_allocation.map((asset, index) => (
-                    <div key={index} className="flex items-center justify-between">
+                    <div
+                      key={index}
+                      className="flex items-center justify-between"
+                    >
                       <div className="flex items-center gap-2">
                         <div
                           className="w-3 h-3 rounded-full"
                           style={{ backgroundColor: asset.color }}
                         />
-                        <span className="font-medium">{asset.name} ({asset.symbol})</span>
+                        <span className="font-medium">
+                          {asset.name} ({asset.symbol})
+                        </span>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="font-medium">{asset.percentage}%</span>

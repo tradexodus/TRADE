@@ -140,11 +140,9 @@ export default function AuthLayout() {
               const profitAmount = (trade.amount * profitPercentage) / 100;
               const roundedProfit = Math.round(profitAmount * 100) / 100;
 
-              // Calculate new balance and profit values
-              const newBalance =
-                roundedProfit < 0
-                  ? accountData.balance + roundedProfit
-                  : accountData.balance;
+              // IMPORTANT: Return the pending amount to the user's balance
+              // Calculate new balance by adding back the original trade amount plus any profit/loss
+              const newBalance = accountData.balance + trade.amount;
               const newProfit =
                 roundedProfit > 0
                   ? (accountData.profit || 0) + roundedProfit

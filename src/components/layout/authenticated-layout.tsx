@@ -9,14 +9,13 @@ import {
   Menu,
   User,
   LayoutDashboard,
-  BrainCircuit,
   Users,
   Wallet,
   ArrowDownToLine,
   History,
   Settings,
   LogOut,
-  TrendingUp,
+  Brain,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../ui/button";
@@ -192,14 +191,15 @@ export default function AuthenticatedLayout({
               Dashboard
             </div>
           </Button>
+
           <Button
             variant="ghost"
             className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
-            onClick={() => navigate("/ai-trader")}
+            onClick={() => navigate("/ai-trading")}
           >
             <div className="flex items-center gap-3">
-              <BrainCircuit className="h-5 w-5 text-blue-400" />
-              AI Trader
+              <Brain className="h-5 w-5 text-blue-400" />
+              AI Trading
             </div>
           </Button>
           <Button
@@ -327,14 +327,15 @@ export default function AuthenticatedLayout({
                         Dashboard
                       </div>
                     </Button>
+
                     <Button
                       variant="ghost"
                       className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
-                      onClick={() => navigate("/ai-trader")}
+                      onClick={() => navigate("/ai-trading")}
                     >
                       <div className="flex items-center gap-3">
-                        <BrainCircuit className="h-5 w-5 text-blue-400" />
-                        AI Trader
+                        <Brain className="h-5 w-5 text-blue-400" />
+                        AI Trading
                       </div>
                     </Button>
                     <Button

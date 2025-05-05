@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TradingViewAdvancedChart } from "@/components/dashboard/trading-view-advanced-chart";
+import AiMarketAnalysisCard from "@/components/dashboard/AiMarketAnalysisCard";
 import {
   Sheet,
   SheetContent,
@@ -11,7 +12,6 @@ import {
   Menu,
   User,
   LayoutDashboard,
-  BrainCircuit,
   Users,
   Wallet,
   ArrowDownToLine,
@@ -138,19 +138,7 @@ export default function DashboardPage() {
                     Dashboard
                   </div>
                 </Button>
-                <Button
-                  variant="ghost"
-                  className="justify-between rounded-xl"
-                  onClick={() => navigate("/ai-trader")}
-                >
-                  <div className="flex items-center gap-2">
-                    <BrainCircuit className="h-4 w-4 text-[#0052CC]" />
-                    AI Trader
-                  </div>
-                  <span className="text-xs text-muted-foreground">
-                    Smart trading with AI
-                  </span>
-                </Button>
+
                 <Button
                   variant="ghost"
                   className="justify-between rounded-xl"
@@ -261,6 +249,8 @@ export default function DashboardPage() {
             </div>
           </CardContent>
         </Card>
+
+        <AiMarketAnalysisCard />
       </main>
     </div>
   );
