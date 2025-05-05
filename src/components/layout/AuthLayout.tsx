@@ -142,7 +142,12 @@ export default function AuthLayout() {
 
               // IMPORTANT: Return the pending amount to the user's balance
               // Calculate new balance by adding back the original trade amount plus any profit/loss
-              const newBalance = accountData.balance + trade.amount;
+              let newBalance;
+              if (roundedProfit < 0) {
+                newBalance = accountData.balance + trade.amount + roundedProfit;
+              } else {
+                newBalance = accountData.balance + trade.amount;
+              }
               const newProfit =
                 roundedProfit > 0
                   ? (accountData.profit || 0) + roundedProfit
