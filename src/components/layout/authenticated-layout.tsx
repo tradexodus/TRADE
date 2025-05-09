@@ -229,7 +229,7 @@ export default function AuthenticatedLayout({
           >
             <div className="flex items-center gap-6">
               <History className="h-7 w-7 text-blue-400" />
-              Transaction History
+              History
             </div>
           </Button>
 

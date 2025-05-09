@@ -73,6 +73,11 @@
   body {
     @apply bg-background text-foreground;
   }
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    font-size: 16px;
+  }
   .font-inter {
     font-family: "Inter", sans-serif;
   }

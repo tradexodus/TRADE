@@ -161,7 +161,7 @@ export default function TransactionHistoryPage() {
   }
 
   return (
-    <div className="container mx-auto p-1 space-y-1">
+    <div className="container mx-auto p-1 space-y-1 bg-[#000000]">
       <div className="flex items-center gap-2">
         <Button
           variant="ghost"
@@ -173,7 +173,6 @@ export default function TransactionHistoryPage() {
         </Button>
         <h1 className="text-2xl font-bold">History</h1>
       </div>
-
       <Tabs defaultValue="transactions" className="w-full">
         <TabsList className="grid w-full grid-cols-2 mb-6">
           <TabsTrigger value="transactions" className="flex items-center gap-2">
@@ -200,83 +199,85 @@ export default function TransactionHistoryPage() {
               <CardHeader>
                 <CardTitle>All Transactions</CardTitle>
               </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead className="hidden md:table-cell">
-                        Date
-                      </TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="hidden md:table-cell">
-                        Details
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {transactions.map((transaction) => (
-                      <TableRow key={`${transaction.type}-${transaction.id}`}>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            {transaction.type === "deposit" ? (
-                              <>
-                                <ArrowDownToLine className="h-4 w-4 text-green-500" />
-                                <span>Deposit</span>
-                              </>
-                            ) : (
-                              <>
-                                <ArrowUpFromLine className="h-4 w-4 text-blue-500" />
-                                <span>Withdrawal</span>
-                              </>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <span
-                            className={`font-medium ${transaction.type === "deposit" ? "text-green-500" : "text-blue-500"}`}
-                          >
-                            {transaction.type === "deposit" ? "+" : "-"}$
-                            {transaction.amount.toFixed(2)}
-                          </span>
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          {format(
-                            new Date(transaction.created_at),
-                            "MMM d, yyyy h:mm a",
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              {
-                                pending: "bg-yellow-500/20 text-yellow-500",
-                                completed: "bg-green-500/20 text-green-500",
-                                rejected: "bg-red-500/20 text-red-500",
-                              }[transaction.status] ||
-                              "bg-gray-500/20 text-gray-500"
-                            }`}
-                          >
-                            {transaction.status.charAt(0).toUpperCase() +
-                              transaction.status.slice(1)}
-                          </span>
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          {transaction.type === "withdrawal" &&
-                          transaction.wallet_address
-                            ? `To: ${transaction.wallet_address.substring(0, 6)}...${transaction.wallet_address.substring(
-                                transaction.wallet_address.length - 4,
-                              )}`
-                            : transaction.type === "deposit" &&
-                                transaction.screenshot_url
-                              ? "Receipt uploaded"
-                              : ""}
-                        </TableCell>
+              <CardContent className="px-0 sm:px-6">
+                <div className="overflow-x-auto w-full">
+                  <Table className="w-full">
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[100px]">Type</TableHead>
+                        <TableHead className="w-[100px]">Amount</TableHead>
+                        <TableHead className="hidden md:table-cell w-[180px]">
+                          Date
+                        </TableHead>
+                        <TableHead className="w-[100px]">Status</TableHead>
+                        <TableHead className="hidden md:table-cell">
+                          Details
+                        </TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {transactions.map((transaction) => (
+                        <TableRow key={`${transaction.type}-${transaction.id}`}>
+                          <TableCell className="whitespace-nowrap">
+                            <div className="flex items-center gap-2">
+                              {transaction.type === "deposit" ? (
+                                <>
+                                  <ArrowDownToLine className="h-4 w-4 text-green-500" />
+                                  <span>Deposit</span>
+                                </>
+                              ) : (
+                                <>
+                                  <ArrowUpFromLine className="h-4 w-4 text-blue-500" />
+                                  <span>Withdrawal</span>
+                                </>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            <span
+                              className={`font-medium ${transaction.type === "deposit" ? "text-green-500" : "text-blue-500"}`}
+                            >
+                              {transaction.type === "deposit" ? "+" : "-"}$
+                              {transaction.amount.toFixed(2)}
+                            </span>
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell whitespace-nowrap">
+                            {format(
+                              new Date(transaction.created_at),
+                              "MMM d, yyyy h:mm a",
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <span
+                              className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                {
+                                  pending: "bg-yellow-500/20 text-yellow-500",
+                                  completed: "bg-green-500/20 text-green-500",
+                                  rejected: "bg-red-500/20 text-red-500",
+                                }[transaction.status] ||
+                                "bg-gray-500/20 text-gray-500"
+                              }`}
+                            >
+                              {transaction.status.charAt(0).toUpperCase() +
+                                transaction.status.slice(1)}
+                            </span>
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell">
+                            {transaction.type === "withdrawal" &&
+                            transaction.wallet_address
+                              ? `To: ${transaction.wallet_address.substring(0, 6)}...${transaction.wallet_address.substring(
+                                  transaction.wallet_address.length - 4,
+                                )}`
+                              : transaction.type === "deposit" &&
+                                  transaction.screenshot_url
+                                ? "Receipt uploaded"
+                                : ""}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               </CardContent>
             </Card>
           )}
@@ -296,75 +297,82 @@ export default function TransactionHistoryPage() {
               <CardHeader>
                 <CardTitle>Trading History</CardTitle>
               </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Crypto Pair</TableHead>
-                      <TableHead className="hidden md:table-cell">
-                        Type
-                      </TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Profit/Loss</TableHead>
-                      <TableHead className="hidden md:table-cell">
-                        Date
-                      </TableHead>
-                      <TableHead className="hidden md:table-cell">
-                        Status
-                      </TableHead>
-                      <TableHead className="hidden md:table-cell">
-                        Duration
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {trades.map((trade) => (
-                      <TableRow key={trade.id}>
-                        <TableCell className="font-medium">
-                          {trade.crypto_pair}
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          <span className="capitalize">{trade.trade_type}</span>
-                        </TableCell>
-                        <TableCell>${trade.amount.toFixed(2)}</TableCell>
-                        <TableCell>
-                          <span
-                            className={`font-medium ${trade.profit_loss >= 0 ? "text-green-500" : "text-red-500"}`}
-                          >
-                            {trade.profit_loss >= 0 ? "+" : "-"}$
-                            {Math.abs(trade.profit_loss).toFixed(2)}
-                          </span>
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          {format(
-                            new Date(trade.created_at),
-                            "MMM d, yyyy h:mm a",
-                          )}
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              {
-                                active: "bg-blue-500/20 text-blue-500",
-                                profit: "bg-green-500/20 text-green-500",
-                                loss: "bg-red-500/20 text-red-500",
-                                pending: "bg-yellow-500/20 text-yellow-500",
-                              }[trade.status] || "bg-gray-500/20 text-gray-500"
-                            }`}
-                          >
-                            {trade.status.charAt(0).toUpperCase() +
-                              trade.status.slice(1)}
-                          </span>
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          {trade.duration_minutes
-                            ? `${trade.duration_minutes} min`
-                            : "N/A"}
-                        </TableCell>
+              <CardContent className="px-0 sm:px-6">
+                <div className="overflow-x-auto w-full">
+                  <Table className="w-full">
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[120px]">Crypto Pair</TableHead>
+                        <TableHead className="hidden md:table-cell w-[80px]">
+                          Type
+                        </TableHead>
+                        <TableHead className="w-[100px]">Amount</TableHead>
+                        <TableHead className="w-[120px]">Profit/Loss</TableHead>
+                        <TableHead className="hidden md:table-cell w-[180px]">
+                          Date
+                        </TableHead>
+                        <TableHead className="hidden md:table-cell w-[100px]">
+                          Status
+                        </TableHead>
+                        <TableHead className="hidden md:table-cell">
+                          Duration
+                        </TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {trades.map((trade) => (
+                        <TableRow key={trade.id}>
+                          <TableCell className="font-medium whitespace-nowrap">
+                            {trade.crypto_pair}
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell whitespace-nowrap">
+                            <span className="capitalize">
+                              {trade.trade_type}
+                            </span>
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            ${trade.amount.toFixed(2)}
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            <span
+                              className={`font-medium ${trade.profit_loss >= 0 ? "text-green-500" : "text-red-500"}`}
+                            >
+                              {trade.profit_loss >= 0 ? "+" : "-"}$
+                              {Math.abs(trade.profit_loss).toFixed(2)}
+                            </span>
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell whitespace-nowrap">
+                            {format(
+                              new Date(trade.created_at),
+                              "MMM d, yyyy h:mm a",
+                            )}
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell whitespace-nowrap">
+                            <span
+                              className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                {
+                                  active: "bg-blue-500/20 text-blue-500",
+                                  profit: "bg-green-500/20 text-green-500",
+                                  loss: "bg-red-500/20 text-red-500",
+                                  pending: "bg-yellow-500/20 text-yellow-500",
+                                }[trade.status] ||
+                                "bg-gray-500/20 text-gray-500"
+                              }`}
+                            >
+                              {trade.status.charAt(0).toUpperCase() +
+                                trade.status.slice(1)}
+                            </span>
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell whitespace-nowrap">
+                            {trade.duration_minutes
+                              ? `${trade.duration_minutes} min`
+                              : "N/A"}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               </CardContent>
             </Card>
           )}

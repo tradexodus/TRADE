@@ -12,8 +12,8 @@ import { Button } from "@/components/ui/button";
 import { Bot, MousePointer, AlertTriangle } from "lucide-react";
 import TradingViewChart from "@/components/ai-trading/TradingViewChart";
 import MarketSentiment from "@/components/ai-trading/MarketSentiment";
-import EmergencyStopButton from "@/components/ai-trading/EmergencyStopButton";
 import { useToast } from "@/components/ui/use-toast";
+import { MobileAccountInfo } from "@/components/ai-trading/AccountInfo";
 
 const AccountInfo = lazy(() => import("@/components/ai-trading/AccountInfo"));
 const ManualTrading = lazy(
@@ -122,23 +122,14 @@ export default function AiTrading() {
     return () => clearTimeout(timer);
   }, [toast]);
 
-  const handleEmergencyStop = () => {
-    // Reset trading mode and refresh data
-    setTradingMode("manual");
-    handleTradeComplete();
-  };
-
   return (
     <AuthenticatedLayout>
-      <div className="container mx-auto px-4 space-y-4 py-4">
+      <div className="container mx-auto px-4 space-y-4 py-4 max-w-full">
         <div className="flex items-center justify-between">
           <h1 className="text-lg sm:text-xl md:text-2xl font-bold">
             AI Trading
           </h1>
-          <EmergencyStopButton
-            userId={userData.userId}
-            onEmergencyStop={handleEmergencyStop}
-          />
+          <MobileAccountInfo />
         </div>
 
         <div className="grid gap-4 md:grid-cols-3">
@@ -168,23 +159,25 @@ export default function AiTrading() {
                     </>
                   )}
                 </CardTitle>
-                <div className="flex gap-2">
-                  <Button
-                    variant={tradingMode === "manual" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setTradingMode("manual")}
-                  >
-                    <MousePointer className="h-4 w-4 mr-1" />
-                    Manual
-                  </Button>
-                  <Button
-                    variant={tradingMode === "auto" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setTradingMode("auto")}
-                  >
-                    <Bot className="h-4 w-4 mr-1" />
-                    Auto
-                  </Button>
+                <div className="flex gap-2 items-center">
+                  <div className="flex gap-2">
+                    <Button
+                      variant={tradingMode === "manual" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setTradingMode("manual")}
+                    >
+                      <MousePointer className="h-4 w-4 mr-1" />
+                      Manual
+                    </Button>
+                    <Button
+                      variant={tradingMode === "auto" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setTradingMode("auto")}
+                    >
+                      <Bot className="h-4 w-4 mr-1" />
+                      Auto
+                    </Button>
+                  </div>
                 </div>
               </div>
               <CardDescription>

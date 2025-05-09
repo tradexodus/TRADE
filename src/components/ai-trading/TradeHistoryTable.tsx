@@ -49,8 +49,8 @@ export default function TradeHistoryTable({
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
+    <div className="overflow-x-auto max-w-[100vw]">
+      <table className="w-full text-sm table-fixed text-[16px]">
         <thead>
           <tr className="border-b">
             <th className="text-left py-3 px-2">Date</th>
