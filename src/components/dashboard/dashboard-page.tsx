@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TradingViewAdvancedChart } from "@/components/dashboard/trading-view-advanced-chart";
-import AiMarketAnalysisCard from "@/components/dashboard/AiMarketAnalysisCard";
+import { AiMarketAnalysisCard } from "@/components/dashboard/AiMarketAnalysisCard";
+import { BalanceCard } from "@/components/dashboard/BalanceCard";
 import {
   Sheet,
   SheetContent,
@@ -210,29 +211,12 @@ export default function DashboardPage() {
       </header>
       {/* Main Content */}
       <main className="container mx-auto p-4 space-y-6">
-        <div className="grid gap-4 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Account ID</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-mono">
-                {loading ? "Loading..." : account?.account_id || "N/A"}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Balance</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-mono">
-                ${loading ? "Loading..." : (account?.balance || 0).toFixed(2)}
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+        <BalanceCard
+          accountId={account?.account_id?.toString()}
+          balance={account?.balance || null}
+          profit={account?.profit || null}
+          loading={loading}
+        />
 
         <Card className="w-full">
           <CardHeader>

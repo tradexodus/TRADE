@@ -25,9 +25,16 @@ export default function LandingPage() {
   return (
     <div className="w-full min-h-screen bg-black text-white font-inter relative overflow-hidden">
       {/* Background Circle */}
-      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[1200px] h-[1200px] rounded-full bg-blue-600/20 blur-3xl z-0" />
-      {/* Another smaller circle for added depth */}
-      <div className="absolute bottom-[-200px] w-[500px] h-[500px] rounded-full bg-gradient-to-tr from-blue-500/20 to-indigo-600/5 blur-3xl left-[100px]" />
+      <div
+        className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[1200px] h-[1200px] rounded-full blur-3xl z-1 pointer-events-none"
+        style={{
+          background:
+            "linear-gradient(135deg, #0f0c29, #302b63, #2c5364, #1bc6c4)",
+          opacity: 0.2,
+        }}
+      />
+      ;{/* Another smaller circle for added depth */}
+      <div className="absolute bottom-[-200px] w-[500px] h-[500px] rounded-full bg-gradient-to-tr from-blue-500/20 to-indigo-600/5 blur-3xl left-[100px] pointer-events-none" />
       {/* Navigation */}
       <nav className="w-full py-4 sm:py-6 px-4 md:px-16 sticky top-0 bg-black/90 backdrop-blur-sm z-50">
         <div className="flex justify-between items-center">

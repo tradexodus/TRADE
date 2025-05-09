@@ -1,12 +1,5 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -19,6 +12,7 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
+import AdvancedTradingOptions from "./AdvancedTradingOptions";
 
 const CRYPTO_PAIRS = [
   "BTC/USD",
@@ -191,103 +185,106 @@ export default function ManualTrading({
   };
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle>Manual Trading</CardTitle>
-        <CardDescription>
-          Execute trades manually with your preferred settings
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="crypto-pair">Crypto Pair</Label>
-            <Select value={cryptoPair} onValueChange={setCryptoPair}>
-              <SelectTrigger id="crypto-pair">
-                <SelectValue placeholder="Select crypto pair" />
-              </SelectTrigger>
-              <SelectContent>
-                {CRYPTO_PAIRS.map((pair) => (
-                  <SelectItem key={pair} value={pair}>
-                    {pair}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="crypto-pair">Crypto Pair</Label>
+        <Select value={cryptoPair} onValueChange={setCryptoPair}>
+          <SelectTrigger id="crypto-pair">
+            <SelectValue placeholder="Select crypto pair" />
+          </SelectTrigger>
+          <SelectContent>
+            {CRYPTO_PAIRS.map((pair) => (
+              <SelectItem key={pair} value={pair}>
+                {pair}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
-          <div className="space-y-2">
-            <Label>Trade Type</Label>
-            <RadioGroup
-              value={tradeType}
-              onValueChange={setTradeType}
-              className="flex space-x-4"
+      <div className="space-y-2">
+        <Label>Trade Type</Label>
+        <RadioGroup
+          value={tradeType}
+          onValueChange={setTradeType}
+          className="flex space-x-4"
+        >
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="buy" id="buy" />
+            <Label htmlFor="buy" className="font-normal text-green-600">
+              Buy / Long
+            </Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="sell" id="sell" />
+            <Label htmlFor="sell" className="font-normal text-red-600">
+              Sell / Short
+            </Label>
+          </div>
+        </RadioGroup>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="amount">Amount (USD)</Label>
+        <Input
+          id="amount"
+          type="text"
+          value={amount}
+          onChange={handleAmountChange}
+          placeholder="Enter amount"
+        />
+        {balance > 0 && (
+          <div className="text-xs text-muted-foreground flex justify-between">
+            <span>Available: ${balance.toFixed(2)}</span>
+            <button
+              type="button"
+              className="text-primary hover:underline"
+              onClick={() => setAmount(balance.toString())}
             >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="buy" id="buy" />
-                <Label htmlFor="buy" className="font-normal text-green-600">
-                  Buy / Long
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="sell" id="sell" />
-                <Label htmlFor="sell" className="font-normal text-red-600">
-                  Sell / Short
-                </Label>
-              </div>
-            </RadioGroup>
+              Max
+            </button>
           </div>
+        )}
+      </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="amount">Amount (USD)</Label>
-            <Input
-              id="amount"
-              type="text"
-              value={amount}
-              onChange={handleAmountChange}
-              placeholder="Enter amount"
-            />
-            {balance > 0 && (
-              <div className="text-xs text-muted-foreground flex justify-between">
-                <span>Available: ${balance.toFixed(2)}</span>
-                <button
-                  type="button"
-                  className="text-primary hover:underline"
-                  onClick={() => setAmount(balance.toString())}
-                >
-                  Max
-                </button>
-              </div>
-            )}
-          </div>
+      <div className="space-y-2">
+        <Label htmlFor="duration">Duration</Label>
+        <Select value={duration} onValueChange={setDuration}>
+          <SelectTrigger id="duration">
+            <SelectValue placeholder="Select duration" />
+          </SelectTrigger>
+          <SelectContent>
+            {DURATIONS.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="duration">Duration</Label>
-            <Select value={duration} onValueChange={setDuration}>
-              <SelectTrigger id="duration">
-                <SelectValue placeholder="Select duration" />
-              </SelectTrigger>
-              <SelectContent>
-                {DURATIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+      <div className="mt-4 space-y-4">
+        <AdvancedTradingOptions
+          disabled={isLoading}
+          currentPrice={
+            cryptoPair.startsWith("BTC")
+              ? 50000
+              : cryptoPair.startsWith("ETH")
+                ? 3000
+                : 1000
+          }
+        />
 
-          <Button
-            className="w-full mt-4"
-            onClick={handleTrade}
-            disabled={isLoading || !amount || parseFloat(amount) <= 0}
-          >
-            {isLoading
-              ? "Processing..."
-              : `Execute ${tradeType.toUpperCase()} Trade`}
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+        <Button
+          className="w-full"
+          onClick={handleTrade}
+          disabled={isLoading || !amount || parseFloat(amount) <= 0}
+        >
+          {isLoading
+            ? "Processing..."
+            : `Execute ${tradeType.toUpperCase()} Trade`}
+        </Button>
+      </div>
+    </div>
   );
 }

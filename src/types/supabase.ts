@@ -253,18 +253,24 @@ export type Database = {
           closed_at: string | null
           created_at: string | null
           crypto_pair: string
+          entry_price: number
+          expiry_time: string | null
           id: string
+          leverage: number | null
           profit_loss: number | null
           status: string
           trade_type: string
           user_id: string
         }
         Insert: {
-          amount?: number
+          amount: number
           closed_at?: string | null
           created_at?: string | null
           crypto_pair: string
+          entry_price: number
+          expiry_time?: string | null
           id?: string
+          leverage?: number | null
           profit_loss?: number | null
           status: string
           trade_type: string
@@ -275,7 +281,10 @@ export type Database = {
           closed_at?: string | null
           created_at?: string | null
           crypto_pair?: string
+          entry_price?: number
+          expiry_time?: string | null
           id?: string
+          leverage?: number | null
           profit_loss?: number | null
           status?: string
           trade_type?: string
@@ -285,6 +294,7 @@ export type Database = {
       }
       trading_history: {
         Row: {
+          ai_reasoning: string | null
           amount: number
           closed_at: string | null
           created_at: string | null
@@ -299,7 +309,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          amount?: number
+          ai_reasoning?: string | null
+          amount: number
           closed_at?: string | null
           created_at?: string | null
           crypto_pair: string
@@ -313,6 +324,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          ai_reasoning?: string | null
           amount?: number
           closed_at?: string | null
           created_at?: string | null
@@ -547,10 +559,6 @@ export type Database = {
           max_profit_percentage: number
           max_loss_percentage: number
         }[]
-      }
-      process_expired_trades: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
       }
       process_withdrawal_approval: {
         Args: { withdrawal_id: string }

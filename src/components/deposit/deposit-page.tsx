@@ -87,7 +87,7 @@ export default function DepositPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-8">
+    <div className="max-w-8xl mx-auto space-y-8">
       <div className="flex items-center gap-4">
         <Button
           variant="ghost"

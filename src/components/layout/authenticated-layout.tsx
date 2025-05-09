@@ -160,9 +160,9 @@ export default function AuthenticatedLayout({
   return (
     <div className="min-h-screen bg-background flex">
       {/* Sidebar for desktop */}
-      <div className="hidden md:flex flex-col w-[270px] border-r bg-gradient-to-r from-blue-900/30 to-blue-800/10 p-0 shadow-lg backdrop-blur-sm">
-        <div className="p-6 border-b border-blue-700/20 bg-blue-900/20 backdrop-filter backdrop-blur-sm">
-          <div className="space-y-1">
+      <div className="hidden md:flex flex-col w-[270px] p-0">
+        <div className="p-2">
+          <div className="space-y-0 md:pl-14 md:my-6">
             <h2 className="text-xl font-bold tracking-wide">neurotrade</h2>
             <p className="text-sm text-white/90">{profile?.email}</p>
             <p className="text-sm text-white/60">
@@ -170,104 +170,103 @@ export default function AuthenticatedLayout({
             </p>
           </div>
         </div>
-        <nav className="flex flex-col gap-3 p-4 flex-1">
+        <nav className="flex flex-col p-6 flex-1 gap-y-8 font-normal">
           <Button
             variant="ghost"
-            className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
+            className="w-full justify-start px-10 py-3 text-lg text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
             onClick={() => navigate("/account")}
           >
-            <div className="flex items-center gap-3">
-              <User className="h-5 w-5 text-blue-400" />
+            <div className="flex items-center gap-6">
+              <User className="h-7 w-7 text-blue-400" />
               Profile
             </div>
           </Button>
           <Button
             variant="ghost"
-            className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
+            className="w-full justify-start px-10 py-3 text-lg text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
             onClick={() => navigate("/dashboard")}
           >
-            <div className="flex items-center gap-3">
-              <LayoutDashboard className="h-5 w-5 text-blue-400" />
+            <div className="flex items-center gap-6">
+              <LayoutDashboard className="h-7 w-7 text-blue-400" />
               Dashboard
             </div>
           </Button>
 
           <Button
             variant="ghost"
-            className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
+            className="w-full justify-start px-10 py-3 text-lg text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
             onClick={() => navigate("/ai-trading")}
           >
-            <div className="flex items-center gap-3">
-              <Brain className="h-5 w-5 text-blue-400" />
+            <div className="flex items-center gap-6">
+              <Brain className="h-7 w-7 text-blue-400" />
               AI Trading
             </div>
           </Button>
           <Button
             variant="ghost"
-            className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
+            className="w-full justify-start px-10 py-3 text-lg text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
             onClick={() => navigate("/copy-trading")}
           >
-            <div className="flex items-center gap-3">
-              <Users className="h-5 w-5 text-blue-400" />
+            <div className="flex items-center gap-6">
+              <Users className="h-7 w-7 text-blue-400" />
               Copy Trading
             </div>
           </Button>
           <Button
             variant="ghost"
-            className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
+            className="w-full justify-start px-10 py-3 text-lg text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
             onClick={() => navigate("/deposit")}
           >
-            <div className="flex items-center gap-3">
-              <ArrowDownToLine className="h-5 w-5 text-blue-400" />
+            <div className="flex items-center gap-6">
+              <ArrowDownToLine className="h-7 w-7 text-blue-400" />
               Deposit
             </div>
           </Button>
           <Button
             variant="ghost"
-            className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
+            className="w-full justify-start px-10 py-3 text-lg text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
             onClick={() => navigate("/history")}
           >
-            <div className="flex items-center gap-3">
-              <History className="h-5 w-5 text-blue-400" />
+            <div className="flex items-center gap-6">
+              <History className="h-7 w-7 text-blue-400" />
               Transaction History
             </div>
           </Button>
 
           <Button
             variant="ghost"
-            className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
+            className="w-full justify-start px-10 py-3 text-lg text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
             onClick={() => navigate("/withdrawal")}
           >
-            <div className="flex items-center gap-3">
-              <Wallet className="h-5 w-5 text-blue-400" />
+            <div className="flex items-center gap-6">
+              <Wallet className="h-7 w-7 text-blue-400" />
               Withdrawal
             </div>
           </Button>
           <Button
             variant="ghost"
-            className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
+            className="w-full justify-start px-10 py-3 text-lg text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
             onClick={() => navigate("/settings")}
           >
-            <div className="flex items-center gap-3">
-              <Settings className="h-5 w-5 text-blue-400" />
+            <div className="flex items-center gap-6">
+              <Settings className="h-7 w-7 text-blue-400" />
               Settings
             </div>
           </Button>
           <div className="mt-auto">
             <Button
               variant="ghost"
-              className="w-full justify-start px-6 py-3 text-red-400 hover:text-red-300 hover:bg-red-900/30 rounded-lg transition-all duration-200 hover:translate-x-1 mt-2 border-t border-blue-800/30 pt-5"
+              className="w-full justify-start px-10 py-3 text-lg text-red-400 hover:text-red-300 hover:bg-red-900/30 rounded-lg transition-all duration-200 hover:translate-x-1 mt-2 border-t border-blue-800/30 pt-5"
               onClick={handleSignOut}
             >
-              <div className="flex items-center gap-3">
-                <LogOut className="h-5 w-5" />
+              <div className="flex items-center gap-6">
+                <LogOut className="h-7 w-7" />
                 Log out
               </div>
             </Button>
           </div>
         </nav>
       </div>
-
       <div className="flex-1 flex flex-col">
         {/* Header with Hamburger Menu (mobile only) */}
         <header className="border-b md:hidden">
@@ -309,93 +308,93 @@ export default function AuthenticatedLayout({
                   <nav className="flex flex-col gap-3 p-4">
                     <Button
                       variant="ghost"
-                      className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
+                      className="w-full justify-start px-10 py-3 text-lg text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
                       onClick={() => navigate("/account")}
                     >
-                      <div className="flex items-center gap-3">
-                        <User className="h-5 w-5 text-blue-400" />
+                      <div className="flex items-center gap-6">
+                        <User className="h-7 w-7 text-blue-400" />
                         Profile
                       </div>
                     </Button>
                     <Button
                       variant="ghost"
-                      className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
+                      className="w-full justify-start px-10 py-3 text-lg text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
                       onClick={() => navigate("/dashboard")}
                     >
-                      <div className="flex items-center gap-3">
-                        <LayoutDashboard className="h-5 w-5 text-blue-400" />
+                      <div className="flex items-center gap-6">
+                        <LayoutDashboard className="h-7 w-7 text-blue-400" />
                         Dashboard
                       </div>
                     </Button>
 
                     <Button
                       variant="ghost"
-                      className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
+                      className="w-full justify-start px-10 py-3 text-lg text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
                       onClick={() => navigate("/ai-trading")}
                     >
-                      <div className="flex items-center gap-3">
-                        <Brain className="h-5 w-5 text-blue-400" />
+                      <div className="flex items-center gap-6">
+                        <Brain className="h-7 w-7 text-blue-400" />
                         AI Trading
                       </div>
                     </Button>
                     <Button
                       variant="ghost"
-                      className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
+                      className="w-full justify-start px-10 py-3 text-lg text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
                       onClick={() => navigate("/copy-trading")}
                     >
-                      <div className="flex items-center gap-3">
-                        <Users className="h-5 w-5 text-blue-400" />
+                      <div className="flex items-center gap-6">
+                        <Users className="h-7 w-7 text-blue-400" />
                         Copy Trading
                       </div>
                     </Button>
                     <Button
                       variant="ghost"
-                      className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
+                      className="w-full justify-start px-10 py-3 text-lg text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
                       onClick={() => navigate("/deposit")}
                     >
-                      <div className="flex items-center gap-3">
-                        <ArrowDownToLine className="h-5 w-5 text-blue-400" />
+                      <div className="flex items-center gap-6">
+                        <ArrowDownToLine className="h-7 w-7 text-blue-400" />
                         Deposit
                       </div>
                     </Button>
                     <Button
                       variant="ghost"
-                      className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
+                      className="w-full justify-start px-10 py-3 text-lg text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
                       onClick={() => navigate("/history")}
                     >
-                      <div className="flex items-center gap-3">
-                        <History className="h-5 w-5 text-blue-400" />
+                      <div className="flex items-center gap-6">
+                        <History className="h-7 w-7 text-blue-400" />
                         Transaction History
                       </div>
                     </Button>
 
                     <Button
                       variant="ghost"
-                      className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
+                      className="w-full justify-start px-10 py-3 text-lg text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
                       onClick={() => navigate("/withdrawal")}
                     >
-                      <div className="flex items-center gap-3">
-                        <Wallet className="h-5 w-5 text-blue-400" />
+                      <div className="flex items-center gap-6">
+                        <Wallet className="h-7 w-7 text-blue-400" />
                         Withdrawal
                       </div>
                     </Button>
                     <Button
                       variant="ghost"
-                      className="w-full justify-start px-6 py-3 text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
+                      className="w-full justify-start px-10 py-3 text-lg text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
                       onClick={() => navigate("/settings")}
                     >
-                      <div className="flex items-center gap-3">
-                        <Settings className="h-5 w-5 text-blue-400" />
+                      <div className="flex items-center gap-6">
+                        <Settings className="h-7 w-7 text-blue-400" />
                         Settings
                       </div>
                     </Button>
                     <Button
                       variant="ghost"
-                      className="w-full justify-start px-6 py-3 text-red-400 hover:text-red-300 hover:bg-red-900/30 rounded-lg transition-all duration-200 hover:translate-x-1 mt-2 border-t border-blue-800/30 pt-5"
+                      className="w-full justify-start px-10 py-3 text-lg text-red-400 hover:text-red-300 hover:bg-red-900/30 rounded-lg transition-all duration-200 hover:translate-x-1 mt-2 border-t border-blue-800/30 pt-5"
                       onClick={handleSignOut}
                     >
-                      <div className="flex items-center gap-3">
-                        <LogOut className="h-5 w-5" />
+                      <div className="flex items-center gap-6">
+                        <LogOut className="h-7 w-7" />
                         Log out
                       </div>
                     </Button>

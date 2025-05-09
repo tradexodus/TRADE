@@ -21,7 +21,7 @@ export default defineConfig({
       ? "/"
       : process.env.VITE_BASE_PATH || "/",
   optimizeDeps: {
-    entries: ["src/main.tsx", "src/tempobook/**/*"],
+    entries: ["src/main.tsx"],
   },
   plugins: [
     react({

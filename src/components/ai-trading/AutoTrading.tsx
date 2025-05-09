@@ -1,12 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -22,6 +15,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { Bot, Pause, Play } from "lucide-react";
 import { Database } from "@/types/supabase";
+import AdvancedTradingOptions from "./AdvancedTradingOptions";
 
 const DURATIONS = [
   { value: "5", label: "5 Minutes" },
@@ -914,175 +908,162 @@ export default function AutoTrading({
   };
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Bot className="h-5 w-5" />
-          Auto Trading
-        </CardTitle>
-        <CardDescription>
-          Let AI execute trades automatically based on your settings
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {!isRunning ? (
-            <>
-              <div className="space-y-2">
-                <Label htmlFor="auto-amount">Amount (USD)</Label>
-                <Input
-                  id="auto-amount"
-                  type="text"
-                  value={amount}
-                  onChange={handleAmountChange}
-                  placeholder="Enter amount"
-                  disabled={isRunning}
-                />
-                {balance > 0 && (
-                  <div className="text-xs text-muted-foreground flex justify-between">
-                    <span>Available: ${balance.toFixed(2)}</span>
-                    <button
-                      type="button"
-                      className="text-primary hover:underline"
-                      onClick={() => setAmount(balance.toString())}
-                      disabled={isRunning}
-                    >
-                      Max
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="auto-duration">Session Duration</Label>
-                <Select
-                  value={duration}
-                  onValueChange={setDuration}
+    <div className="space-y-4">
+      {!isRunning ? (
+        <>
+          <div className="space-y-2">
+            <Label htmlFor="auto-amount">Amount (USD)</Label>
+            <Input
+              id="auto-amount"
+              type="text"
+              value={amount}
+              onChange={handleAmountChange}
+              placeholder="Enter amount"
+              disabled={isRunning}
+            />
+            {balance > 0 && (
+              <div className="text-xs text-muted-foreground flex justify-between">
+                <span>Available: ${balance.toFixed(2)}</span>
+                <button
+                  type="button"
+                  className="text-primary hover:underline"
+                  onClick={() => setAmount(balance.toString())}
                   disabled={isRunning}
                 >
-                  <SelectTrigger id="auto-duration">
-                    <SelectValue placeholder="Select duration" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {DURATIONS.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  Max
+                </button>
               </div>
+            )}
+          </div>
 
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <Label>Risk Level</Label>
-                  <span className="text-sm text-muted-foreground">
-                    {riskLevel[0] < 33
-                      ? "Low"
-                      : riskLevel[0] < 66
-                        ? "Medium"
-                        : "High"}
-                  </span>
+          <div className="space-y-2">
+            <Label htmlFor="auto-duration">Session Duration</Label>
+            <Select
+              value={duration}
+              onValueChange={setDuration}
+              disabled={isRunning}
+            >
+              <SelectTrigger id="auto-duration">
+                <SelectValue placeholder="Select duration" />
+              </SelectTrigger>
+              <SelectContent>
+                {DURATIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <Label>Risk Level</Label>
+              <span className="text-sm text-muted-foreground">
+                {riskLevel[0] < 33
+                  ? "Low"
+                  : riskLevel[0] < 66
+                    ? "Medium"
+                    : "High"}
+              </span>
+            </div>
+            <Slider
+              defaultValue={[50]}
+              max={100}
+              step={1}
+              value={riskLevel}
+              onValueChange={setRiskLevel}
+              disabled={isRunning}
+              className="py-4"
+            />
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>Conservative</span>
+              <span>Balanced</span>
+              <span>Aggressive</span>
+            </div>
+          </div>
+
+          <div className="mt-4">
+            <AdvancedTradingOptions disabled={isRunning} />
+          </div>
+
+          <Button
+            className="w-full mt-4"
+            onClick={startAutoTrading}
+            disabled={isLoading || !amount || parseFloat(amount) <= 0}
+          >
+            {isLoading ? "Processing..." : "Start Auto Trading"}
+          </Button>
+        </>
+      ) : (
+        <>
+          <div className="space-y-4 py-4">
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-medium">Session in progress</span>
+              <span className="text-xl font-mono">{formatTimeRemaining()}</span>
+            </div>
+
+            <Progress value={progress} className="h-2" />
+
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>Amount: ${parseFloat(amount).toFixed(2)}</span>
+              <span>
+                Risk:{" "}
+                {riskLevel[0] < 33
+                  ? "Low"
+                  : riskLevel[0] < 66
+                    ? "Medium"
+                    : "High"}
+              </span>
+            </div>
+
+            <div className="bg-muted/30 p-4 rounded-md space-y-2">
+              <h4 className="text-sm font-medium">AI Trading Status</h4>
+              {errorMessage ? (
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-red-500">
+                    Error: {errorMessage}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {isRetrying
+                      ? `Retrying... (Attempt ${retryCount}/${3})`
+                      : "AI will continue to attempt trades after resolving this issue."}
+                  </p>
                 </div>
-                <Slider
-                  defaultValue={[50]}
-                  max={100}
-                  step={1}
-                  value={riskLevel}
-                  onValueChange={setRiskLevel}
-                  disabled={isRunning}
-                  className="py-4"
-                />
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>Conservative</span>
-                  <span>Balanced</span>
-                  <span>Aggressive</span>
+              ) : tradeResult ? (
+                <div className="space-y-2">
+                  <p
+                    className={`text-sm font-medium ${tradeResult.isWin ? "text-green-500" : "text-red-500"}`}
+                  >
+                    {tradeResult.isWin ? "Profit" : "Loss"}: $
+                    {Math.abs(tradeResult.profit).toFixed(2)}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {tradeInProgress
+                      ? "AI is executing a trade..."
+                      : "AI is continuing to analyze market conditions for optimal trading opportunities."}
+                  </p>
                 </div>
-              </div>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  {tradeInProgress
+                    ? "AI is executing a trade..."
+                    : "AI is analyzing market conditions and will execute trades automatically based on your risk preferences."}
+                </p>
+              )}
+            </div>
 
-              <Button
-                className="w-full mt-4"
-                onClick={startAutoTrading}
-                disabled={isLoading || !amount || parseFloat(amount) <= 0}
-              >
-                {isLoading ? "Processing..." : "Start Auto Trading"}
-              </Button>
-            </>
-          ) : (
-            <>
-              <div className="space-y-4 py-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">
-                    Session in progress
-                  </span>
-                  <span className="text-xl font-mono">
-                    {formatTimeRemaining()}
-                  </span>
-                </div>
-
-                <Progress value={progress} className="h-2" />
-
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>Amount: ${parseFloat(amount).toFixed(2)}</span>
-                  <span>
-                    Risk:{" "}
-                    {riskLevel[0] < 33
-                      ? "Low"
-                      : riskLevel[0] < 66
-                        ? "Medium"
-                        : "High"}
-                  </span>
-                </div>
-
-                <div className="bg-muted/30 p-4 rounded-md space-y-2">
-                  <h4 className="text-sm font-medium">AI Trading Status</h4>
-                  {errorMessage ? (
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium text-red-500">
-                        Error: {errorMessage}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {isRetrying
-                          ? `Retrying... (Attempt ${retryCount}/${3})`
-                          : "AI will continue to attempt trades after resolving this issue."}
-                      </p>
-                    </div>
-                  ) : tradeResult ? (
-                    <div className="space-y-2">
-                      <p
-                        className={`text-sm font-medium ${tradeResult.isWin ? "text-green-500" : "text-red-500"}`}
-                      >
-                        {tradeResult.isWin ? "Profit" : "Loss"}: $
-                        {Math.abs(tradeResult.profit).toFixed(2)}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {tradeInProgress
-                          ? "AI is executing a trade..."
-                          : "AI is continuing to analyze market conditions for optimal trading opportunities."}
-                      </p>
-                    </div>
-                  ) : (
-                    <p className="text-xs text-muted-foreground">
-                      {tradeInProgress
-                        ? "AI is executing a trade..."
-                        : "AI is analyzing market conditions and will execute trades automatically based on your risk preferences."}
-                    </p>
-                  )}
-                </div>
-
-                <Button
-                  variant="outline"
-                  className="w-full mt-4 flex items-center gap-2"
-                  onClick={stopAutoTrading}
-                >
-                  <Pause className="h-4 w-4" />
-                  Stop Auto Trading
-                </Button>
-              </div>
-            </>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+            <Button
+              variant="outline"
+              className="w-full mt-4 flex items-center gap-2"
+              onClick={stopAutoTrading}
+            >
+              <Pause className="h-4 w-4" />
+              Stop Auto Trading
+            </Button>
+          </div>
+        </>
+      )}
+    </div>
   );
 }

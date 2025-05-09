@@ -38,30 +38,33 @@ export function AiMarketAnalysisCard() {
   };
 
   return (
-    <div className="w-full h-full">
-      <CardContent className="pt-3 sm:pt-4 p-3 sm:p-4">
-        <div className="space-y-1 sm:space-y-2">
+    <div className="w-full h-full bg-background">
+      <CardContent className="p-0">
+        <div className="space-y-2 p-3 sm:p-4">
+          <h3 className="text-sm font-medium text-muted-foreground">
+            Market Predictions
+          </h3>
           {loading ? (
             <div className="flex justify-center py-2">
               <div className="animate-spin h-4 w-4 sm:h-5 sm:w-5 border-2 border-blue-500 rounded-full border-t-transparent"></div>
             </div>
           ) : (
-            <div className="space-y-1 sm:space-y-2">
+            <div className="space-y-2">
               {topPredictions.map((crypto) => (
                 <div
                   key={crypto.symbol}
                   className="flex items-center justify-between"
                 >
-                  <div className="flex items-center gap-1 sm:gap-2">
+                  <div className="flex items-center gap-2">
                     <div
-                      className={`w-5 h-5 sm:w-6 sm:h-6 bg-gradient-to-br ${crypto.color} rounded-full flex items-center justify-center text-white text-xs font-bold shadow-sm`}
+                      className={`w-6 h-6 bg-gradient-to-br ${crypto.color} rounded-full flex items-center justify-center text-white text-xs font-bold shadow-sm`}
                     >
                       {crypto.icon}
                     </div>
-                    <div className="text-xs sm:text-sm">{crypto.name}</div>
+                    <div className="text-sm">{crypto.name}</div>
                   </div>
                   <div
-                    className={`text-xs sm:text-sm font-medium ${getPredictionColor(crypto.prediction)}`}
+                    className={`text-sm font-medium ${getPredictionColor(crypto.prediction)}`}
                   >
                     {crypto.prediction}
                   </div>
@@ -70,7 +73,7 @@ export function AiMarketAnalysisCard() {
             </div>
           )}
 
-          <div className="flex justify-between items-center mt-1 sm:mt-2">
+          <div className="flex justify-between items-center mt-2">
             <div className="text-xs text-muted-foreground">
               {lastUpdated ? (
                 <>Updated: {format(lastUpdated, "h:mm a")}</>
@@ -84,11 +87,11 @@ export function AiMarketAnalysisCard() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-5 w-5 sm:h-6 sm:w-6"
+                    className="h-6 w-6"
                     onClick={refreshPredictions}
                     disabled={loading}
                   >
-                    <RefreshCw className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                    <RefreshCw className="h-3 w-3" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="left">

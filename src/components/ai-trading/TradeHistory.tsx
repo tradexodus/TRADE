@@ -7,7 +7,15 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { supabase } from "@/lib/supabase";
-import { ArrowDown, ArrowUp, History } from "lucide-react";
+import { History, Clock } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import TradeHistoryTable from "./TradeHistoryTable";
 
 interface TradeHistoryProps {
   userId: string | null;
@@ -22,11 +30,15 @@ interface Trade {
   profit_loss: number | null;
   status: string;
   trade_type: string;
+  ai_reasoning?: string;
 }
 
 export default function TradeHistory({ userId }: TradeHistoryProps) {
   const [trades, setTrades] = useState<Trade[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [timeFilter, setTimeFilter] = useState<
+    "1h" | "24h" | "7d" | "30d" | "all"
+  >("all");
 
   useEffect(() => {
     async function fetchTradeHistory() {
@@ -37,12 +49,36 @@ export default function TradeHistory({ userId }: TradeHistoryProps) {
 
       try {
         setIsLoading(true);
-        const { data, error } = await supabase
+        let query = supabase
           .from("trading_history")
           .select("*")
           .eq("user_id", userId)
-          .order("created_at", { ascending: false })
-          .limit(10);
+          .order("created_at", { ascending: false });
+
+        // Apply time filter
+        if (timeFilter !== "all") {
+          const now = new Date();
+          let startTime: Date;
+
+          switch (timeFilter) {
+            case "1h":
+              startTime = new Date(now.getTime() - 60 * 60 * 1000);
+              break;
+            case "24h":
+              startTime = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+              break;
+            case "7d":
+              startTime = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+              break;
+            case "30d":
+              startTime = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+              break;
+          }
+
+          query = query.gte("created_at", startTime.toISOString());
+        }
+
+        const { data, error } = await query.limit(10);
 
         if (error) {
           console.error("Error fetching trade history:", error);
@@ -58,7 +94,7 @@ export default function TradeHistory({ userId }: TradeHistoryProps) {
     }
 
     fetchTradeHistory();
-  }, [userId]);
+  }, [userId, timeFilter]);
 
   // Format date to readable format
   const formatDate = (dateString: string | null) => {
@@ -69,79 +105,40 @@ export default function TradeHistory({ userId }: TradeHistoryProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <History className="h-5 w-5" />
-          Recent Trading Activity
-        </CardTitle>
+        <div className="flex justify-between items-center">
+          <CardTitle className="flex items-center gap-2">
+            <History className="h-5 w-5" />
+            Recent Trading Activity
+          </CardTitle>
+          <div className="flex items-center gap-2">
+            <Clock className="h-4 w-4 text-muted-foreground" />
+            <Select
+              value={timeFilter}
+              onValueChange={(value) => setTimeFilter(value as any)}
+            >
+              <SelectTrigger className="w-[120px] h-8">
+                <SelectValue placeholder="Filter by time" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1h">Last hour</SelectItem>
+                <SelectItem value="24h">Last 24h</SelectItem>
+                <SelectItem value="7d">Last 7 days</SelectItem>
+                <SelectItem value="30d">Last 30 days</SelectItem>
+                <SelectItem value="all">All time</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
         <CardDescription>
           Your recent AI trading history and performance
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {isLoading ? (
-          <div className="space-y-2">
-            {[...Array(3)].map((_, i) => (
-              <div
-                key={i}
-                className="h-12 bg-muted rounded-md animate-pulse"
-              ></div>
-            ))}
-          </div>
-        ) : trades.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <p>No trading history yet</p>
-            <p className="text-sm">Start trading to see your activity here</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left py-3 px-2">Date</th>
-                  <th className="text-left py-3 px-2">Pair</th>
-                  <th className="text-left py-3 px-2">Type</th>
-                  <th className="text-left py-3 px-2">Amount</th>
-                  <th className="text-right py-3 px-2">Profit/Loss</th>
-                </tr>
-              </thead>
-              <tbody>
-                {trades.map((trade) => (
-                  <tr
-                    key={trade.id}
-                    className="border-b border-muted hover:bg-muted/30"
-                  >
-                    <td className="py-3 px-2">
-                      {formatDate(trade.created_at)}
-                    </td>
-                    <td className="py-3 px-2">{trade.crypto_pair}</td>
-                    <td className="py-3 px-2">
-                      <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-muted">
-                        {trade.trade_type}
-                      </span>
-                    </td>
-                    <td className="py-3 px-2">${trade.amount.toFixed(2)}</td>
-                    <td className="py-3 px-2 text-right">
-                      {trade.profit_loss !== null ? (
-                        <span
-                          className={`inline-flex items-center gap-1 ${trade.profit_loss > 0 ? "text-green-500" : "text-red-500"}`}
-                        >
-                          {trade.profit_loss > 0 ? (
-                            <ArrowUp className="h-3 w-3" />
-                          ) : (
-                            <ArrowDown className="h-3 w-3" />
-                          )}
-                          ${Math.abs(trade.profit_loss).toFixed(2)}
-                        </span>
-                      ) : (
-                        <span className="text-muted-foreground">Pending</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+        <TradeHistoryTable
+          trades={trades}
+          isLoading={isLoading}
+          formatDate={formatDate}
+        />
       </CardContent>
     </Card>
   );

@@ -283,13 +283,10 @@ export default function WithdrawalPage() {
   };
 
   return (
-    <div className="container max-w-4xl mx-auto px-2 sm:px-6">
-      <div className="flex flex-col gap-8">
+    <div className="container max-w-8xl mx-auto px-2 sm:px-1">
+      <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-bold">Withdraw Funds</h1>
-          <p className="text-muted-foreground">
-            Withdraw your funds to your TRC20 wallet
-          </p>
+          <h1 className="text-2xl font-bold">Withdraw Funds</h1>
         </div>
 
         {/* Summary Section */}

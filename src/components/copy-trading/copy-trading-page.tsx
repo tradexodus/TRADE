@@ -231,7 +231,7 @@ export default function CopyTradingPage() {
   };
 
   return (
-    <div className="container mx-auto space-y-8 bg-background text-foreground">
+    <div className="container mx-auto space-y-4 bg-background text-foreground">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Copy Trading</h1>
       </div>

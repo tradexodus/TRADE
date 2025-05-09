@@ -4,7 +4,7 @@ import { useRoutes, Routes, Route } from "react-router-dom";
 import Home from "./components/home";
 import routes from "tempo-routes";
 import { Toaster } from "@/components/ui/toaster";
-import { AuthLayout } from "./components/layout";
+import AuthLayout from "./components/layout/AuthLayout";
 
 const LoginPage = lazy(() => import("./pages/login"));
 const SignupPage = lazy(() => import("./pages/signup"));
@@ -27,6 +27,11 @@ function App() {
     <Suspense fallback={<p>Loading...</p>}>
       <div>
         {import.meta.env.VITE_TEMPO === "true" && useRoutes(routes)}
+        {import.meta.env.VITE_TEMPO === "true" && (
+          <Routes>
+            <Route path="/tempobook/*" />
+          </Routes>
+        )}
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<LoginPage />} />
