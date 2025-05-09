@@ -14,6 +14,7 @@ import TradingViewChart from "@/components/ai-trading/TradingViewChart";
 import MarketSentiment from "@/components/ai-trading/MarketSentiment";
 import { useToast } from "@/components/ui/use-toast";
 import { MobileAccountInfo } from "@/components/ai-trading/AccountInfo";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const AccountInfo = lazy(() => import("@/components/ai-trading/AccountInfo"));
 const ManualTrading = lazy(
@@ -122,13 +123,12 @@ export default function AiTrading() {
     return () => clearTimeout(timer);
   }, [toast]);
 
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+
   return (
     <AuthenticatedLayout>
-      <div className="container mx-auto px-4 space-y-4 py-4 max-w-full">
+      <div className="container mx-auto px-0 space-y-4 py-0 max-w-full pb-20 md:pb-4">
         <div className="flex items-center justify-between">
-          <h1 className="text-lg sm:text-xl md:text-2xl font-bold">
-            AI Trading
-          </h1>
           <MobileAccountInfo />
         </div>
 
@@ -141,9 +141,15 @@ export default function AiTrading() {
             <AccountInfo />
           </Suspense>
 
-          <MarketSentiment className="md:col-span-2" />
+          {/* Mobile-first order: TradingView chart first, then Market Sentiment */}
+          <div className="md:col-span-2 md:order-2 order-1">
+            <TradingViewChart height={500} />
+          </div>
 
-          <Card className="w-full">
+          <MarketSentiment className="md:col-span-2 md:order-1 order-2" />
+
+          {/* Desktop trading card */}
+          <Card className="w-full hidden md:block md:order-3">
             <CardHeader>
               <div className="flex justify-between items-center">
                 <CardTitle className="flex items-center gap-2">
@@ -213,9 +219,6 @@ export default function AiTrading() {
               )}
             </CardContent>
           </Card>
-          <div className="md:col-span-2">
-            <TradingViewChart height={500} />
-          </div>
         </div>
 
         <Suspense
@@ -225,6 +228,90 @@ export default function AiTrading() {
         >
           <TradeHistory userId={userData.userId} />
         </Suspense>
+
+        {/* Mobile bottom navigation bar */}
+        <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border p-2 flex justify-around md:hidden z-50">
+          <Sheet
+            open={isSheetOpen && tradingMode === "manual"}
+            onOpenChange={(open) => {
+              setIsSheetOpen(open);
+              if (open) setTradingMode("manual");
+            }}
+          >
+            <SheetTrigger asChild>
+              <Button
+                variant={tradingMode === "manual" ? "default" : "outline"}
+                className="flex-1 mx-1"
+                onClick={() => setTradingMode("manual")}
+              >
+                <MousePointer className="h-4 w-4 mr-2" />
+                Manual
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="bottom" className="h-[80vh] rounded-t-xl">
+              <div className="pt-6 pb-2">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <MousePointer className="h-5 w-5" />
+                  Manual Trading
+                </h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Execute trades manually with your preferred settings
+                </p>
+                <Suspense
+                  fallback={
+                    <div className="h-64 bg-muted rounded-md animate-pulse"></div>
+                  }
+                >
+                  <ManualTrading
+                    balance={userData.balance}
+                    onTradeComplete={handleTradeComplete}
+                  />
+                </Suspense>
+              </div>
+            </SheetContent>
+          </Sheet>
+
+          <Sheet
+            open={isSheetOpen && tradingMode === "auto"}
+            onOpenChange={(open) => {
+              setIsSheetOpen(open);
+              if (open) setTradingMode("auto");
+            }}
+          >
+            <SheetTrigger asChild>
+              <Button
+                variant={tradingMode === "auto" ? "default" : "outline"}
+                className="flex-1 mx-1"
+                onClick={() => setTradingMode("auto")}
+              >
+                <Bot className="h-4 w-4 mr-2" />
+                Auto
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="bottom" className="h-[80vh] rounded-t-xl">
+              <div className="pt-6 pb-2">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <Bot className="h-5 w-5" />
+                  Auto Trading
+                </h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Let AI execute trades automatically based on your settings
+                </p>
+                <Suspense
+                  fallback={
+                    <div className="h-64 bg-muted rounded-md animate-pulse"></div>
+                  }
+                >
+                  <AutoTrading
+                    balance={userData.balance}
+                    userId={userData.userId}
+                    onTradeComplete={handleTradeComplete}
+                  />
+                </Suspense>
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
       </div>
     </AuthenticatedLayout>
   );

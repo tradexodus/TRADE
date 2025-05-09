@@ -75,14 +75,14 @@ export function MobileAccountInfo() {
 
   return (
     <div className="md:hidden flex items-center gap-3">
-      <div className="text-right">
-        <div className="text-xs text-muted-foreground">Balance</div>
+      <div className="text-left">
+        <div className="text-xs text-muted-foreground">Balance :</div>
         <div className="text-sm font-mono font-medium text-blue-400">
           ${account?.balance?.toFixed(2) || "0.00"}
         </div>
       </div>
-      <div className="text-right">
-        <div className="text-xs text-muted-foreground">Profit</div>
+      <div className="text-left">
+        <div className="text-xs text-muted-foreground">Profit :</div>
         <div className="text-sm font-mono font-medium text-green-500">
           ${account?.profit?.toFixed(2) || "0.00"}
         </div>

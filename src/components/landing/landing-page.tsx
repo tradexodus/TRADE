@@ -30,7 +30,7 @@ export default function LandingPage() {
         style={{
           background:
             "linear-gradient(135deg, #0f0c29, #302b63, #2c5364, #1bc6c4)",
-          opacity: 0.2,
+          opacity: 0.5,
         }}
       />
       ;{/* Another smaller circle for added depth */}

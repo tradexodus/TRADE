@@ -79,7 +79,7 @@ export default function TradingViewChart({
 
   return (
     <Card className="overflow-hidden border-0 shadow-lg max-w-full">
-      <CardHeader className="bg-gradient-to-r from-blue-900/30 to-blue-800/10 py-3">
+      <CardHeader className="bg-gradient-to-r from-blue-900/30 to-blue-800/10 py-3 hidden md:block">
         <CardTitle className="flex items-center gap-2">
           <LineChart className="h-4 w-4 text-blue-400" />
           <span>Live Market Chart</span>
