@@ -47,20 +47,51 @@ export default function MarketSentiment({ className }: MarketSentimentProps) {
       // Generate a random change between -5 and 5
       const mockChange = Math.floor(Math.random() * 10) - 5;
 
-      setSentimentData({
+      const newSentimentData = {
         value: mockValue,
         level,
         change: mockChange,
         timestamp: new Date().toISOString(),
-      });
+      };
 
+      // Store in localStorage
+      localStorage.setItem(
+        "marketSentimentData",
+        JSON.stringify(newSentimentData),
+      );
+      localStorage.setItem(
+        "marketSentimentLastFetch",
+        new Date().toISOString(),
+      );
+
+      setSentimentData(newSentimentData);
       setIsLoading(false);
     };
 
-    fetchMarketSentiment();
+    // Check if we have stored data and if it's less than an hour old
+    const storedData = localStorage.getItem("marketSentimentData");
+    const lastFetch = localStorage.getItem("marketSentimentLastFetch");
 
-    // Refresh every 30 seconds
-    const intervalId = setInterval(fetchMarketSentiment, 30000);
+    if (storedData && lastFetch) {
+      const lastFetchTime = new Date(lastFetch).getTime();
+      const currentTime = new Date().getTime();
+      const hourInMs = 3600000; // 1 hour in milliseconds
+
+      if (currentTime - lastFetchTime < hourInMs) {
+        // Use stored data if it's less than an hour old
+        setSentimentData(JSON.parse(storedData));
+        setIsLoading(false);
+      } else {
+        // Data is older than an hour, fetch new data
+        fetchMarketSentiment();
+      }
+    } else {
+      // No stored data, fetch new data
+      fetchMarketSentiment();
+    }
+
+    // Refresh every hour
+    const intervalId = setInterval(fetchMarketSentiment, 3600000);
 
     return () => clearInterval(intervalId);
   }, []);

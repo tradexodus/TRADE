@@ -13,16 +13,17 @@ import { Slider } from "@/components/ui/slider";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
 import { Progress } from "@/components/ui/progress";
-import { Bot, Pause, Play } from "lucide-react";
+import { Bot } from "lucide-react";
 import { Database } from "@/types/supabase";
 import AdvancedTradingOptions from "./AdvancedTradingOptions";
 
 const DURATIONS = [
-  { value: "5", label: "5 Minutes" },
+  { value: "1", label: "1 Minute" },
   { value: "10", label: "10 Minutes" },
-  { value: "15", label: "15 Minutes" },
-  { value: "30", label: "30 Minutes" },
   { value: "60", label: "1 Hour" },
+  { value: "360", label: "6 Hours" },
+  { value: "720", label: "12 Hours" },
+  { value: "1440", label: "24 Hours" },
 ];
 
 interface AutoTradingProps {
@@ -40,7 +41,7 @@ export default function AutoTrading({
   const [isLoading, setIsLoading] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
   const [amount, setAmount] = useState("");
-  const [duration, setDuration] = useState("15");
+  const [duration, setDuration] = useState("60");
   const [riskLevel, setRiskLevel] = useState([50]); // 0-100 scale
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [progress, setProgress] = useState(0);
@@ -237,7 +238,10 @@ export default function AutoTrading({
     }
   };
 
+  // Auto trading cannot be stopped once started
+  // This function is kept for internal use by the component
   const stopAutoTrading = () => {
+    // Only called internally when time expires
     setIsRunning(false);
     setTimeRemaining(0);
     setProgress(0);
@@ -262,11 +266,6 @@ export default function AutoTrading({
       clearTimeout(retryTimeoutRef.current);
       retryTimeoutRef.current = null;
     }
-
-    toast({
-      title: "Auto trading stopped",
-      description: "You've manually stopped the auto trading session",
-    });
 
     // If there was a trade executed, call the onTradeComplete callback
     if (tradeExecuted && onTradeComplete) {
@@ -639,6 +638,38 @@ export default function AutoTrading({
     );
   };
 
+  // Generate AI reasoning for auto trades
+  const generateAiReasoning = (
+    isWin: boolean,
+    profitLoss: number,
+    settings: any,
+    cryptoPair: string,
+  ): string => {
+    const riskLevel =
+      riskLevel[0] < 33 ? "low" : riskLevel[0] < 66 ? "medium" : "high";
+    const marketConditions = [
+      "bullish",
+      "bearish",
+      "volatile",
+      "stable",
+      "consolidating",
+    ];
+    const randomMarketCondition =
+      marketConditions[Math.floor(Math.random() * marketConditions.length)];
+
+    const profitLossAbs = Math.abs(profitLoss).toFixed(2);
+    const profitLossPercentage = (
+      (Math.abs(profitLoss) / parseFloat(amount)) *
+      100
+    ).toFixed(2);
+
+    if (isWin) {
+      return `AI detected favorable ${randomMarketCondition} conditions for ${cryptoPair}. With ${riskLevel} risk profile, executed trade resulting in ${profitLossAbs} profit (${profitLossPercentage}%). Technical indicators showed strong momentum and optimal entry point. Win probability was calculated at ${(settings.win_probability * 100).toFixed(0)}% based on market analysis.`;
+    } else {
+      return `AI detected ${randomMarketCondition} conditions for ${cryptoPair}, but market moved against prediction. With ${riskLevel} risk profile, trade resulted in ${profitLossAbs} loss (${profitLossPercentage}%). Risk management limited downside to ${settings.max_loss_percentage.toFixed(2)}%. Technical indicators showed mixed signals with win probability at ${(settings.win_probability * 100).toFixed(0)}%.`;
+    }
+  };
+
   // Process the trade and update the database
   const processTrade = async (
     userId: string,
@@ -726,6 +757,14 @@ export default function AutoTrading({
     const randomPair =
       cryptoPairs[Math.floor(Math.random() * cryptoPairs.length)];
 
+    // Generate AI reasoning for this trade
+    const aiReasoning = generateAiReasoning(
+      isWin,
+      profitLoss,
+      settings,
+      randomPair,
+    );
+
     // If there's a pending trade, update it; otherwise insert a new one
     let tradeError;
     if (pendingTradeId) {
@@ -735,6 +774,7 @@ export default function AutoTrading({
           status: "COMPLETED",
           profit_loss: profitLoss,
           closed_at: new Date().toISOString(),
+          ai_reasoning: aiReasoning,
         })
         .eq("id", pendingTradeId);
       tradeError = error;
@@ -749,6 +789,7 @@ export default function AutoTrading({
         profit_loss: profitLoss,
         original_balance: balance,
         closed_at: new Date().toISOString(),
+        ai_reasoning: aiReasoning,
       });
       tradeError = error;
     }
@@ -1053,14 +1094,10 @@ export default function AutoTrading({
               )}
             </div>
 
-            <Button
-              variant="outline"
-              className="w-full mt-4 flex items-center gap-2"
-              onClick={stopAutoTrading}
-            >
-              <Pause className="h-4 w-4" />
-              Stop Auto Trading
-            </Button>
+            <div className="w-full mt-4 p-3 bg-muted/50 rounded-md border border-muted-foreground/20 text-center text-sm text-muted-foreground">
+              <Bot className="h-4 w-4 inline-block mr-2" />
+              Auto trading will complete in {formatTimeRemaining()}
+            </div>
           </div>
         </>
       )}

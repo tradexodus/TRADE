@@ -103,7 +103,7 @@ export default function TradeHistory({ userId }: TradeHistoryProps) {
   };
 
   return (
-    <Card className="max-w-full">
+    <Card className="max-w-full text-xs sm:text-sm md:text-base overflow-hidden">
       <CardHeader>
         <div className="flex justify-between items-center">
           <CardTitle className="flex items-center gap-2">

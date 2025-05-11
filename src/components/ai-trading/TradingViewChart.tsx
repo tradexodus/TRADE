@@ -16,63 +16,40 @@ export default function TradingViewChart({
   const container = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Clean up any existing script to avoid duplicates
-    const existingScript = document.getElementById("tradingview-widget-script");
-    if (existingScript) {
-      existingScript.remove();
-    }
+    const timeout = setTimeout(() => {
+      if (!container.current) return;
 
-    // Create the TradingView widget script
-    const script = document.createElement("script");
-    script.id = "tradingview-widget-script";
-    script.src =
-      "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
-    script.async = true;
-    script.type = "text/javascript";
-    const widgetOptions = {
-      height: height,
-      width: "100%",
-      symbol: symbol,
-
-      timezone: "Etc/UTC",
-      theme: theme,
-      style: "1",
-      locale: "en",
-      backgroundColor:
-        theme === "dark" ? "rgba(0, 0, 0, 1)" : "rgba(255, 255, 255, 1)",
-      gridColor:
-        theme === "dark"
-          ? "rgba(152, 152, 152, 0.06)"
-          : "rgba(42, 46, 57, 0.06)",
-      range: "1D",
-      allow_symbol_change: true,
-      save_image: false,
-      hide_volume: true,
-      support_host: "https://www.tradingview.com",
-    };
-    script.text = JSON.stringify(widgetOptions);
-
-    // Append the script to the container
-    if (container.current) {
-      // Clear any existing content
       container.current.innerHTML = "";
 
-      // Create the widget container
       const widgetContainer = document.createElement("div");
       widgetContainer.className = "tradingview-widget-container__widget";
       container.current.appendChild(widgetContainer);
 
-      // Add the script
-      container.current.appendChild(script);
-    }
+      const script = document.createElement("script");
+      script.src =
+        "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
+      script.type = "text/javascript";
+      script.async = true;
+      script.innerHTML = JSON.stringify({
+        height: height,
+        width: "100%",
+        symbol: symbol,
+        interval: "D",
+        timezone: "Etc/UTC",
+        theme: theme,
+        style: "1",
+        locale: "en",
+        allow_symbol_change: true,
+        hide_volume: true,
+        support_host: "https://www.tradingview.com",
+      });
+      widgetContainer.appendChild(script);
+    }, 100); // 100ms تأخير بسيط
 
-    // Clean up function
     return () => {
-      const scriptToRemove = document.getElementById(
-        "tradingview-widget-script",
-      );
-      if (scriptToRemove) {
-        scriptToRemove.remove();
+      clearTimeout(timeout);
+      if (container.current) {
+        container.current.innerHTML = "";
       }
     };
   }, [symbol, theme]);
@@ -90,9 +67,7 @@ export default function TradingViewChart({
           ref={container}
           className="tradingview-widget-container"
           style={{ minHeight: `${height}px`, width: "100%" }}
-        >
-          {/* TradingView widget will be inserted here */}
-        </div>
+        />
       </CardContent>
     </Card>
   );

@@ -49,16 +49,16 @@ export default function TradeHistoryTable({
   }
 
   return (
-    <div className="overflow-x-auto max-w-[100vw]">
-      <table className="w-full text-sm table-fixed text-[16px]">
+    <div className="overflow-x-auto max-w-full -mx-2 px-1 sm:mx-0 sm:px-0">
+      <table className="w-full table-fixed text-[9px] sm:text-[12px] md:text-[16px]">
         <thead>
           <tr className="border-b">
-            <th className="text-left py-3 px-2">Date</th>
-            <th className="text-left py-3 px-2">Pair</th>
-            <th className="text-left py-3 px-2">Type</th>
-            <th className="text-left py-3 px-2">Amount</th>
-            <th className="text-right py-3 px-2">Profit/Loss</th>
-            <th className="text-left py-3 px-2">AI Reasoning</th>
+            <th className="text-left py-2 sm:py-3 px-1 sm:px-2">Date</th>
+            <th className="text-left py-2 sm:py-3 px-1 sm:px-2">Pair</th>
+            <th className="text-left py-2 sm:py-3 px-1 sm:px-2">Type</th>
+            <th className="text-left py-2 sm:py-3 px-1 sm:px-2">Amount</th>
+            <th className="text-right py-2 sm:py-3 px-1 sm:px-2">P/L</th>
+            <th className="text-left py-2 sm:py-3 px-1 sm:px-2">AI</th>
           </tr>
         </thead>
         <tbody>
@@ -67,15 +67,17 @@ export default function TradeHistoryTable({
               key={trade.id}
               className="border-b border-muted hover:bg-muted/30"
             >
-              <td className="py-3 px-2">{formatDate(trade.created_at)}</td>
-              <td className="py-3 px-2">{trade.crypto_pair}</td>
+              <td className="py-2 sm:py-3 px-1 sm:px-2">
+                {formatDate(trade.created_at)}
+              </td>
+              <td className="py-2 sm:py-3 px-1 sm:px-2">{trade.crypto_pair}</td>
               <td className="py-3 px-2">
-                <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-muted">
+                <span className="inline-flex items-center rounded-full px-1 sm:px-2 py-0.5 sm:py-1 text-[8px] sm:text-xs font-medium bg-muted">
                   {trade.trade_type}
                 </span>
               </td>
               <td className="py-3 px-2">${trade.amount.toFixed(2)}</td>
-              <td className="py-3 px-2 text-right">
+              <td className="py-2 sm:py-3 px-1 sm:px-2 text-right">
                 {trade.profit_loss !== null ? (
                   <span
                     className={`inline-flex items-center gap-1 ${trade.profit_loss > 0 ? "text-green-500" : "text-red-500"}`}
@@ -92,7 +94,7 @@ export default function TradeHistoryTable({
                 )}
               </td>
               <td className="py-3 px-2">
-                {trade.ai_reasoning ? (
+                {trade.trade_type === "AUTO" && trade.ai_reasoning ? (
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger className="text-xs text-left max-w-[150px] truncate text-muted-foreground hover:text-primary transition-colors">
@@ -103,9 +105,13 @@ export default function TradeHistoryTable({
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
-                ) : (
+                ) : trade.trade_type === "AUTO" ? (
                   <span className="text-xs text-muted-foreground">
                     No reasoning available
+                  </span>
+                ) : (
+                  <span className="text-xs text-muted-foreground">
+                    N/A for manual trades
                   </span>
                 )}
               </td>
