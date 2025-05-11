@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
-import VerificationDialog from "./verification-dialog";
+import VerificationForm from "./verification-form";
 import TradingStatistics from "./trading-statistics";
 import { getNeuronLevel, NEURON_LEVELS } from "@/lib/neuron-levels";
 
@@ -18,9 +18,9 @@ export default function AccountPage() {
   >("not_verified");
   const [isEmailVerified, setIsEmailVerified] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<"identity" | "neurons">(
-    "identity",
-  );
+  const [activeTab, setActiveTab] = useState<
+    "identity" | "neurons" | "verification"
+  >("identity");
   const [totalDepositAmount, setTotalDepositAmount] = useState(0);
   const [neuronLevel, setNeuronLevel] = useState(NEURON_LEVELS[0]);
   const { toast } = useToast();
@@ -93,7 +93,7 @@ export default function AccountPage() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-8">
+    <div className="container mx-auto p-0 space-y-8">
       <div className="flex items-center gap-4">
         <Button
           variant="ghost"
@@ -115,6 +115,12 @@ export default function AccountPage() {
               className={`pb-2 font-medium text-sm transition-colors ${activeTab === "identity" ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground"}`}
             >
               Identity Info
+            </button>
+            <button
+              onClick={() => setActiveTab("verification")}
+              className={`pb-2 font-medium text-sm transition-colors ${activeTab === "verification" ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground"}`}
+            >
+              ID Verification
             </button>
             <button
               onClick={() => setActiveTab("neurons")}
@@ -200,6 +206,74 @@ export default function AccountPage() {
                   )}
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* ID Verification Tab */}
+        {activeTab === "verification" && (
+          <div className="space-y-6">
+            <h2 className="text-xl font-semibold">ID Verification</h2>
+            <div className="space-y-4">
+              {/* Verification Status */}
+              <div className="space-y-2">
+                <Label>Verification Status</Label>
+                <div className="flex items-center gap-2">
+                  <div
+                    className={`px-2 py-1 rounded text-sm ${
+                      {
+                        not_verified: "bg-red-500/20 text-red-500",
+                        pending: "bg-yellow-500/20 text-yellow-500",
+                        verified: "bg-green-500/20 text-green-500",
+                      }[isVerified]
+                    }`}
+                  >
+                    {
+                      {
+                        not_verified: "Not Verified",
+                        pending: "Pending Review",
+                        verified: "Verified",
+                      }[isVerified]
+                    }
+                  </div>
+                </div>
+              </div>
+
+              {/* Verification Form */}
+              {isVerified === "not_verified" && (
+                <VerificationForm
+                  onVerificationSubmitted={() => setIsVerified("pending")}
+                />
+              )}
+
+              {/* Pending Message */}
+              {isVerified === "pending" && (
+                <div className="p-6 border rounded-lg bg-yellow-500/10">
+                  <div className="text-center space-y-4">
+                    <p className="text-yellow-500 font-medium">
+                      Your verification is being reviewed
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      We are currently reviewing your submitted documents. This
+                      process typically takes 1-3 business days.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Verified Message */}
+              {isVerified === "verified" && (
+                <div className="p-6 border rounded-lg bg-green-500/10">
+                  <div className="text-center space-y-4">
+                    <p className="text-green-500 font-medium">
+                      Your identity has been verified
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      You now have full access to all platform features.
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -345,14 +419,7 @@ export default function AccountPage() {
         )}
       </div>
 
-      <VerificationDialog
-        open={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
-        onVerificationSubmitted={() => {
-          setIsVerified("pending");
-          setIsDialogOpen(false);
-        }}
-      />
+      {/* Verification dialog is now replaced by the tab */}
     </div>
   );
 }

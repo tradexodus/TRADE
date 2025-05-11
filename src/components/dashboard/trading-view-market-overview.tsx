@@ -59,7 +59,7 @@ export const TradingViewMarketOverview = () => {
         backgroundColor: "rgba(15, 15, 15, 0)",
         lineWidth: 2,
         lineType: 0,
-        dateRanges: ["1d|1", "1m|30", "3m|60", "12m|1D", "60m|1W", "all|1M"],
+        dateRanges: ["3m|60", "12m|1D", "60m|1W", "all|1M"],
       });
 
       widgetContainer.appendChild(script);

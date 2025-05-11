@@ -1,6 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Wallet, ArrowUpDown, User } from "lucide-react";
-import { getNeuronLevel } from "@/lib/neuron-levels";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
+import { getNeuronLevel, type NeuronLevel } from "@/lib/neuron-levels";
+import { Progress } from "@/components/ui/progress";
 
 interface BalanceCardProps {
   accountId?: string;
@@ -15,6 +18,46 @@ export function BalanceCard({
   profit,
   loading,
 }: BalanceCardProps) {
+  const [neuronLevel, setNeuronLevel] = useState<NeuronLevel | null>(null);
+  const [loadingNeuronLevel, setLoadingNeuronLevel] = useState(true);
+
+  useEffect(() => {
+    async function fetchNeuronLevel() {
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (user) {
+          const { data, error } = await supabase
+            .from("user_profiles")
+            .select("total_deposit_amount")
+            .eq("id", user.id)
+            .single();
+
+          if (error) {
+            console.error("Error fetching user profile:", error);
+            setLoadingNeuronLevel(false);
+            return;
+          }
+
+          // Check if data exists, even if total_deposit_amount is 0
+          if (data) {
+            // Use 0 as default if total_deposit_amount is null or undefined
+            const depositAmount = data.total_deposit_amount ?? 0;
+            const level = getNeuronLevel(depositAmount);
+            setNeuronLevel(level);
+          }
+        }
+      } catch (error) {
+        console.error("Error:", error);
+      } finally {
+        setLoadingNeuronLevel(false);
+      }
+    }
+
+    fetchNeuronLevel();
+  }, []);
   return (
     <Card className="w-[600px] overflow-hidden border-0 shadow-lg h-full">
       <CardHeader className=" from-blue-900/30 to-blue-800/10 py-2 sm:py-2">
@@ -72,41 +115,6 @@ export function BalanceCard({
               </span>
             </div>
 
-            {/* Neuron Level Progress */}
-            {balance !== null && (
-              <div className="space-y-1">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-muted-foreground">
-                    Neuron Level
-                  </span>
-                  <span
-                    className="text-xs font-medium"
-                    style={{ color: getNeuronLevel(balance).color }}
-                  >
-                    {getNeuronLevel(balance).name}
-                  </span>
-                </div>
-                <div
-                  className="h-1.5 w-full rounded-full overflow-hidden"
-                  style={{
-                    backgroundColor: `${getNeuronLevel(balance).bgColor}50`,
-                  }}
-                >
-                  <div
-                    className="h-full rounded-full"
-                    style={{
-                      width: `${getNeuronLevel(balance).progressPercentage}%`,
-                      backgroundColor: getNeuronLevel(balance).color,
-                    }}
-                  ></div>
-                </div>
-                <div className="flex justify-between text-[10px] text-muted-foreground">
-                  <span>Progress</span>
-                  <span>{getNeuronLevel(balance).progressPercentage}%</span>
-                </div>
-              </div>
-            )}
-
             {/* Account Status */}
             <div className="flex items-center justify-between pt-1">
               <span className="text-xs text-muted-foreground">Status</span>
@@ -114,6 +122,53 @@ export function BalanceCard({
                 <span className="w-1.5 h-1.5 mr-1 rounded-full bg-green-400"></span>
                 Active
               </span>
+            </div>
+
+            {/* Neuron Level */}
+            <div className="flex flex-col gap-1 pt-1">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">
+                  Neuron Level
+                </span>
+                {loadingNeuronLevel ? (
+                  <span className="text-xs">Loading...</span>
+                ) : neuronLevel ? (
+                  <div className="flex items-center gap-1">
+                    <span
+                      className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
+                      style={{
+                        backgroundColor: `${neuronLevel.bgColor}40`,
+                        color: neuronLevel.color,
+                      }}
+                    >
+                      {neuronLevel.name}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {neuronLevel.percentage}%
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-xs">Not available</span>
+                )}
+              </div>
+
+              {neuronLevel && (
+                <div className="space-y-1">
+                  <Progress
+                    value={neuronLevel.progressPercentage}
+                    className="h-1"
+                    indicatorClassName={`bg-gradient-to-r from-${neuronLevel.color}/70 to-${neuronLevel.color}`}
+                  />
+                  <div className="flex justify-between items-center text-[10px] text-muted-foreground">
+                    <span>${neuronLevel.minAmount}</span>
+                    <span>
+                      {neuronLevel.maxAmount !== null
+                        ? `${neuronLevel.maxAmount}`
+                        : "Max"}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

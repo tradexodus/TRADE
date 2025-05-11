@@ -120,6 +120,7 @@ export default function Dashboard() {
           {/* Mobile: Full-width Balance Card */}
           <div className="col-span-2 md:col-span-6 flex">
             <BalanceCard
+              accountId={accountData?.account_id}
               balance={balance}
               profit={profit}
               loading={loading}

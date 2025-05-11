@@ -305,7 +305,7 @@ export default function AuthenticatedLayout({
                       </p>
                     </div>
                   </SheetHeader>
-                  <nav className="flex flex-col gap-3 p-4">
+                  <nav className="flex flex-col gap-8 p-4">
                     <Button
                       variant="ghost"
                       className="w-full justify-start px-10 py-3 text-lg text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
