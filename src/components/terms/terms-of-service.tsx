@@ -24,9 +24,9 @@ export default function TermsOfService() {
 
         <p>
           These Terms constitute a legally binding agreement between you ("you"
-          or "your") and Neurotrade ("Neurotrade", "we", "our" or "us"). The
-          Terms govern your use of the Neurotrade Services made available to you
-          on or through the Platform or otherwise.
+          or "your") and Exodus Trade© ("Exodus Trade©", "we", "our" or "us").
+          The Terms govern your use of the Exodus Trade© Services made
+          available to you on or through the Platform or otherwise.
         </p>
 
         <div className="bg-destructive/10 border border-destructive p-6 rounded-lg space-y-4">
@@ -46,23 +46,24 @@ export default function TermsOfService() {
             <div>
               <h3 className="text-lg font-semibold">1.1. About us</h3>
               <p>
-                The Neurotrade group is an ecosystem centred around an online
-                exchange for Digital Assets trading. The Neurotrade group
-                provides users with a trading platform to buy and sell Digital
-                Assets, an integrated custody solution allowing users to store
-                their Digital Assets and other Digital Asset-related services.
+                The Exodus Trade© group is an ecosystem centred around an
+                online exchange for Digital Assets trading. The Exodus Trade©
+                group provides users with a trading platform to buy and sell
+                Digital Assets, an integrated custody solution allowing users to
+                store their Digital Assets and other Digital Asset-related
+                services.
               </p>
             </div>
 
             <div>
               <h3 className="text-lg font-semibold">1.2. These Terms</h3>
               <p>
-                By registering to open a Neurotrade Account you are entering
-                into a legally binding agreement with us. These Terms will
-                govern your use of the Neurotrade Services and tell you who we
-                are, how we will provide the Neurotrade Services to you, how
-                these Terms may be changed or terminated, what to do if there is
-                a problem, along with other important information.
+                By registering to open an Exodus Trade© Account you are
+                entering into a legally binding agreement with us. These Terms
+                will govern your use of the Exodus Trade© Services and tell you
+                who we are, how we will provide the Exodus Trade© Services to
+                you, how these Terms may be changed or terminated, what to do if
+                there is a problem, along with other important information.
               </p>
             </div>
           </div>
@@ -76,8 +77,8 @@ export default function TermsOfService() {
                 2.1. Eligibility criteria
               </h3>
               <p>
-                To be eligible to register for a Neurotrade Account and use the
-                Neurotrade Services, you must:
+                To be eligible to register for an Exodus Trade© Account and use
+                the Exodus Trade© Services, you must:
               </p>
               <ul className="list-disc list-inside space-y-2 pl-4">
                 <li>be at least 18 years old;</li>
@@ -87,10 +88,10 @@ export default function TermsOfService() {
                 </li>
                 <li>
                   not have been previously suspended or removed from using
-                  Neurotrade Services;
+                  Exodus Trade© Services;
                 </li>
                 <li>not be a Restricted Person;</li>
-                <li>not currently have an existing Neurotrade Account;</li>
+                <li>not currently have an existing Exodus Trade© Account;</li>
               </ul>
             </div>
           </div>
@@ -104,7 +105,7 @@ export default function TermsOfService() {
                 3.1. How you can contact us
               </h3>
               <p>
-                For more information on Neurotrade, you may refer to the
+                For more information on Exodus Trade©, you may refer to the
                 information found on our Website. If you have questions,
                 feedback or complaints you can contact us via our Customer
                 Support team.

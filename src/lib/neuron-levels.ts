@@ -18,6 +18,7 @@ export const NEURON_LEVELS: NeuronLevel[] = [
     color: "#3B82F6", // Blue
     bgColor: "#1E3A8A",
     icon: "Brain",
+    dailyAutoTradingAttempts: 3,
   },
   {
     name: "Intermediate",
@@ -27,6 +28,7 @@ export const NEURON_LEVELS: NeuronLevel[] = [
     color: "#10B981", // Green
     bgColor: "#064E3B",
     icon: "Zap",
+    dailyAutoTradingAttempts: 5,
   },
   {
     name: "Advanced",
@@ -36,6 +38,7 @@ export const NEURON_LEVELS: NeuronLevel[] = [
     color: "#6366F1", // Indigo
     bgColor: "#312E81",
     icon: "Rocket",
+    dailyAutoTradingAttempts: 8,
   },
   {
     name: "Pro",
@@ -45,6 +48,7 @@ export const NEURON_LEVELS: NeuronLevel[] = [
     color: "#EC4899", // Pink
     bgColor: "#831843",
     icon: "Star",
+    dailyAutoTradingAttempts: 10,
   },
   {
     name: "VIP",
@@ -54,6 +58,7 @@ export const NEURON_LEVELS: NeuronLevel[] = [
     color: "#F59E0B", // Amber
     bgColor: "#78350F",
     icon: "Crown",
+    dailyAutoTradingAttempts: 15,
   },
   {
     name: "Elite",
@@ -63,6 +68,7 @@ export const NEURON_LEVELS: NeuronLevel[] = [
     color: "#EF4444", // Red
     bgColor: "#7F1D1D",
     icon: "Diamond",
+    dailyAutoTradingAttempts: Infinity, // Unlimited attempts
   },
 ];
 

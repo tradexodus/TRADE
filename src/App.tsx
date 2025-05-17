@@ -5,6 +5,7 @@ import Home from "./components/home";
 import routes from "tempo-routes";
 import { Toaster } from "@/components/ui/toaster";
 import AuthLayout from "./components/layout/AuthLayout";
+import { LoadingScreen } from "./components/ui/loading-screen";
 
 const LoginPage = lazy(() => import("./pages/login"));
 const SignupPage = lazy(() => import("./pages/signup"));
@@ -24,7 +25,7 @@ const AiTradingPage = lazy(() => import("./pages/ai-trading"));
 
 function App() {
   return (
-    <Suspense fallback={<p>Loading...</p>}>
+    <Suspense fallback={<LoadingScreen />}>
       <div>
         {import.meta.env.VITE_TEMPO === "true" && useRoutes(routes)}
         {import.meta.env.VITE_TEMPO === "true" && (

@@ -163,7 +163,7 @@ export default function AuthenticatedLayout({
       <div className="hidden md:flex flex-col w-[270px] p-0">
         <div className="p-2">
           <div className="space-y-0 md:pl-14 md:my-6">
-            <h2 className="text-xl font-bold tracking-wide">neurotrade</h2>
+            <h2 className="text-xl font-bold tracking-wide">Exodus Trade</h2>
             <p className="text-sm text-white/90">{profile?.email}</p>
             <p className="text-sm text-white/60">
               Account ID: {loading ? "Loading..." : profile?.account_id}
@@ -296,7 +296,7 @@ export default function AuthenticatedLayout({
                   <SheetHeader className="p-6 border-b border-blue-700/20 bg-blue-900/20">
                     <div className="space-y-1">
                       <SheetTitle className="text-xl font-bold tracking-wide">
-                        neurotrade
+                        Exodus Trade©
                       </SheetTitle>
                       <p className="text-sm text-white/90">{profile?.email}</p>
                       <p className="text-sm text-white/60">
