@@ -89,7 +89,7 @@ export default function DashboardPage() {
         <div className="flex items-center justify-between px-4 py-3">
           <img
             src="/images/tempo-image-20250222T194809206Z.png"
-            alt="NeuroTrade"
+            alt="Exodus Trade©"
             className="h-8"
           />
           <Sheet>
@@ -103,7 +103,7 @@ export default function DashboardPage() {
                 <div className="flex items-center gap-4 mb-4">
                   <img
                     src="/images/tempo-image-20250222T194809206Z.png"
-                    alt="NeuroTrade"
+                    alt="Exodus Trade©"
                     className="h-8"
                   />
                 </div>

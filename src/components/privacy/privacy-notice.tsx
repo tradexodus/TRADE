@@ -16,26 +16,26 @@ export default function PrivacyNotice() {
         >
           <ArrowLeft className="h-6 w-6" />
         </Button>
-        <h1 className="text-2xl font-bold">Privacy Notice - Neurotrade</h1>
+        <h1 className="text-2xl font-bold">Privacy Notice - Exodus Trade©</h1>
       </div>
 
       <div className="prose prose-invert max-w-none">
         <p className="text-muted-foreground">Last updated: 20 January 2025</p>
 
         <p>
-          Neurotrade ("Neurotrade", "we", or "us") is committed to protecting
-          the privacy of our customers, and we take our data protection
-          responsibilities with the utmost seriousness.
+          Exodus Trade© ("Exodus Trade©", "we", or "us") is committed to
+          protecting the privacy of our customers, and we take our data
+          protection responsibilities with the utmost seriousness.
         </p>
 
         <p>
-          This Privacy Notice describes how Neurotrade collects and processes
-          your personal data through the Neurotrade websites and applications
-          that are referenced in this Privacy Notice.
+          This Privacy Notice describes how Exodus Trade© collects and
+          processes your personal data through the Exodus Trade© websites and
+          applications that are referenced in this Privacy Notice.
         </p>
 
         <h2 className="text-xl font-bold mt-8 mb-4">
-          1. Neurotrade Relationship with you
+          1. Exodus Trade© Relationship with you
         </h2>
 
         <div className="overflow-x-auto">
@@ -52,7 +52,7 @@ export default function PrivacyNotice() {
               <tr className="border-t border-border">
                 <td className="p-4">France</td>
                 <td className="p-4">Digital Asset Services Provider</td>
-                <td className="p-4">Neurotrade France SAS</td>
+                <td className="p-4">Exodus Trade© France SAS</td>
                 <td className="p-4">
                   1 rue de Stockholm, 75008, Paris, France
                 </td>
@@ -60,7 +60,7 @@ export default function PrivacyNotice() {
               <tr className="border-t border-border">
                 <td className="p-4">Italy</td>
                 <td className="p-4">Digital Asset Services Provider</td>
-                <td className="p-4">Neurotrade Italy S.R.L</td>
+                <td className="p-4">Exodus Trade© Italy S.R.L</td>
                 <td className="p-4">
                   Corso Europa n. 15, 20122, Milano (MI), Italy
                 </td>
@@ -71,7 +71,7 @@ export default function PrivacyNotice() {
         </div>
 
         <h2 className="text-xl font-bold mt-8 mb-4">
-          2. What Personal Data does Neurotrade collect and process?
+          2. What Personal Data does Exodus Trade© collect and process?
         </h2>
 
         <p>
@@ -98,8 +98,9 @@ export default function PrivacyNotice() {
               Sensitive and Biometric Personal Data
             </h3>
             <p className="text-muted-foreground">
-              Neurotrade may also collect sensitive personal data when permitted
-              by local law or with your consent, such as biometric information
+              Exodus Trade© may also collect sensitive personal data when
+              permitted by local law or with your consent, such as biometric
+              information
             </p>
           </div>
 

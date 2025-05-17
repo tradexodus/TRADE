@@ -33,15 +33,15 @@ export default function LandingPage() {
           opacity: 0.5,
         }}
       />
-      ;{/* Another smaller circle for added depth */}
+      {/* Another smaller circle for added depth */}
       <div className="absolute bottom-[-200px] w-[500px] h-[500px] rounded-full bg-gradient-to-tr from-blue-500/20 to-indigo-600/5 blur-3xl left-[100px] pointer-events-none" />
       {/* Navigation */}
-      <nav className="w-full py-4 sm:py-6 px-4 md:px-16 sticky top-0 bg-black/90 backdrop-blur-sm z-50">
+      <nav className="w-full py-1 sm:py-0 px-1 md:px-12 sticky top-0 bg-black/90 backdrop-blur-sm z-50">
         <div className="flex justify-between items-center">
           <img
-            src="https://storage.googleapis.com/tempo-public-images/figma-exports%2Fgithub%7C196424230-1740190883034-node-14%3A79-1740180082712.png"
+            src="https://i.top4top.io/p_3417xmy0t0.png"
             alt="Logo"
-            className="h-6 md:h-8 w-[100px] sm:w-[120px] md:w-[160px] flex"
+            className="h-10 sm:h-12 md:h-16 w-auto max-w-[160px] sm:max-w-[180px] md:max-w-[220px] object-contain flex"
           />
 
           <div className="hidden md:flex items-center space-x-6">
@@ -391,7 +391,7 @@ export default function LandingPage() {
             <img
               src="https://storage.googleapis.com/tempo-public-images/figma-exports%2Fgithub%7C196424230-1740190881924-node-103%3A91-1740180080498.png"
               alt="Logo"
-              className="w-32 sm:w-36 h-[40px] sm:h-[45px]"
+              className="w-28 sm:w-32 h-[36px] sm:h-[40px] object-contain"
             />
             <p className="text-base sm:text-lg font-semibold font-poppins">
               Get the lastes Updates
@@ -458,7 +458,7 @@ export default function LandingPage() {
 
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 pt-6 border-t border-white/10">
           <p className="text-sm sm:text-base font-semibold font-poppins text-center md:text-left">
-            NeuroTrade ©. All Rights Reserved
+            Exodus Trade©. All Rights Reserved
           </p>
           <div className="flex space-x-4">{/* Social Icons */}</div>
         </div>

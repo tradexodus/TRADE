@@ -400,6 +400,11 @@ export default function AccountPage() {
                             ? `${level.minAmount.toLocaleString()} - ${level.maxAmount.toLocaleString()}`
                             : `${level.minAmount.toLocaleString()}+`}
                         </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {level.dailyAutoTradingAttempts === Infinity
+                            ? "Unlimited auto trading attempts"
+                            : `${level.dailyAutoTradingAttempts} auto trading attempts/day`}
+                        </p>
                       </div>
                     </div>
                     <div

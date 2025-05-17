@@ -29,6 +29,17 @@ export default function AuthLayout() {
 
       if (!user) return;
 
+      // Try to call the database function to process all expired trades
+      try {
+        await supabase.rpc("process_expired_trades");
+        console.log(
+          "Successfully processed expired trades via database function",
+        );
+      } catch (dbFunctionError) {
+        console.error("Error processing expired trades:", dbFunctionError);
+        // Continue with client-side processing as fallback
+      }
+
       // Get all pending trades
       const { data: pendingTrades, error } = await supabase
         .from("trading_history")
@@ -92,16 +103,52 @@ export default function AuthLayout() {
             // Process the trade using local logic as fallback
             try {
               // Get user's trading settings
-              const { data: settingsData, error: settingsError } =
-                await supabase
+              let settingsData;
+              try {
+                const { data, error } = await supabase
                   .from("trading_settings")
                   .select("*")
                   .eq("user_id", user.id)
                   .single();
 
-              if (settingsError) {
+                if (error) {
+                  // If no settings found, create default settings
+                  if (error.code === "PGRST116") {
+                    console.log("No trading settings found, using defaults");
+                    settingsData = {
+                      win_probability: 0.5,
+                      min_profit_percentage: 2,
+                      max_profit_percentage: 5,
+                      max_loss_percentage: 3,
+                    };
+
+                    // Try to create default settings for future use
+                    const { error: insertError } = await supabase
+                      .from("trading_settings")
+                      .insert({
+                        user_id: user.id,
+                        win_probability: 0.5,
+                        min_profit_percentage: 2,
+                        max_profit_percentage: 5,
+                        max_loss_percentage: 3,
+                      });
+
+                    if (insertError) {
+                      console.error(
+                        "Error creating default trading settings:",
+                        insertError,
+                      );
+                    }
+                  } else {
+                    console.error("Error fetching trading settings:", error);
+                    continue;
+                  }
+                } else {
+                  settingsData = data;
+                }
+              } catch (settingsError) {
                 console.error(
-                  "Error fetching trading settings:",
+                  "Exception fetching trading settings:",
                   settingsError,
                 );
                 continue;

@@ -1,4 +1,4 @@
-import { Suspense, lazy, useState, useEffect } from "react";
+import { Suspense, lazy, useState, useEffect, useCallback } from "react";
 import AuthenticatedLayout from "@/components/layout/authenticated-layout";
 import { supabase } from "@/lib/supabase";
 import {
@@ -29,6 +29,10 @@ export default function AiTrading() {
     userId: string | null;
     balance: number;
     profit: number;
+    neuronLevel?: any;
+    attemptsUsed?: number;
+    maxAttempts?: number;
+    nextResetTime?: string;
   }>({
     userId: null,
     balance: 0,
@@ -37,74 +41,114 @@ export default function AiTrading() {
   const [isLoading, setIsLoading] = useState(true);
   const [tradingMode, setTradingMode] = useState<"manual" | "auto">("manual");
 
-  // Fetch user account data
-  useEffect(() => {
-    async function fetchUserData() {
-      try {
-        setIsLoading(true);
+  // Fetch user account data and trading attempts
+  const fetchUserData = useCallback(async () => {
+    try {
+      setIsLoading(true);
 
-        // Get current user
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
+      // Get current user
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-        if (!user) {
-          setIsLoading(false);
-          return;
-        }
-
-        // Get user account data
-        const { data: accountData, error: accountError } = await supabase
-          .from("user_accounts")
-          .select("balance, profit")
-          .eq("id", user.id)
-          .single();
-
-        if (accountError) {
-          console.error("Error fetching account data:", accountError);
-          setIsLoading(false);
-          return;
-        }
-
-        setUserData({
-          userId: user.id,
-          balance: accountData?.balance || 0,
-          profit: accountData?.profit || 0,
-        });
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-      } finally {
+      if (!user) {
         setIsLoading(false);
+        return;
       }
-    }
 
-    fetchUserData();
+      // Get user account data
+      const { data: accountData, error: accountError } = await supabase
+        .from("user_accounts")
+        .select("balance, profit")
+        .eq("id", user.id)
+        .single();
+
+      if (accountError) {
+        console.error("Error fetching account data:", accountError);
+        setIsLoading(false);
+        return;
+      }
+
+      // Get user's deposits to calculate total deposit amount
+      const { data: depositsData } = await supabase
+        .from("deposits")
+        .select("amount")
+        .eq("user_id", user.id)
+        .eq("status", "approved");
+
+      // Calculate total deposit amount from deposits table
+      const totalDepositAmount = depositsData
+        ? depositsData.reduce((sum, deposit) => sum + (deposit.amount || 0), 0)
+        : 0;
+
+      const { getNeuronLevel, NEURON_LEVELS } = await import(
+        "@/lib/neuron-levels"
+      );
+      const neuronLevel = getNeuronLevel(totalDepositAmount);
+
+      // Get user's auto trading attempts
+      const { data: attemptsData, error: attemptsError } = await supabase
+        .from("auto_trading_attempts")
+        .select("attempts_used, last_reset")
+        .eq("user_id", user.id)
+        .single();
+
+      // Calculate next reset time (midnight GMT+4)
+      const now = new Date();
+      const dubaiTime = new Date(
+        now.toLocaleString("en-US", { timeZone: "Asia/Dubai" }),
+      );
+      const nextReset = new Date(dubaiTime);
+      nextReset.setHours(24, 0, 0, 0); // Set to next midnight in Dubai time
+
+      // Format the next reset time in user's local timezone
+      const nextResetFormatted = nextReset.toLocaleString();
+
+      // If no attempts record exists yet, user has used 0 attempts
+      let attemptsUsed = 0;
+
+      if (attemptsData) {
+        // Check if the last reset was today in Dubai time
+        const lastResetDate = new Date(attemptsData.last_reset);
+        const lastResetDubaiDate = new Date(
+          lastResetDate.toLocaleString("en-US", { timeZone: "Asia/Dubai" }),
+        ).setHours(0, 0, 0, 0);
+
+        const todayDubaiDate = new Date(
+          dubaiTime.toLocaleString("en-US", { timeZone: "Asia/Dubai" }),
+        ).setHours(0, 0, 0, 0);
+
+        // Only count attempts if they were made today
+        if (lastResetDubaiDate === todayDubaiDate) {
+          attemptsUsed = attemptsData.attempts_used;
+        }
+      }
+      const maxAttempts = neuronLevel.dailyAutoTradingAttempts;
+
+      setUserData({
+        userId: user.id,
+        balance: accountData?.balance || 0,
+        profit: accountData?.profit || 0,
+        neuronLevel,
+        attemptsUsed,
+        maxAttempts,
+        nextResetTime: nextResetFormatted,
+      });
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchUserData();
+  }, [fetchUserData]);
 
   // Refresh user data after trade completion
   const handleTradeComplete = async () => {
     if (!userData.userId) return;
-
-    try {
-      const { data: accountData, error: accountError } = await supabase
-        .from("user_accounts")
-        .select("balance, profit")
-        .eq("id", userData.userId)
-        .single();
-
-      if (accountError) {
-        console.error("Error refreshing account data:", accountError);
-        return;
-      }
-
-      setUserData((prev) => ({
-        ...prev,
-        balance: accountData?.balance || prev.balance,
-        profit: accountData?.profit || prev.profit,
-      }));
-    } catch (error) {
-      console.error("Error refreshing user data:", error);
-    }
+    await fetchUserData();
   };
 
   // Simulate market volatility notification
@@ -214,6 +258,10 @@ export default function AiTrading() {
                     balance={userData.balance}
                     userId={userData.userId}
                     onTradeComplete={handleTradeComplete}
+                    attemptsUsed={userData.attemptsUsed}
+                    maxAttempts={userData.maxAttempts}
+                    nextResetTime={userData.nextResetTime}
+                    neuronLevel={userData.neuronLevel}
                   />
                 </Suspense>
               )}
@@ -306,6 +354,10 @@ export default function AiTrading() {
                     balance={userData.balance}
                     userId={userData.userId}
                     onTradeComplete={handleTradeComplete}
+                    attemptsUsed={userData.attemptsUsed}
+                    maxAttempts={userData.maxAttempts}
+                    nextResetTime={userData.nextResetTime}
+                    neuronLevel={userData.neuronLevel}
                   />
                 </Suspense>
               </div>

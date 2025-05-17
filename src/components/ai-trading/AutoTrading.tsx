@@ -36,6 +36,10 @@ export default function AutoTrading({
   onTradeComplete,
   balance = 0,
   userId,
+  maxAttempts = Infinity,
+  attemptsUsed = 0,
+  neuronLevel = { name: "Beginner" },
+  nextResetTime = "Tomorrow",
 }: AutoTradingProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -164,6 +168,68 @@ export default function AutoTrading({
       ];
       const randomPair =
         cryptoPairs[Math.floor(Math.random() * cryptoPairs.length)];
+
+      // Record the auto trading attempt in the auto_trading_attempts table
+      // Use Dubai time (GMT+4) for the attempt date
+      const dubaiTime = new Date();
+      dubaiTime.setHours(dubaiTime.getHours() + 4); // Adjust to GMT+4 (Dubai time)
+      const today = dubaiTime.toISOString().split("T")[0]; // Get today's date in YYYY-MM-DD format
+
+      // Try using the check_and_increment_attempts function
+      try {
+        const { data: functionResult, error: functionError } =
+          await supabase.rpc("check_and_increment_attempts", {
+            user_id_param: currentUserId,
+            max_attempts_param: maxAttempts === Infinity ? 1000 : maxAttempts,
+          });
+
+        if (functionError) {
+          console.error(
+            "Error using check_and_increment_attempts function:",
+            functionError,
+          );
+          toast({
+            title: "Warning",
+            description:
+              "Failed to record trading attempt: " + functionError.message,
+            variant: "destructive",
+          });
+          // Don't proceed with the trade if we can't track attempts
+          setIsLoading(false);
+          return;
+        }
+
+        // Check if we've reached the daily limit
+        if (functionResult === false) {
+          toast({
+            title: "Daily limit reached",
+            description: `You've reached your daily limit of ${maxAttempts} auto trading attempts. Try again tomorrow.`,
+            variant: "destructive",
+          });
+          setIsLoading(false);
+          return;
+        }
+
+        console.log("Successfully recorded auto trading attempt");
+
+        // Refresh the attempts count
+        if (onTradeComplete) {
+          onTradeComplete();
+        }
+      } catch (error) {
+        console.error(
+          "Unexpected error recording auto trading attempt:",
+          error,
+        );
+        toast({
+          title: "Warning",
+          description:
+            "Failed to record trading attempt due to an unexpected error",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
 
       const { error: pendingTradeError } = await supabase
         .from("trading_history")
@@ -1028,13 +1094,53 @@ export default function AutoTrading({
             <AdvancedTradingOptions disabled={isRunning} />
           </div>
 
-          <Button
-            className="w-full mt-4"
-            onClick={startAutoTrading}
-            disabled={isLoading || !amount || parseFloat(amount) <= 0}
-          >
-            {isLoading ? "Processing..." : "Start Auto Trading"}
-          </Button>
+          <div className="space-y-4">
+            {maxAttempts !== Infinity && (
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-muted-foreground">Daily attempts:</span>
+                <div className="flex items-center gap-2">
+                  <span
+                    className={
+                      attemptsUsed >= maxAttempts ? "text-red-500" : ""
+                    }
+                  >
+                    {attemptsUsed} / {maxAttempts}
+                  </span>
+                  <div className="relative group">
+                    <div className="cursor-help text-muted-foreground hover:text-foreground">
+                      ⓘ
+                    </div>
+                    <div className="absolute bottom-full right-0 mb-2 w-64 p-2 bg-popover text-popover-foreground text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-50 pointer-events-none">
+                      <p>
+                        Your {neuronLevel?.name} level allows {maxAttempts} auto
+                        trading attempts per day.
+                      </p>
+                      <p className="mt-1">
+                        Attempts reset at midnight (GMT+4).
+                      </p>
+                      <p className="mt-1">Next reset: {nextResetTime}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            <Button
+              className="w-full"
+              onClick={startAutoTrading}
+              disabled={
+                isLoading ||
+                !amount ||
+                parseFloat(amount) <= 0 ||
+                (maxAttempts !== Infinity && attemptsUsed >= maxAttempts)
+              }
+            >
+              {isLoading
+                ? "Processing..."
+                : maxAttempts !== Infinity && attemptsUsed >= maxAttempts
+                  ? "Daily Limit Reached"
+                  : "Start Auto Trading"}
+            </Button>
+          </div>
         </>
       ) : (
         <>

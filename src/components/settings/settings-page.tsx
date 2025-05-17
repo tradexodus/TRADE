@@ -503,7 +503,7 @@ export default function SettingsPage() {
                 For any issues or questions, please contact our support team:
               </p>
               <div className="mt-4 space-y-2">
-                <p>Email: support@neurotrade.com</p>
+                <p>Email: support@exodustrade.com</p>
                 <p>Phone: +1 (555) 123-4567</p>
                 <p>Hours: 24/7</p>
               </div>
@@ -519,11 +519,11 @@ export default function SettingsPage() {
           </div>
           <Card>
             <CardHeader>
-              <CardTitle>About NeuroTrade</CardTitle>
+              <CardTitle>About Exodus Trade©</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <p>
-                NeuroTrade is a cutting-edge trading platform that combines
+                Exodus Trade© is a cutting-edge trading platform that combines
                 artificial intelligence with traditional trading methods to
                 provide users with the best possible trading experience.
               </p>
