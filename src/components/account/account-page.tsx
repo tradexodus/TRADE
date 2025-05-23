@@ -282,7 +282,7 @@ export default function AccountPage() {
         {activeTab === "neurons" && (
           <div className="space-y-6">
             <h2 className="text-xl font-semibold">Neurons Level</h2>
-            <div className="p-6 border rounded-lg bg-black">
+            <div className="p-6 border rounded-lg">
               <div className="text-center space-y-4">
                 <div
                   className="inline-flex p-4 rounded-full"
@@ -359,7 +359,6 @@ export default function AccountPage() {
                     key={level.name}
                     className="flex justify-between items-center p-4 border rounded-lg transition-all duration-200 hover:scale-[1.02] cursor-pointer"
                     style={{
-                      backgroundColor: "#121212",
                       borderColor: level.color,
                     }}
                     onClick={() => {

@@ -58,9 +58,48 @@ export default function AutoTrading({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const [isRetrying, setIsRetrying] = useState(false);
+  const [isVerified, setIsVerified] = useState<
+    "not_verified" | "pending" | "verified"
+  >("not_verified");
+  const [isCheckingVerification, setIsCheckingVerification] = useState(true);
   const timerIntervalRef = useRef<number | null>(null);
   const tradeIntervalRef = useRef<number | null>(null);
   const retryTimeoutRef = useRef<number | null>(null);
+
+  // Check verification status on component mount
+  useEffect(() => {
+    checkVerificationStatus();
+  }, []);
+
+  const checkVerificationStatus = async () => {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        setIsVerified("not_verified");
+        setIsCheckingVerification(false);
+        return;
+      }
+
+      const { data: verification } = await supabase
+        .from("user_verifications")
+        .select("status")
+        .eq("id", user.id)
+        .single();
+
+      if (verification) {
+        setIsVerified(verification.status);
+      } else {
+        setIsVerified("not_verified");
+      }
+    } catch (error) {
+      console.error("Error checking verification status:", error);
+      setIsVerified("not_verified");
+    } finally {
+      setIsCheckingVerification(false);
+    }
+  };
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -72,6 +111,17 @@ export default function AutoTrading({
 
   const startAutoTrading = async () => {
     try {
+      // Check verification status first
+      if (isVerified !== "verified") {
+        toast({
+          title: "Account verification required",
+          description:
+            "Please verify your account in the Profile section before starting auto trading",
+          variant: "destructive",
+        });
+        return;
+      }
+
       // Validate amount is provided and positive
       if (!amount) {
         toast({
@@ -1095,6 +1145,20 @@ export default function AutoTrading({
           </div>
 
           <div className="space-y-4">
+            {isVerified !== "verified" && !isCheckingVerification && (
+              <div className="p-4 border border-yellow-500/20 bg-yellow-500/10 rounded-lg">
+                <div className="text-center space-y-2">
+                  <p className="text-yellow-500 font-medium text-sm">
+                    Account verification required
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {isVerified === "pending"
+                      ? "Your verification is being reviewed. Auto trading will be available once verified."
+                      : "Please verify your account in the Profile section to start auto trading."}
+                  </p>
+                </div>
+              </div>
+            )}
             {maxAttempts !== Infinity && (
               <div className="flex justify-between items-center text-sm">
                 <span className="text-muted-foreground">Daily attempts:</span>
@@ -1129,16 +1193,22 @@ export default function AutoTrading({
               onClick={startAutoTrading}
               disabled={
                 isLoading ||
+                isCheckingVerification ||
+                isVerified !== "verified" ||
                 !amount ||
                 parseFloat(amount) <= 0 ||
                 (maxAttempts !== Infinity && attemptsUsed >= maxAttempts)
               }
             >
-              {isLoading
-                ? "Processing..."
-                : maxAttempts !== Infinity && attemptsUsed >= maxAttempts
-                  ? "Daily Limit Reached"
-                  : "Start Auto Trading"}
+              {isCheckingVerification
+                ? "Checking verification..."
+                : isLoading
+                  ? "Processing..."
+                  : isVerified !== "verified"
+                    ? "Account Verification Required"
+                    : maxAttempts !== Infinity && attemptsUsed >= maxAttempts
+                      ? "Daily Limit Reached"
+                      : "Start Auto Trading"}
             </Button>
           </div>
         </>

@@ -9,6 +9,27 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      auto_trading_attempts: {
+        Row: {
+          attempts_used: number
+          id: string
+          last_reset: string
+          user_id: string
+        }
+        Insert: {
+          attempts_used?: number
+          id?: string
+          last_reset?: string
+          user_id: string
+        }
+        Update: {
+          attempts_used?: number
+          id?: string
+          last_reset?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       copy_trading_relationships: {
         Row: {
           created_at: string
@@ -296,10 +317,12 @@ export type Database = {
         Row: {
           ai_reasoning: string | null
           amount: number
+          close_price: number | null
           closed_at: string | null
           created_at: string | null
           crypto_pair: string
           duration_minutes: string | null
+          entry_price: number | null
           expiration_time: string | null
           id: string
           original_balance: number | null
@@ -311,10 +334,12 @@ export type Database = {
         Insert: {
           ai_reasoning?: string | null
           amount: number
+          close_price?: number | null
           closed_at?: string | null
           created_at?: string | null
           crypto_pair: string
           duration_minutes?: string | null
+          entry_price?: number | null
           expiration_time?: string | null
           id?: string
           original_balance?: number | null
@@ -326,10 +351,12 @@ export type Database = {
         Update: {
           ai_reasoning?: string | null
           amount?: number
+          close_price?: number | null
           closed_at?: string | null
           created_at?: string | null
           crypto_pair?: string
           duration_minutes?: string | null
+          entry_price?: number | null
           expiration_time?: string | null
           id?: string
           original_balance?: number | null
@@ -552,6 +579,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_and_increment_attempts: {
+        Args: { user_id_param: string; max_attempts_param: number }
+        Returns: boolean
+      }
       get_user_trading_settings: {
         Args: { p_user_id: string }
         Returns: {
@@ -560,9 +591,17 @@ export type Database = {
           max_loss_percentage: number
         }[]
       }
+      process_expired_trades: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       process_withdrawal_approval: {
         Args: { withdrawal_id: string }
         Returns: Json
+      }
+      reset_daily_attempts: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
     }
     Enums: {

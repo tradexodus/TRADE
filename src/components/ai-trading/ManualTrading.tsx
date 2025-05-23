@@ -54,9 +54,14 @@ export default function ManualTrading({
   const [amount, setAmount] = useState("");
   const [activeTrades, setActiveTrades] = useState<ActiveTrade[]>([]);
   const [isClosingTrade, setIsClosingTrade] = useState<string | null>(null);
+  const [isVerified, setIsVerified] = useState<
+    "not_verified" | "pending" | "verified"
+  >("not_verified");
+  const [isCheckingVerification, setIsCheckingVerification] = useState(true);
 
-  // Fetch active trades on component mount
+  // Fetch active trades and check verification on component mount
   useEffect(() => {
+    checkVerificationStatus();
     fetchActiveTrades();
     // Set up interval to update current prices (simulated)
     const interval = setInterval(() => {
@@ -65,6 +70,36 @@ export default function ManualTrading({
 
     return () => clearInterval(interval);
   }, []);
+
+  const checkVerificationStatus = async () => {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        setIsVerified("not_verified");
+        setIsCheckingVerification(false);
+        return;
+      }
+
+      const { data: verification } = await supabase
+        .from("user_verifications")
+        .select("status")
+        .eq("id", user.id)
+        .single();
+
+      if (verification) {
+        setIsVerified(verification.status);
+      } else {
+        setIsVerified("not_verified");
+      }
+    } catch (error) {
+      console.error("Error checking verification status:", error);
+      setIsVerified("not_verified");
+    } finally {
+      setIsCheckingVerification(false);
+    }
+  };
 
   const fetchActiveTrades = async () => {
     try {
@@ -254,6 +289,17 @@ export default function ManualTrading({
 
   const handleOpenTrade = async () => {
     try {
+      // Check verification status first
+      if (isVerified !== "verified") {
+        toast({
+          title: "Account verification required",
+          description:
+            "Please verify your account in the Profile section before opening trades",
+          variant: "destructive",
+        });
+        return;
+      }
+
       if (!amount || parseFloat(amount) <= 0) {
         toast({
           title: "Invalid amount",
@@ -585,8 +631,23 @@ export default function ManualTrading({
       </div>
 
       <div className="mt-4 space-y-4">
+        {isVerified !== "verified" && !isCheckingVerification && (
+          <div className="p-4 border border-yellow-500/20 bg-yellow-500/10 rounded-lg">
+            <div className="text-center space-y-2">
+              <p className="text-yellow-500 font-medium text-sm">
+                Account verification required
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {isVerified === "pending"
+                  ? "Your verification is being reviewed. Manual trading will be available once verified."
+                  : "Please verify your account in the Profile section to start manual trading."}
+              </p>
+            </div>
+          </div>
+        )}
+
         <AdvancedTradingOptions
-          disabled={isLoading}
+          disabled={isLoading || isVerified !== "verified"}
           currentPrice={
             cryptoPair.startsWith("BTC")
               ? 50000
@@ -599,11 +660,21 @@ export default function ManualTrading({
         <Button
           className="w-full"
           onClick={handleOpenTrade}
-          disabled={isLoading || !amount || parseFloat(amount) <= 0}
+          disabled={
+            isLoading ||
+            isCheckingVerification ||
+            isVerified !== "verified" ||
+            !amount ||
+            parseFloat(amount) <= 0
+          }
         >
-          {isLoading
-            ? "Processing..."
-            : `Open ${tradeType.toUpperCase()} Position`}
+          {isCheckingVerification
+            ? "Checking verification..."
+            : isLoading
+              ? "Processing..."
+              : isVerified !== "verified"
+                ? "Account Verification Required"
+                : `Open ${tradeType.toUpperCase()} Position`}
         </Button>
       </div>
 

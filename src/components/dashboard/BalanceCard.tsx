@@ -60,7 +60,7 @@ export function BalanceCard({
   }, []);
   return (
     <Card className="w-[600px] overflow-hidden border-0 shadow-lg h-full">
-      <CardHeader className=" from-blue-900/30 to-blue-800/10 py-2 sm:py-2">
+      <CardHeader className="bg-gradient-to-r from-blue-900/30 to-blue-800/10 py-2 sm:py-3">
         <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
           <Wallet className="h-3 w-3 sm:h-4 sm:w-4 text-blue-400" />
           <span>Account Information</span>
@@ -92,13 +92,6 @@ export function BalanceCard({
                   >
                     <Wallet className="h-3 w-3 mr-1" />
                     Deposit
-                  </a>
-                  <a
-                    href="/withdrawal"
-                    className="inline-flex items-center justify-center rounded-md bg-blue-500/20 px-2 py-1 text-xs font-medium text-blue-400 ring-1 ring-inset ring-blue-500/30 hover:bg-blue-500/30 transition-colors"
-                  >
-                    <ArrowUpDown className="h-3 w-3 mr-1" />
-                    Withdraw
                   </a>
                 </div>
               </>
