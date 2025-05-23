@@ -283,7 +283,7 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-0">
         <Button
           variant="ghost"
           size="icon"

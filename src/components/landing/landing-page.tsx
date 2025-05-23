@@ -6,13 +6,65 @@ import "@fontsource/poppins/400.css";
 import "@fontsource/poppins/500.css";
 import "@fontsource/poppins/600.css";
 import "@fontsource/manrope/700.css";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Star } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
+import { getCookie, setCookie } from "@/lib/cookies";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 export default function LandingPage() {
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showCookieConsent, setShowCookieConsent] = useState(false);
+
+  useEffect(() => {
+    // Add a small delay to ensure DOM is fully loaded
+    const checkCookieConsent = () => {
+      try {
+        // Check if user has already seen the cookie consent popup
+        const cookieConsent = getCookie("cookie_consent");
+        const hasSeenConsent = getCookie("has_seen_consent");
+
+        console.log("Cookie consent check:", { cookieConsent, hasSeenConsent });
+
+        // Only show popup if user hasn't seen it before
+        if (!cookieConsent && !hasSeenConsent) {
+          setShowCookieConsent(true);
+        }
+      } catch (error) {
+        console.error("Error checking cookie consent:", error);
+      }
+    };
+
+    // Small delay to ensure cookies are properly accessible
+    setTimeout(checkCookieConsent, 100);
+  }, []);
+
+  const handleCookieConsent = (accepted: boolean) => {
+    try {
+      const consentValue = accepted ? "accepted" : "rejected";
+      setCookie("cookie_consent", consentValue, 365); // Store for 1 year
+      setCookie("has_seen_consent", "true", 365); // Mark that user has seen the consent popup
+
+      console.log("Cookie consent set:", {
+        cookie_consent: consentValue,
+        has_seen_consent: "true",
+      });
+
+      setShowCookieConsent(false);
+    } catch (error) {
+      console.error("Error setting cookie consent:", error);
+      setShowCookieConsent(false);
+    }
+  };
 
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
@@ -315,7 +367,7 @@ export default function LandingPage() {
           alt="Pasted Image"
           width={1409}
           height={203}
-          className="h-full w-[150%] sm:w-[130%] md:w-9/12 relative left-[-25%] sm:left-[-15%] md:left-56 object-cover"
+          className="h-full w-[95%] sm:w-[130%] md:w-9/12 relative left-[2%] sm:left-[-15%] md:left-56 object-cover flex"
         />
       </div>
       {/* Features Grid */}
@@ -463,6 +515,37 @@ export default function LandingPage() {
           <div className="flex space-x-4">{/* Social Icons */}</div>
         </div>
       </footer>
+
+      {/* Cookie Consent Dialog */}
+      <Dialog open={showCookieConsent} onOpenChange={() => {}}>
+        <DialogContent className="sm:max-w-md bg-black border-white/20 text-white">
+          <DialogHeader>
+            <DialogTitle className="text-white font-bold text-xl">
+              Cookie Consent
+            </DialogTitle>
+            <DialogDescription className="text-white/80">
+              We use cookies to enhance your browsing experience, serve
+              personalized content, and analyze our traffic. By clicking
+              &quot;Accept All&quot;, you consent to our use of cookies.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex flex-col sm:flex-row gap-2">
+            <Button
+              variant="outline"
+              onClick={() => handleCookieConsent(false)}
+              className="border-white/20 text-white hover:bg-white/10"
+            >
+              Reject
+            </Button>
+            <Button
+              onClick={() => handleCookieConsent(true)}
+              className="bg-[#0052cc] hover:bg-[#0052cc]/90 text-white"
+            >
+              Accept All
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

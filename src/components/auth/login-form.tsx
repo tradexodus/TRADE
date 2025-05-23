@@ -13,8 +13,14 @@ import {
 } from "@/components/ui/form";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
+import {
+  setSessionToken,
+  saveFormProgress,
+  getFormProgress,
+  clearFormProgress,
+} from "@/lib/cookies";
 
 const formSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -34,6 +40,27 @@ export default function LoginForm() {
     },
   });
 
+  // Load saved form progress on component mount
+  useEffect(() => {
+    const savedProgress = getFormProgress("login");
+    if (savedProgress) {
+      if (savedProgress.email) {
+        form.setValue("email", savedProgress.email);
+      }
+      // Note: We don't restore password for security reasons
+    }
+  }, [form]);
+
+  // Save form progress when email changes
+  useEffect(() => {
+    const subscription = form.watch((value) => {
+      if (value.email) {
+        saveFormProgress("login", { email: value.email });
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       setIsLoading(true);
@@ -49,6 +76,17 @@ export default function LoginForm() {
         });
         return;
       }
+
+      // Get the session and store it in cookie
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (session?.access_token) {
+        setSessionToken(session.access_token);
+      }
+
+      // Clear form progress after successful login
+      clearFormProgress("login");
 
       navigate("/dashboard");
     } catch (error) {

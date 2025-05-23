@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../ui/button";
+import { ThemeToggle } from "../ui/theme-toggle";
 import { supabase } from "@/lib/supabase";
 import { useEffect, useState, useRef } from "react";
 
@@ -164,8 +165,8 @@ export default function AuthenticatedLayout({
         <div className="p-2">
           <div className="space-y-0 md:pl-14 md:my-6">
             <h2 className="text-xl font-bold tracking-wide">Exodus Trade</h2>
-            <p className="text-sm text-white/90">{profile?.email}</p>
-            <p className="text-sm text-white/60">
+            <p className="text-sm font-bold/90">{profile?.email}</p>
+            <p className="text-sm font-bold">
               Account ID: {loading ? "Loading..." : profile?.account_id}
             </p>
           </div>
@@ -173,7 +174,7 @@ export default function AuthenticatedLayout({
         <nav className="flex flex-col p-6 flex-1 gap-y-8 font-normal">
           <Button
             variant="ghost"
-            className="w-full justify-start px-10 py-3 text-lg text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
+            className="w-full justify-start px-10 py-3 text-lg font-bold hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
             onClick={() => navigate("/account")}
           >
             <div className="flex items-center gap-6">
@@ -183,7 +184,7 @@ export default function AuthenticatedLayout({
           </Button>
           <Button
             variant="ghost"
-            className="w-full justify-start px-10 py-3 text-lg text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
+            className="w-full justify-start px-10 py-3 text-lg font-bold hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
             onClick={() => navigate("/dashboard")}
           >
             <div className="flex items-center gap-6">
@@ -194,7 +195,7 @@ export default function AuthenticatedLayout({
 
           <Button
             variant="ghost"
-            className="w-full justify-start px-10 py-3 text-lg text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
+            className="w-full justify-start px-10 py-3 text-lg font-bold hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
             onClick={() => navigate("/ai-trading")}
           >
             <div className="flex items-center gap-6">
@@ -204,7 +205,7 @@ export default function AuthenticatedLayout({
           </Button>
           <Button
             variant="ghost"
-            className="w-full justify-start px-10 py-3 text-lg text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
+            className="w-full justify-start px-10 py-3 text-lg font-bold hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
             onClick={() => navigate("/copy-trading")}
           >
             <div className="flex items-center gap-6">
@@ -214,7 +215,7 @@ export default function AuthenticatedLayout({
           </Button>
           <Button
             variant="ghost"
-            className="w-full justify-start px-10 py-3 text-lg text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
+            className="w-full justify-start px-10 py-3 text-lg font-bold hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
             onClick={() => navigate("/deposit")}
           >
             <div className="flex items-center gap-6">
@@ -224,7 +225,7 @@ export default function AuthenticatedLayout({
           </Button>
           <Button
             variant="ghost"
-            className="w-full justify-start px-10 py-3 text-lg text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
+            className="w-full justify-start px-10 py-3 text-lg font-bold hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
             onClick={() => navigate("/history")}
           >
             <div className="flex items-center gap-6">
@@ -235,7 +236,7 @@ export default function AuthenticatedLayout({
 
           <Button
             variant="ghost"
-            className="w-full justify-start px-10 py-3 text-lg text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
+            className="w-full justify-start px-10 py-3 text-lg font-bold hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
             onClick={() => navigate("/withdrawal")}
           >
             <div className="flex items-center gap-6">
@@ -245,7 +246,7 @@ export default function AuthenticatedLayout({
           </Button>
           <Button
             variant="ghost"
-            className="w-full justify-start px-10 py-3 text-lg text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
+            className="w-full justify-start px-10 py-3 text-lg font-bold hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
             onClick={() => navigate("/settings")}
           >
             <div className="flex items-center gap-6">
@@ -276,13 +277,10 @@ export default function AuthenticatedLayout({
               className="p-0"
               onClick={() => navigate("/dashboard")}
             >
-              <img
-                src="/images/tempo-image-20250222T194809206Z.png"
-                alt="NeuroTrade"
-                className="h-8"
-              />
+              <h2 className="text-xl font-bold tracking-wide">Exodus Trade</h2>
             </Button>
-            <div className="md:hidden">
+            <div className="md:hidden flex items-center gap-2">
+              <ThemeToggle />
               <Sheet>
                 <SheetTrigger asChild>
                   <Button variant="ghost" size="icon">
@@ -296,10 +294,10 @@ export default function AuthenticatedLayout({
                   <SheetHeader className="p-6 border-b border-blue-700/20 bg-blue-900/20">
                     <div className="space-y-1">
                       <SheetTitle className="text-xl font-bold tracking-wide">
-                        Exodus Trade©
+                        Exodus Trade
                       </SheetTitle>
-                      <p className="text-sm text-white/90">{profile?.email}</p>
-                      <p className="text-sm text-white/60">
+                      <p className="text-sm font-bold">{profile?.email}</p>
+                      <p className="text-sm font-bold">
                         Account ID:{" "}
                         {loading ? "Loading..." : profile?.account_id}
                       </p>
@@ -308,7 +306,7 @@ export default function AuthenticatedLayout({
                   <nav className="flex flex-col gap-8 p-4">
                     <Button
                       variant="ghost"
-                      className="w-full justify-start px-10 py-3 text-lg text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
+                      className="w-full justify-start px-10 py-3 text-lg font-bold hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
                       onClick={() => navigate("/account")}
                     >
                       <div className="flex items-center gap-6">
@@ -318,7 +316,7 @@ export default function AuthenticatedLayout({
                     </Button>
                     <Button
                       variant="ghost"
-                      className="w-full justify-start px-10 py-3 text-lg text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
+                      className="w-full justify-start px-10 py-3 text-lg font-bold hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
                       onClick={() => navigate("/dashboard")}
                     >
                       <div className="flex items-center gap-6">
@@ -329,7 +327,7 @@ export default function AuthenticatedLayout({
 
                     <Button
                       variant="ghost"
-                      className="w-full justify-start px-10 py-3 text-lg text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
+                      className="w-full justify-start px-10 py-3 text-lg font-bold hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
                       onClick={() => navigate("/ai-trading")}
                     >
                       <div className="flex items-center gap-6">
@@ -339,7 +337,7 @@ export default function AuthenticatedLayout({
                     </Button>
                     <Button
                       variant="ghost"
-                      className="w-full justify-start px-10 py-3 text-lg text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
+                      className="w-full justify-start px-10 py-3 text-lg font-bold hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
                       onClick={() => navigate("/copy-trading")}
                     >
                       <div className="flex items-center gap-6">
@@ -349,7 +347,7 @@ export default function AuthenticatedLayout({
                     </Button>
                     <Button
                       variant="ghost"
-                      className="w-full justify-start px-10 py-3 text-lg text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
+                      className="w-full justify-start px-10 py-3 text-lg font-bold hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
                       onClick={() => navigate("/deposit")}
                     >
                       <div className="flex items-center gap-6">
@@ -359,18 +357,18 @@ export default function AuthenticatedLayout({
                     </Button>
                     <Button
                       variant="ghost"
-                      className="w-full justify-start px-10 py-3 text-lg text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
+                      className="w-full justify-start px-10 py-3 text-lg font-bold hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
                       onClick={() => navigate("/history")}
                     >
                       <div className="flex items-center gap-6">
                         <History className="h-7 w-7 text-blue-400" />
-                        Transaction History
+                        History
                       </div>
                     </Button>
 
                     <Button
                       variant="ghost"
-                      className="w-full justify-start px-10 py-3 text-lg text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
+                      className="w-full justify-start px-10 py-3 text-lg font-bold hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
                       onClick={() => navigate("/withdrawal")}
                     >
                       <div className="flex items-center gap-6">
@@ -380,7 +378,7 @@ export default function AuthenticatedLayout({
                     </Button>
                     <Button
                       variant="ghost"
-                      className="w-full justify-start px-10 py-3 text-lg text-white/90 hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
+                      className="w-full justify-start px-10 py-3 text-lg font-bold hover:text-white hover:bg-blue-800/30 rounded-lg transition-all duration-200 hover:translate-x-1"
                       onClick={() => navigate("/settings")}
                     >
                       <div className="flex items-center gap-6">

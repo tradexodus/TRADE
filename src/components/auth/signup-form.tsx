@@ -13,8 +13,14 @@ import {
 } from "@/components/ui/form";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
+import {
+  setSessionToken,
+  saveFormProgress,
+  getFormProgress,
+  clearFormProgress,
+} from "@/lib/cookies";
 
 const formSchema = z
   .object({
@@ -42,6 +48,30 @@ export default function SignupForm() {
       confirmPassword: "",
     },
   });
+
+  // Load saved form progress on component mount
+  useEffect(() => {
+    const savedProgress = getFormProgress("signup");
+    if (savedProgress) {
+      if (savedProgress.name) form.setValue("name", savedProgress.name);
+      if (savedProgress.email) form.setValue("email", savedProgress.email);
+      // Note: We don't restore passwords for security reasons
+    }
+  }, [form]);
+
+  // Save form progress when form values change
+  useEffect(() => {
+    const subscription = form.watch((value) => {
+      const progressData: Record<string, any> = {};
+      if (value.name) progressData.name = value.name;
+      if (value.email) progressData.email = value.email;
+
+      if (Object.keys(progressData).length > 0) {
+        saveFormProgress("signup", progressData);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
@@ -98,6 +128,17 @@ export default function SignupForm() {
         console.error("Account creation error:", accountError);
         throw new Error("Failed to create user account");
       }
+
+      // Get the session and store it in cookie if auto-login is enabled
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (session?.access_token) {
+        setSessionToken(session.access_token);
+      }
+
+      // Clear form progress after successful signup
+      clearFormProgress("signup");
 
       toast({
         title: "Success",

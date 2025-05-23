@@ -15,8 +15,8 @@ export function TradingStatsCard({
   return (
     <Card className="overflow-hidden border-0 shadow-lg h-full text-sm">
       <CardHeader className="bg-gradient-to-r from-blue-900/30 to-blue-800/10 py-2 sm:py-3">
-        <CardTitle className="flex items-center gap-1 text-xs sm:text-sm">
-          <TrendingUp className="h-3 w-3 text-blue-400" />
+        <CardTitle className="flex items-center gap-2 text-xs sm:text-sm">
+          <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-blue-400" />
           <span>Trading</span>
         </CardTitle>
       </CardHeader>

@@ -17,6 +17,19 @@ import "@fontsource/manrope/700.css";
 import { TempoDevtools } from "tempo-devtools";
 TempoDevtools.init();
 
+// Apply theme from cookies or localStorage on initial load
+import { getThemePreference } from "./lib/cookies";
+
+const cookieTheme = getThemePreference();
+const localStorageTheme = localStorage.getItem("theme");
+const theme = cookieTheme || localStorageTheme || "dark";
+
+if (theme === "light") {
+  document.documentElement.classList.remove("dark");
+} else {
+  document.documentElement.classList.add("dark");
+}
+
 // Global error handler for better debugging
 window.addEventListener("error", function (event) {
   console.error("Global error caught:", {
