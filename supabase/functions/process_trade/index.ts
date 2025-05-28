@@ -54,6 +54,27 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Check if the trade has expired based on expiration_time or duration_minutes
+    let hasExpired = false;
+    const now = new Date();
+
+    if (tradeData.expiration_time) {
+      const expirationTime = new Date(tradeData.expiration_time);
+      hasExpired = now >= expirationTime;
+    } else if (tradeData.duration_minutes) {
+      const createdAt = new Date(tradeData.created_at);
+      const durationMs = parseInt(tradeData.duration_minutes) * 60 * 1000;
+      const shouldBeCompletedAt = new Date(createdAt.getTime() + durationMs);
+      hasExpired = now >= shouldBeCompletedAt;
+    }
+
+    // If the trade hasn't expired yet, we can still process it but log a warning
+    if (!hasExpired) {
+      console.log(
+        `Warning: Processing trade ${tradeData.id} before expiration time`,
+      );
+    }
+
     // For auto trading, check if the user has exceeded their daily attempts
     if (tradeData.trade_type === "AUTO") {
       // Get user's total deposit amount to determine their neuron level

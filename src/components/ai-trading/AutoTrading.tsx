@@ -32,6 +32,15 @@ interface AutoTradingProps {
   userId?: string;
 }
 
+interface SessionData {
+  endTime: string;
+  amount: string;
+  duration: string;
+  riskLevel: number[];
+  userId: string;
+  startTime: string;
+}
+
 export default function AutoTrading({
   onTradeComplete,
   balance = 0,
@@ -66,9 +75,78 @@ export default function AutoTrading({
   const tradeIntervalRef = useRef<number | null>(null);
   const retryTimeoutRef = useRef<number | null>(null);
 
-  // Check verification status on component mount
+  // Save session data to localStorage
+  const saveSessionData = (sessionData: SessionData) => {
+    try {
+      localStorage.setItem("autoTradingSession", JSON.stringify(sessionData));
+    } catch (error) {
+      console.error("Failed to save session data:", error);
+    }
+  };
+
+  // Load session data from localStorage
+  const loadSessionData = (): SessionData | null => {
+    try {
+      const data = localStorage.getItem("autoTradingSession");
+      return data ? JSON.parse(data) : null;
+    } catch (error) {
+      console.error("Failed to load session data:", error);
+      return null;
+    }
+  };
+
+  // Clear session data from localStorage
+  const clearSessionData = () => {
+    try {
+      localStorage.removeItem("autoTradingSession");
+    } catch (error) {
+      console.error("Failed to clear session data:", error);
+    }
+  };
+
+  // Check and restore session on component mount
   useEffect(() => {
+    const restoreSession = async () => {
+      const sessionData = loadSessionData();
+      if (sessionData) {
+        const endTime = new Date(sessionData.endTime);
+        const currentTime = new Date();
+
+        if (currentTime < endTime) {
+          // Session is still valid, restore it
+          const remainingTime = Math.floor(
+            (endTime.getTime() - currentTime.getTime()) / 1000,
+          );
+
+          if (remainingTime > 0) {
+            setAmount(sessionData.amount);
+            setDuration(sessionData.duration);
+            setRiskLevel(sessionData.riskLevel);
+            setIsRunning(true);
+            setTimeRemaining(remainingTime);
+
+            // Calculate progress based on elapsed time
+            const totalDuration = parseInt(sessionData.duration) * 60;
+            const elapsedTime = totalDuration - remainingTime;
+            const progressPercentage = (elapsedTime / totalDuration) * 100;
+            setProgress(progressPercentage);
+
+            console.log(
+              `Restored auto trading session with ${remainingTime} seconds remaining`,
+            );
+          } else {
+            // Session has expired, clear it
+            clearSessionData();
+          }
+        } else {
+          // Session has expired, clear it
+          clearSessionData();
+        }
+      }
+    };
+
     checkVerificationStatus();
+    restoreSession();
   }, []);
 
   const checkVerificationStatus = async () => {
@@ -325,6 +403,23 @@ export default function AutoTrading({
         return;
       }
 
+      // Calculate session end time
+      const startTime = new Date();
+      const endTime = new Date(
+        startTime.getTime() + parseInt(duration) * 60 * 1000,
+      );
+
+      // Save session data to localStorage
+      const sessionData: SessionData = {
+        endTime: endTime.toISOString(),
+        amount: amount,
+        duration: duration,
+        riskLevel: riskLevel,
+        userId: currentUserId,
+        startTime: startTime.toISOString(),
+      };
+      saveSessionData(sessionData);
+
       // Start the auto trading session
       setIsRunning(true);
       setTimeRemaining(parseInt(duration) * 60); // Convert minutes to seconds
@@ -364,6 +459,9 @@ export default function AutoTrading({
     setErrorMessage(null);
     setRetryCount(0);
     setIsRetrying(false);
+
+    // Clear session data from localStorage
+    clearSessionData();
 
     // Clear the timer interval
     if (timerIntervalRef.current) {
@@ -991,6 +1089,69 @@ export default function AutoTrading({
           if (prevTime <= 1) {
             // Time's up, stop auto trading
             stopAutoTrading();
+
+            // Force check for pending trades when time expires
+            setTimeout(async () => {
+              try {
+                // Try to process the trade directly via the edge function
+                const { data: pendingTrades } = await supabase
+                  .from("trading_history")
+                  .select("id")
+                  .eq("user_id", userId || "")
+                  .eq("status", "pending")
+                  .eq("trade_type", "AUTO")
+                  .order("created_at", { ascending: false })
+                  .limit(1);
+
+                if (pendingTrades && pendingTrades.length > 0) {
+                  const tradeId = pendingTrades[0].id;
+                  console.log(
+                    `Attempting to process pending trade ${tradeId} after session expiration`,
+                  );
+
+                  try {
+                    const response = await fetch(
+                      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process_trade`,
+                      {
+                        method: "POST",
+                        headers: {
+                          "Content-Type": "application/json",
+                          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+                        },
+                        body: JSON.stringify({
+                          tradeId: tradeId,
+                          userId: userId,
+                        }),
+                      },
+                    );
+
+                    if (response.ok) {
+                      console.log(
+                        `Successfully processed trade ${tradeId} after session expiration`,
+                      );
+                      if (onTradeComplete) {
+                        onTradeComplete();
+                      }
+                    } else {
+                      console.error(
+                        `Failed to process trade ${tradeId}: ${response.statusText}`,
+                      );
+                    }
+                  } catch (error) {
+                    console.error(
+                      "Error processing trade after expiration:",
+                      error,
+                    );
+                  }
+                }
+              } catch (error) {
+                console.error(
+                  "Error checking for pending trades after expiration:",
+                  error,
+                );
+              }
+            }, 1000);
+
             return 0;
           }
 
@@ -1011,7 +1172,7 @@ export default function AutoTrading({
         }
       };
     }
-  }, [isRunning, timeRemaining, duration]);
+  }, [isRunning, timeRemaining, duration, userId, onTradeComplete]);
 
   // Set up the auto trading execution at random intervals
   useEffect(() => {
