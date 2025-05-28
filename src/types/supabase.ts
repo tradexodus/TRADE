@@ -274,6 +274,7 @@ export type Database = {
           closed_at: string | null
           created_at: string | null
           crypto_pair: string
+          duration_minutes: string | null
           entry_price: number
           expiry_time: string | null
           id: string
@@ -288,6 +289,7 @@ export type Database = {
           closed_at?: string | null
           created_at?: string | null
           crypto_pair: string
+          duration_minutes?: string | null
           entry_price: number
           expiry_time?: string | null
           id?: string
@@ -302,6 +304,7 @@ export type Database = {
           closed_at?: string | null
           created_at?: string | null
           crypto_pair?: string
+          duration_minutes?: string | null
           entry_price?: number
           expiry_time?: string | null
           id?: string
@@ -324,9 +327,11 @@ export type Database = {
           duration_minutes: string | null
           entry_price: number | null
           expiration_time: string | null
+          expiry_time: string | null
           id: string
           original_balance: number | null
           profit_loss: number | null
+          session_id: string | null
           status: string
           trade_type: string
           user_id: string
@@ -341,9 +346,11 @@ export type Database = {
           duration_minutes?: string | null
           entry_price?: number | null
           expiration_time?: string | null
+          expiry_time?: string | null
           id?: string
           original_balance?: number | null
           profit_loss?: number | null
+          session_id?: string | null
           status: string
           trade_type: string
           user_id: string
@@ -358,9 +365,11 @@ export type Database = {
           duration_minutes?: string | null
           entry_price?: number | null
           expiration_time?: string | null
+          expiry_time?: string | null
           id?: string
           original_balance?: number | null
           profit_loss?: number | null
+          session_id?: string | null
           status?: string
           trade_type?: string
           user_id?: string
@@ -582,6 +591,38 @@ export type Database = {
       check_and_increment_attempts: {
         Args: { user_id_param: string; max_attempts_param: number }
         Returns: boolean
+      }
+      create_auto_trading_session_with_trade: {
+        Args: {
+          p_user_id: string
+          p_amount: number
+          p_duration_minutes: number
+          p_risk_level: number
+          p_crypto_pair: string
+          p_original_balance: number
+        }
+        Returns: string
+      }
+      get_active_trading_session: {
+        Args: { user_id_param: string }
+        Returns: {
+          id: string
+          amount: number
+          duration_minutes: number
+          risk_level: number
+          start_time: string
+          end_time: string
+          time_remaining_seconds: number
+        }[]
+      }
+      get_trades_ready_for_processing: {
+        Args: { p_user_id: string }
+        Returns: {
+          trade_id: string
+          session_id: string
+          amount: number
+          risk_level: number
+        }[]
       }
       get_user_trading_settings: {
         Args: { p_user_id: string }

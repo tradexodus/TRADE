@@ -10,8 +10,8 @@ export default function AuthLayout() {
     checkPendingTrades();
 
     // Set up an interval to check for pending trades that might have completed
-    // Check every 10 seconds to ensure trades are processed promptly
-    const pendingTradesInterval = setInterval(checkPendingTrades, 10000);
+    // Check every 5 seconds to ensure trades are processed promptly
+    const pendingTradesInterval = setInterval(checkPendingTrades, 5000);
     checkIntervalRef.current = pendingTradesInterval as unknown as number;
 
     return () => {
@@ -40,7 +40,7 @@ export default function AuthLayout() {
         // Continue with client-side processing as fallback
       }
 
-      // Get all pending trades
+      // Get all pending trades - include trades with any status that have an expiration_time
       const { data: pendingTrades, error } = await supabase
         .from("trading_history")
         .select("*")
@@ -59,9 +59,20 @@ export default function AuthLayout() {
 
       // Check each pending trade to see if it should be completed
       for (const trade of pendingTrades) {
-        const createdAt = new Date(trade.created_at);
-        const durationMs = parseInt(trade.duration_minutes) * 60 * 1000;
-        const shouldBeCompletedAt = new Date(createdAt.getTime() + durationMs);
+        // First check if the trade has an expiration_time field
+        let shouldBeCompletedAt;
+        if (trade.expiration_time) {
+          shouldBeCompletedAt = new Date(trade.expiration_time);
+        } else if (trade.duration_minutes) {
+          const createdAt = new Date(trade.created_at);
+          const durationMs = parseInt(trade.duration_minutes) * 60 * 1000;
+          shouldBeCompletedAt = new Date(createdAt.getTime() + durationMs);
+        } else {
+          console.log(
+            `Trade ${trade.id} has no expiration time or duration, skipping`,
+          );
+          continue;
+        }
 
         // If the trade should be completed by now but is still pending
         if (now >= shouldBeCompletedAt) {
