@@ -534,18 +534,21 @@ export type Database = {
       }
       wallet_settings: {
         Row: {
-          id: number
-          updated_at: string
+          created_at: string | null
+          id: string
+          updated_at: string | null
           wallet_address: string
         }
         Insert: {
-          id?: number
-          updated_at?: string
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
           wallet_address: string
         }
         Update: {
-          id?: number
-          updated_at?: string
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
           wallet_address?: string
         }
         Relationships: []
