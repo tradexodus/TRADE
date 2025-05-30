@@ -20,12 +20,41 @@ export default function DepositPage() {
 
   useEffect(() => {
     async function fetchWalletAddress() {
-      const { data } = await supabase
-        .from("wallet_settings")
-        .select("wallet_address")
-        .single();
-      if (data) {
-        setWalletAddress(data.wallet_address);
+      try {
+        // Try to get the wallet address
+        const { data, error } = await supabase
+          .from("wallet_settings")
+          .select("wallet_address")
+          .single();
+
+        if (error) {
+          // If table doesn't exist or no record found
+          console.error("Error fetching wallet address:", error);
+
+          // Create a default wallet address entry
+          const defaultAddress = "TRC20WalletAddressDefault123456789";
+          const { data: insertData, error: insertError } = await supabase
+            .from("wallet_settings")
+            .insert([{ wallet_address: defaultAddress }])
+            .select("wallet_address")
+            .single();
+
+          if (insertError) {
+            console.error(
+              "Error creating default wallet address:",
+              insertError,
+            );
+            // Keep the default hardcoded address as fallback
+            setWalletAddress(defaultAddress);
+          } else if (insertData) {
+            setWalletAddress(insertData.wallet_address);
+          }
+        } else if (data) {
+          setWalletAddress(data.wallet_address);
+        }
+      } catch (err) {
+        console.error("Unexpected error in fetchWalletAddress:", err);
+        // Keep the default hardcoded address as ultimate fallback
       }
     }
     fetchWalletAddress();
@@ -99,7 +128,6 @@ export default function DepositPage() {
         </Button>
         <h1 className="text-2xl font-bold">Deposit USDT</h1>
       </div>
-
       <div className="space-y-6">
         <Card>
           <CardHeader>
@@ -161,7 +189,10 @@ export default function DepositPage() {
             <CardContent>
               <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
                 <li>Copy the USDT wallet address above (TRC20 network)</li>
-                <li>Send USDT from your wallet to this address</li>
+                <li>
+                  Send USDT from your wallet to this address (min amount
+                  200usdt){" "}
+                </li>
                 <li>Take a screenshot of the successful transaction</li>
                 <li>Enter the amount and upload the screenshot</li>
                 <li>Submit the deposit request</li>
@@ -175,7 +206,6 @@ export default function DepositPage() {
           </Button>
         </form>
       </div>
-
       {/* Partnership Logos */}
       <Card className="mt-8">
         <CardHeader>
@@ -220,7 +250,6 @@ export default function DepositPage() {
           </div>
         </CardContent>
       </Card>
-
       {/* Policies and Terms */}
       <div className="mt-8 text-center space-y-4">
         <Separator />
