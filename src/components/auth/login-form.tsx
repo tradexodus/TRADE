@@ -1,240 +1,250 @@
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { TradingViewAdvancedChart } from "@/components/dashboard/trading-view-advanced-chart";
+import { AiMarketAnalysisCard } from "@/components/dashboard/AiMarketAnalysisCard";
+import { BalanceCard } from "@/components/dashboard/BalanceCard";
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Link, useNavigate } from "react-router-dom";
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import {
+  Menu,
+  User,
+  LayoutDashboard,
+  Users,
+  ArrowDownToLine,
+  ArrowUpFromLine,
+  History,
+  Settings,
+  LogOut,
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "../ui/button";
 import { supabase } from "@/lib/supabase";
-import { useState, useEffect } from "react";
-import { useToast } from "@/components/ui/use-toast";
-import { Mail } from "lucide-react";
-import {
-  setSessionToken,
-  saveFormProgress,
-  getFormProgress,
-  clearFormProgress,
-} from "@/lib/cookies";
+import { Separator } from "@/components/ui/separator";
+import { useEffect, useState } from "react";
 
-const formSchema = z.object({
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-});
+type UserAccount = {
+  account_id: number;
+  balance: number;
+  profit?: number;
+};
 
-export default function LoginForm() {
-  const [isLoading, setIsLoading] = useState(false);
+type UserProfile = {
+  name?: string;
+  email?: string;
+};
+
+export default function DashboardPage() {
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const [account, setAccount] = useState<UserAccount | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
-  });
-
-  // Load saved form progress on component mount
   useEffect(() => {
-    const savedProgress = getFormProgress("login");
-    if (savedProgress) {
-      if (savedProgress.email) {
-        form.setValue("email", savedProgress.email);
-      }
-      // Note: We don't restore password for security reasons
-    }
-  }, [form]);
+    async function fetchUserData() {
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession();
 
-  // Save form progress when email changes
-  useEffect(() => {
-    const subscription = form.watch((value) => {
-      if (value.email) {
-        saveFormProgress("login", { email: value.email });
-      }
-    });
-    return () => subscription.unsubscribe();
-  }, [form]);
-
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    try {
-      setIsLoading(true);
-      const { error } = await supabase.auth.signInWithPassword({
-        email: values.email,
-        password: values.password,
-      });
-
-      if (error) {
-        form.setError("password", {
-          type: "manual",
-          message: "The email or password you entered is incorrect.",
-        });
+      if (sessionError || !session) {
+        navigate("/login");
         return;
       }
 
-      // Get the session and store it in cookie
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (session?.access_token) {
-        setSessionToken(session.access_token);
+      const user = session.user;
+
+      setProfile({
+        name: user.user_metadata?.name || "User",
+        email: user.email,
+      });
+
+      const { data: accountData, error: accountError } = await supabase
+        .from("user_accounts")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
+      if (accountError) {
+        console.error("Error fetching account:", accountError);
+        return;
       }
 
-      // Clear form progress after successful login
-      clearFormProgress("login");
-
-      navigate("/dashboard");
-    } catch (error) {
-      form.setError("password", {
-        type: "manual",
-        message: "Something went wrong. Please try again.",
-      });
-    } finally {
-      setIsLoading(false);
+      setAccount(accountData);
+      setLoading(false);
     }
-  }
 
-  async function handleGoogleSignIn() {
-    try {
-      setIsLoading(true);
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: "https://www.tradexodus.com/dashboard",
-        },
-      });
+    fetchUserData();
+  }, [navigate]);
 
-      if (error) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to sign in with Google. Please try again.",
-        });
-      }
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Something went wrong. Please try again.",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    navigate("/login");
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-muted-foreground text-sm">Loading dashboard...</p>
+      </div>
+    );
   }
 
   return (
-    <div className="w-full max-w-md space-y-8 p-8 bg-card rounded-lg border">
-      <div className="space-y-2 text-center">
-        <h1 className="text-2xl font-bold">Welcome back</h1>
-        <p className="text-muted-foreground">Enter your credentials to login</p>
-      </div>
-
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder="Enter your email"
-                    {...field}
-                    type="email"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+    <div className="min-h-screen bg-background">
+      {/* Header with Hamburger Menu */}
+      <header className="border-b">
+        <div className="flex items-center justify-between px-4 py-3">
+          <img
+            src="/images/tempo-image-20250222T194809206Z.png"
+            alt="Exodus Trade©"
+            className="h-8"
           />
-
-          <FormField
-            control={form.control}
-            name="password"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Password</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder="Enter your password"
-                    {...field}
-                    type="password"
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Menu className="h-6 w-6" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-80">
+              <SheetHeader className="pb-4">
+                <div className="flex items-center gap-4 mb-4">
+                  <img
+                    src="/images/tempo-image-20250222T194809206Z.png"
+                    alt="Exodus Trade©"
+                    className="h-8"
                   />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                </div>
+                <SheetTitle className="text-lg font-bold">
+                  {profile?.name || "User"}
+                </SheetTitle>
+                <p className="text-sm text-muted-foreground">{profile?.email}</p>
+                <p className="text-sm font-medium">
+                  Account ID: {account?.account_id}
+                </p>
+              </SheetHeader>
+              <Separator className="my-4" />
+              <nav className="flex flex-col gap-1">
+                <Button
+                  variant="ghost"
+                  className="justify-between rounded-xl"
+                  onClick={() => navigate("/account")}
+                >
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4 text-[#0052CC]" />
+                    Account
+                  </div>
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="justify-between rounded-xl"
+                  onClick={() => navigate("/dashboard")}
+                >
+                  <div className="flex items-center gap-2">
+                    <LayoutDashboard className="h-4 w-4 text-[#0052CC]" />
+                    Dashboard
+                  </div>
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="justify-between rounded-xl"
+                  onClick={() => navigate("/copy-trading")}
+                >
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4 text-[#0052CC]" />
+                    Copy Trading
+                  </div>
+                  <span className="text-xs text-muted-foreground">
+                    Follow top traders
+                  </span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="justify-between rounded-xl"
+                  onClick={() => navigate("/deposit")}
+                >
+                  <div className="flex items-center gap-2">
+                    <ArrowDownToLine className="h-4 w-4 text-[#0052CC]" />
+                    Deposit
+                  </div>
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="justify-between rounded-xl"
+                  onClick={() => navigate("/withdrawal")}
+                >
+                  <div className="flex items-center gap-2">
+                    <ArrowUpFromLine className="h-4 w-4 text-[#0052CC]" />
+                    Withdrawal
+                  </div>
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="justify-between rounded-xl"
+                  onClick={() => navigate("/history")}
+                >
+                  <div className="flex items-center gap-2">
+                    <History className="h-4 w-4 text-[#0052CC]" />
+                    Transaction History
+                  </div>
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="justify-between rounded-xl"
+                  onClick={() => navigate("/settings")}
+                >
+                  <div className="flex items-center gap-2">
+                    <Settings className="h-4 w-4 text-[#0052CC]" />
+                    Settings
+                  </div>
+                </Button>
+                <Separator className="my-4" />
+                <Button
+                  variant="ghost"
+                  className="justify-between rounded-xl text-red-500"
+                  onClick={handleSignOut}
+                >
+                  <div className="flex items-center gap-2">
+                    <LogOut className="h-4 w-4" />
+                    Log out
+                  </div>
+                </Button>
+              </nav>
+            </SheetContent>
+          </Sheet>
+        </div>
+      </header>
 
-          <div className="space-y-4">
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              <Mail className="w-4 h-4 mr-2" />
-              Login with Email
-            </Button>
+      {/* Main Content */}
+      <main className="container mx-auto p-4 space-y-6">
+        <BalanceCard
+          accountId={account?.account_id?.toString()}
+          balance={account?.balance || null}
+          profit={account?.profit || null}
+          loading={loading}
+        />
 
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-2 text-muted-foreground">
-                  Or continue with
-                </span>
-              </div>
+        <Card className="w-full">
+          <CardHeader>
+            <CardTitle>Market Overview</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[500px]">
+              <TradingViewAdvancedChart
+                symbol="NASDAQ:AAPL"
+                height={500}
+                theme="dark"
+                allowSymbolChange={true}
+              />
             </div>
+          </CardContent>
+        </Card>
 
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full"
-              disabled={isLoading}
-              onClick={handleGoogleSignIn}
-            >
-              <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
-                <path
-                  fill="#4285F4"
-                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                />
-                <path
-                  fill="#34A853"
-                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                />
-                <path
-                  fill="#FBBC05"
-                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                />
-                <path
-                  fill="#EA4335"
-                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                />
-              </svg>
-              Continue with Google
-            </Button>
-
-            <div className="text-center mt-2">
-              <Link
-                to="/forgot-password"
-                className="text-primary hover:underline text-sm"
-              >
-                Forgot password?
-              </Link>
-            </div>
-            <div className="text-center text-sm">
-              Don't have an account?{" "}
-              <Link to="/signup" className="text-primary hover:underline">
-                Sign up
-              </Link>
-            </div>
-          </div>
-        </form>
-      </Form>
+        <AiMarketAnalysisCard />
+      </main>
     </div>
   );
 }
