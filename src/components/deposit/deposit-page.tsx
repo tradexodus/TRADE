@@ -233,7 +233,7 @@ export default function DepositPage() {
             </div>
             <div className="flex flex-col items-center">
               <img
-                src="https://cryptologos.cc/logos/tether-usdt-logo.png"
+                src="https://assets.coingecko.com/coins/images/325/large/Tether.png"
                 alt="Tether"
                 className="h-12 object-contain"
               />
