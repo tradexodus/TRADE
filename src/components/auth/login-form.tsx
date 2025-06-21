@@ -106,8 +106,7 @@ export default function LoginForm() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo:
-            "https://unruffled-dewdney9-t9g3a.view-3.tempo-dev.app/dashboard",
+          redirectTo: "https://www.tradexodus.com/dashboard",
         },
       });
 

@@ -1,13 +1,14 @@
 import { Suspense, lazy, useEffect } from "react";
 import CopyTrading from "./pages/copy-trading";
-import { useRoutes, Routes, Route } from "react-router-dom";
+import { useRoutes, Routes, Route, useNavigate } from "react-router-dom";
 import Home from "./components/home";
 import routes from "tempo-routes";
 import { Toaster } from "@/components/ui/toaster";
 import AuthLayout from "./components/layout/AuthLayout";
 import { LoadingScreen } from "./components/ui/loading-screen";
 import { ThemeToggle } from "./components/ui/theme-toggle";
-import { getThemePreference } from "@/lib/cookies";
+import { getThemePreference, setSessionToken } from "@/lib/cookies";
+import { supabase } from "@/lib/supabase";
 
 const LoginPage = lazy(() => import("./pages/login"));
 const SignupPage = lazy(() => import("./pages/signup"));
@@ -26,6 +27,8 @@ const WithdrawalPage = lazy(() => import("./pages/withdrawal"));
 const AiTradingPage = lazy(() => import("./pages/ai-trading"));
 
 function App() {
+  const navigate = useNavigate();
+
   // Apply theme from cookie on app initialization
   useEffect(() => {
     const cookieTheme = getThemePreference();
@@ -39,6 +42,31 @@ function App() {
       htmlElement.classList.remove("dark");
     }
   }, []);
+
+  // ✅ Handle OAuth redirect with tokens in hash
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash.includes("access_token")) {
+      const params = new URLSearchParams(hash.substring(1));
+      const access_token = params.get("access_token");
+      const refresh_token = params.get("refresh_token");
+
+      if (access_token && refresh_token) {
+        supabase.auth
+          .setSession({ access_token, refresh_token })
+          .then(({ error }) => {
+            if (!error) {
+              setSessionToken(access_token);
+              window.history.replaceState(null, "", window.location.pathname); // remove tokens from URL
+              navigate("/dashboard");
+            } else {
+              console.error("Error restoring session from Google OAuth", error);
+              navigate("/login");
+            }
+          });
+      }
+    }
+  }, [navigate]);
 
   return (
     <Suspense fallback={<LoadingScreen />}>
@@ -68,7 +96,6 @@ function App() {
             <Route path="/history" element={<HistoryPage />} />
             <Route path="/trade-history" element={<HistoryPage />} />
             <Route path="/settings" element={<SettingsPage />} />
-
             <Route path="/withdrawal" element={<WithdrawalPage />} />
             <Route path="/ai-trading" element={<AiTradingPage />} />
           </Route>
