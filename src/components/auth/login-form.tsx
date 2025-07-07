@@ -71,6 +71,23 @@ export default function LoginForm() {
       });
 
       if (error) {
+        // Check if the error indicates a banned user
+        if (
+          error.message.includes("User is banned") ||
+          error.message.includes("Account has been banned") ||
+          error.message.includes("banned") ||
+          error.message.includes("suspended")
+        ) {
+          toast({
+            variant: "destructive",
+            title: "Account Banned",
+            description:
+              "Your account has been banned. Please contact support for assistance.",
+          });
+          return;
+        }
+
+        // For other authentication errors, show generic message
         form.setError("password", {
           type: "manual",
           message: "The email or password you entered is incorrect.",
