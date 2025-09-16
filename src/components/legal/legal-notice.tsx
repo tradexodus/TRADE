@@ -1,9 +1,20 @@
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Download, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 
 export default function LegalNotice() {
   const navigate = useNavigate();
+
+  const handleDownload = (filename: string, displayName: string) => {
+    const link = document.createElement('a');
+    link.href = `/documents/${filename}`;
+    link.download = filename;
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-8">
@@ -22,6 +33,69 @@ export default function LegalNotice() {
       </div>
 
       <div className="prose prose-invert max-w-none space-y-8">
+        <section>
+          <h2 className="text-xl font-bold">OFFICIAL DOCUMENTS</h2>
+          <p className="mb-6">
+            Download official platform documentation required for registration and government compliance purposes.
+          </p>
+          
+          <div className="grid md:grid-cols-2 gap-4 not-prose">
+            <Card className="bg-card border-border">
+              <CardHeader className="pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-primary/10 rounded-lg">
+                    <FileText className="h-6 w-6 text-primary" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">Registration Document</CardTitle>
+                    <CardDescription>Eden Beta Software Program Agreement</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Official beta program agreement document for platform registration purposes.
+                </p>
+                <Button 
+                  onClick={() => handleDownload('eden-tos-20201110-v1.pdf', 'Registration Document')}
+                  className="w-full"
+                  variant="outline"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download PDF
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-card border-border">
+              <CardHeader className="pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-primary/10 rounded-lg">
+                    <FileText className="h-6 w-6 text-primary" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">Government Documentation</CardTitle>
+                    <CardDescription>Exodus Terms of Use Agreement</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Official terms of use document for government compliance and regulatory purposes.
+                </p>
+                <Button 
+                  onClick={() => handleDownload('exodus-tos-20250704-v36.pdf', 'Government Documentation')}
+                  className="w-full"
+                  variant="outline"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download PDF
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </section>
+
         <section>
           <h2 className="text-xl font-bold">LICENSES AND REGISTRATIONS</h2>
           <p>

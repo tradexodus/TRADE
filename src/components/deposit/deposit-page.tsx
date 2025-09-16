@@ -2,62 +2,134 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, ExternalLink } from "lucide-react";
+import {
+  ArrowLeft,
+  ExternalLink,
+  Copy,
+  CheckCircle,
+  Check,
+  ChevronsUpDown,
+} from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getNeuronLevel } from "@/lib/neuron-levels";
 import { Separator } from "@/components/ui/separator";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { cn } from "@/lib/utils";
+import { TRC20Icon, BEP20Icon, ERC20Icon } from "@/components/ui/network-icons";
+
+const NETWORKS = [
+  {
+    id: "trc20",
+    name: "TRC20",
+    icon: TRC20Icon,
+    description: "Tron Network - Low fees",
+    address: "TRC20WalletAddressDefault123456789",
+  },
+  {
+    id: "bep20",
+    name: "BEP20",
+    icon: BEP20Icon,
+    description: "BSC Network - Fast transactions",
+    address: "0xBEP20WalletAddressDefault123456789",
+  },
+  {
+    id: "erc20",
+    name: "ERC20",
+    icon: ERC20Icon,
+    description: "Ethereum Network - Most secure",
+    address: "0xERC20WalletAddressDefault123456789",
+  },
+];
 
 export default function DepositPage() {
   const [amount, setAmount] = useState("");
   const [screenshot, setScreenshot] = useState<File | null>(null);
-  const [walletAddress, setWalletAddress] = useState("iorefunwe9032rf");
+  const [selectedNetwork, setSelectedNetwork] = useState(NETWORKS[0]);
+  const [walletAddresses, setWalletAddresses] = useState<{
+    [key: string]: string;
+  }>({});
   const [loading, setLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
-    async function fetchWalletAddress() {
+    async function fetchWalletAddresses() {
       try {
-        // Try to get the wallet address
+        // Try to get the wallet addresses for all networks
         const { data, error } = await supabase
           .from("wallet_settings")
-          .select("wallet_address")
+          .select("*")
           .single();
 
         if (error) {
-          // If table doesn't exist or no record found
-          console.error("Error fetching wallet address:", error);
+          console.error("Error fetching wallet addresses:", error);
 
-          // Create a default wallet address entry
-          const defaultAddress = "TRC20WalletAddressDefault123456789";
+          // Create default wallet addresses for all networks
+          const defaultAddresses = {
+            trc20_address: NETWORKS[0].address,
+            bep20_address: NETWORKS[1].address,
+            erc20_address: NETWORKS[2].address,
+          };
+
           const { data: insertData, error: insertError } = await supabase
             .from("wallet_settings")
-            .insert([{ wallet_address: defaultAddress }])
-            .select("wallet_address")
+            .insert([defaultAddresses])
+            .select("*")
             .single();
 
           if (insertError) {
             console.error(
-              "Error creating default wallet address:",
+              "Error creating default wallet addresses:",
               insertError,
             );
-            // Keep the default hardcoded address as fallback
-            setWalletAddress(defaultAddress);
+            // Use hardcoded defaults as fallback
+            setWalletAddresses({
+              trc20: NETWORKS[0].address,
+              bep20: NETWORKS[1].address,
+              erc20: NETWORKS[2].address,
+            });
           } else if (insertData) {
-            setWalletAddress(insertData.wallet_address);
+            setWalletAddresses({
+              trc20: insertData.trc20_address || NETWORKS[0].address,
+              bep20: insertData.bep20_address || NETWORKS[1].address,
+              erc20: insertData.erc20_address || NETWORKS[2].address,
+            });
           }
         } else if (data) {
-          setWalletAddress(data.wallet_address);
+          setWalletAddresses({
+            trc20: data.trc20_address || NETWORKS[0].address,
+            bep20: data.bep20_address || NETWORKS[1].address,
+            erc20: data.erc20_address || NETWORKS[2].address,
+          });
         }
       } catch (err) {
-        console.error("Unexpected error in fetchWalletAddress:", err);
-        // Keep the default hardcoded address as ultimate fallback
+        console.error("Unexpected error in fetchWalletAddresses:", err);
+        // Use hardcoded defaults as ultimate fallback
+        setWalletAddresses({
+          trc20: NETWORKS[0].address,
+          bep20: NETWORKS[1].address,
+          erc20: NETWORKS[2].address,
+        });
       }
     }
-    fetchWalletAddress();
+    fetchWalletAddresses();
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -85,13 +157,15 @@ export default function DepositPage() {
 
       const depositAmount = parseFloat(amount);
 
-      // Insert the deposit record - neuron level will be updated only after approval
+      // Insert the deposit record with network information
       const { error } = await supabase.from("deposits").insert([
         {
           user_id: user.id,
           amount: depositAmount,
           status: "pending",
           screenshot_url: screenshotUrl,
+          network: selectedNetwork.id,
+          wallet_address: walletAddresses[selectedNetwork.id],
         },
       ]);
 
@@ -99,7 +173,7 @@ export default function DepositPage() {
 
       toast({
         title: "Deposit request submitted",
-        description: "Your deposit request is being processed.",
+        description: `Your ${selectedNetwork.name} deposit request is being processed.`,
       });
 
       navigate("/dashboard");
@@ -115,170 +189,287 @@ export default function DepositPage() {
     }
   }
 
+  const handleCopyAddress = () => {
+    const address =
+      walletAddresses[selectedNetwork.id] || selectedNetwork.address;
+    navigator.clipboard.writeText(address);
+    setCopied(true);
+    toast({
+      title: "Copied!",
+      description: "Wallet address copied to clipboard",
+    });
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const currentAddress =
+    walletAddresses[selectedNetwork.id] || selectedNetwork.address;
+
   return (
-    <div className="max-w-8xl mx-auto space-y-8">
-      <div className="flex items-center gap-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => navigate(-1)}
-          className="rounded-full"
-        >
-          <ArrowLeft className="h-6 w-6" />
-        </Button>
-        <h1 className="text-2xl font-bold">Deposit USDT</h1>
-      </div>
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>USDT Wallet Address (TRC20)</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <div className="flex gap-2">
-              <Input value={walletAddress} readOnly />
-              <Button
-                onClick={() => {
-                  navigator.clipboard.writeText(walletAddress);
-                  toast({
-                    title: "Copied!",
-                    description: "Wallet address copied to clipboard",
-                  });
-                }}
-              >
-                Copy
-              </Button>
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <div className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
+        <div className="max-w-2xl mx-auto px-4 py-4">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate(-1)}
+              className="rounded-full"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div>
+              <h1 className="text-xl font-semibold">Deposit USDT</h1>
+              <p className="text-sm text-muted-foreground">
+                Add funds to your account
+              </p>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
+        {/* Network Selection */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">Select Network</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Popover open={open} onOpenChange={setOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={open}
+                  className="w-full justify-between h-12"
+                >
+                  <div className="flex items-center gap-3">
+                    <selectedNetwork.icon className="h-6 w-6" />
+                    <div className="text-left">
+                      <p className="font-medium">{selectedNetwork.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {selectedNetwork.description}
+                      </p>
+                    </div>
+                  </div>
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-full p-0" align="start">
+                <Command>
+                  <CommandList>
+                    <CommandEmpty>No network found.</CommandEmpty>
+                    <CommandGroup>
+                      {NETWORKS.map((network) => (
+                        <CommandItem
+                          key={network.id}
+                          value={network.id}
+                          onSelect={(currentValue) => {
+                            const selected = NETWORKS.find(
+                              (n) => n.id === currentValue,
+                            );
+                            if (selected) {
+                              setSelectedNetwork(selected);
+                            }
+                            setOpen(false);
+                          }}
+                          className="flex items-center gap-3 p-3"
+                        >
+                          <network.icon className="h-8 w-8" />
+                          <div className="flex-1">
+                            <p className="font-medium">{network.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {network.description}
+                            </p>
+                          </div>
+                          <Check
+                            className={cn(
+                              "ml-auto h-4 w-4",
+                              selectedNetwork.id === network.id
+                                ? "opacity-100"
+                                : "opacity-0",
+                            )}
+                          />
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </CardContent>
         </Card>
 
+        {/* Wallet Address Card */}
+        <Card className="border-2 border-green-500/20">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              USDT Wallet Address ({selectedNetwork.name})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-2">
+              <Input
+                value={currentAddress}
+                readOnly
+                className="font-mono text-sm bg-muted/50"
+              />
+              <Button
+                onClick={handleCopyAddress}
+                variant="outline"
+                className="shrink-0"
+              >
+                {copied ? (
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                ) : (
+                  <Copy className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              Only send USDT via {selectedNetwork.name} network to this address
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Deposit Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Deposit Details</CardTitle>
+              <CardTitle className="text-lg">Deposit Details</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label>Amount (USDT)</Label>
+                <Label htmlFor="amount">Amount (USDT)</Label>
                 <Input
+                  id="amount"
                   type="number"
                   required
                   min="1"
                   step="any"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  placeholder="Enter amount"
+                  placeholder="Minimum 1 USDT"
+                  className="text-lg"
                 />
+                <p className="text-xs text-muted-foreground">
+                  Minimum deposit: 1 USDT
+                </p>
               </div>
 
               <div className="space-y-2">
-                <Label>Transaction Screenshot</Label>
+                <Label htmlFor="screenshot">Transaction Screenshot</Label>
                 <Input
+                  id="screenshot"
                   type="file"
                   required
                   accept="image/*"
                   onChange={(e) => setScreenshot(e.target.files?.[0] || null)}
+                  className="file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
                 />
+                <p className="text-xs text-muted-foreground">
+                  Upload a clear screenshot of your transaction
+                </p>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          {/* Instructions */}
+          <Card className="bg-muted/30">
             <CardHeader>
-              <CardTitle>Instructions</CardTitle>
+              <CardTitle className="text-lg">How to Deposit</CardTitle>
             </CardHeader>
             <CardContent>
-              <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
-                <li>Copy the USDT wallet address above (TRC20 network)</li>
-                <li>
-                  Send USDT from your wallet to this address (min amount
-                  200usdt){" "}
-                </li>
-                <li>Take a screenshot of the successful transaction</li>
-                <li>Enter the amount and upload the screenshot</li>
-                <li>Submit the deposit request</li>
-                <li>Wait for approval (usually within 24 hours)</li>
-              </ol>
+              <div className="space-y-3">
+                {[
+                  `Select your preferred network (${selectedNetwork.name})`,
+                  "Copy the USDT wallet address above",
+                  `Send USDT from your wallet (${selectedNetwork.name} network only)`,
+                  "Take a screenshot of the successful transaction",
+                  "Enter the amount and upload the screenshot",
+                  "Submit and wait for approval (within 24 hours)",
+                ].map((step, index) => (
+                  <div key={index} className="flex gap-3 items-start">
+                    <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center font-medium shrink-0 mt-0.5">
+                      {index + 1}
+                    </div>
+                    <p className="text-sm">{step}</p>
+                  </div>
+                ))}
+              </div>
             </CardContent>
           </Card>
 
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Processing..." : "Confirm Deposit"}
+          <Button
+            type="submit"
+            className="w-full h-12 text-base font-medium"
+            disabled={loading}
+          >
+            {loading
+              ? "Processing..."
+              : `Confirm ${selectedNetwork.name} Deposit`}
           </Button>
         </form>
-      </div>
-      {/* Partnership Logos */}
-      <Card className="mt-8">
-        <CardHeader>
-          <CardTitle>Supported Payment Methods</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap justify-center gap-6 items-center">
-            <div className="flex flex-col items-center">
-              <img
-                src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/200px-Mastercard-logo.svg.png"
-                alt="Mastercard"
-                className="h-12 object-contain"
-              />
-              <span className="text-xs text-muted-foreground mt-1">
-                Mastercard
-              </span>
+
+        {/* Payment Methods */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-center">Supported Networks</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex justify-center gap-8 items-center">
+              <div className="flex flex-col items-center">
+                <img
+                  src="https://assets.coingecko.com/coins/images/325/large/Tether.png"
+                  alt="Tether"
+                  className="h-10 w-10 object-contain"
+                />
+                <span className="text-xs text-muted-foreground mt-1">USDT</span>
+              </div>
+              {NETWORKS.map((network) => (
+                <div key={network.id} className="flex flex-col items-center">
+                  <network.icon className="h-10 w-10" />
+                  <span className="text-xs text-muted-foreground mt-1">
+                    {network.name}
+                  </span>
+                </div>
+              ))}
             </div>
-            <div className="flex flex-col items-center">
-              <img
-                src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/200px-Visa_Inc._logo.svg.png"
-                alt="Visa"
-                className="h-12 object-contain"
-              />
-              <span className="text-xs text-muted-foreground mt-1">Visa</span>
-            </div>
-            <div className="flex flex-col items-center">
-              <img
-                src="https://assets.coingecko.com/coins/images/325/large/Tether.png"
-                alt="Tether"
-                className="h-12 object-contain"
-              />
-              <span className="text-xs text-muted-foreground mt-1">Tether</span>
-            </div>
-            <div className="flex flex-col items-center">
-              <img
-                src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/PayPal.svg/200px-PayPal.svg.png"
-                alt="PayPal"
-                className="h-12 object-contain"
-              />
-              <span className="text-xs text-muted-foreground mt-1">PayPal</span>
-            </div>
+          </CardContent>
+        </Card>
+
+        {/* Footer Links */}
+        <div className="text-center space-y-4 pt-4">
+          <Separator />
+          <div className="text-sm text-muted-foreground flex flex-wrap justify-center gap-x-6 gap-y-2">
+            <Link
+              to="/terms"
+              className="flex items-center hover:text-primary transition-colors"
+            >
+              <span>Terms of Service</span>
+              <ExternalLink className="ml-1 h-3 w-3" />
+            </Link>
+            <Link
+              to="/privacy"
+              className="flex items-center hover:text-primary transition-colors"
+            >
+              <span>Privacy Policy</span>
+              <ExternalLink className="ml-1 h-3 w-3" />
+            </Link>
+            <Link
+              to="/legal"
+              className="flex items-center hover:text-primary transition-colors"
+            >
+              <span>Legal Notice</span>
+              <ExternalLink className="ml-1 h-3 w-3" />
+            </Link>
           </div>
-        </CardContent>
-      </Card>
-      {/* Policies and Terms */}
-      <div className="mt-8 text-center space-y-4">
-        <Separator />
-        <div className="text-sm text-muted-foreground flex flex-wrap justify-center gap-x-6 gap-y-2">
-          <Link
-            to="/terms"
-            className="flex items-center hover:text-primary transition-colors"
-          >
-            <span>Terms of Service</span>
-            <ExternalLink className="ml-1 h-3 w-3" />
-          </Link>
-          <Link
-            to="/privacy"
-            className="flex items-center hover:text-primary transition-colors"
-          >
-            <span>Privacy Policy</span>
-            <ExternalLink className="ml-1 h-3 w-3" />
-          </Link>
-          <Link
-            to="/legal"
-            className="flex items-center hover:text-primary transition-colors"
-          >
-            <span>Legal Notice</span>
-            <ExternalLink className="ml-1 h-3 w-3" />
-          </Link>
+          <p className="text-xs text-muted-foreground">
+            By using our deposit service, you agree to our terms and conditions.
+          </p>
         </div>
-        <p className="text-xs text-muted-foreground">
-          By using our deposit service, you agree to our terms and conditions.
-        </p>
       </div>
     </div>
   );

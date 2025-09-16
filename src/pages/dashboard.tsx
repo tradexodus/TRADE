@@ -108,7 +108,7 @@ export default function Dashboard() {
 
   return (
     <AuthenticatedLayout>
-      <div className="container mx-auto px-1 sm:px-1 space-y-1 sm:space-y-2 py-0 sm:py-0">
+      <div className="container mx-auto px-4 sm:px-1 space-y-1 sm:space-y-2 py-0 sm:py-0">
         <div className="flex items-center justify-between py-2">
           <h1 className="text-lg sm:text-xl md:text-2xl font-bold">
             Dashboard
@@ -154,9 +154,9 @@ export default function Dashboard() {
         </div>
       </div>
       {/* Market Overview Widget - Full width at the bottom */}
-      <div className="mt-4 sm:mt-3">
+      <div className="mt-4 sm:mt-3 px-4">
         <Card className="overflow-hidden border-0 shadow-lg">
-          <CardHeader className="bg-gradient-to-r from-blue-900/30 to-blue-800/10 py-2 sm:py-3">
+          <CardHeader className="bg-gradient-to-r from-blue-900/30 to-blue-800/10 py-3 sm:py-3">
             <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
               <LineChart className="h-3 w-3 sm:h-4 sm:w-4 text-blue-400" />
               <span>Market Overview</span>

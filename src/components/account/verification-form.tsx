@@ -9,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { CountrySelect } from "@/components/ui/country-select";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
 import { ToastAction } from "@/components/ui/toast";
@@ -158,11 +159,10 @@ export default function VerificationForm({
 
               <div className="space-y-2">
                 <Label>Nationality</Label>
-                <Input
-                  required
+                <CountrySelect
                   value={nationality}
-                  onChange={(e) => setNationality(e.target.value)}
-                  placeholder="Enter your nationality"
+                  onValueChange={setNationality}
+                  placeholder="Select your nationality"
                 />
               </div>
             </div>

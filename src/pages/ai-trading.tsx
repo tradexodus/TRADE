@@ -171,7 +171,7 @@ export default function AiTrading() {
 
   return (
     <AuthenticatedLayout>
-      <div className="container mx-auto px-0 space-y-4 py-0 max-w-full pb-20 md:pb-4">
+      <div className="container mx-auto px-4 space-y-4 py-2 max-w-full pb-20 md:pb-4">
         <div className="flex items-center justify-between">
           <MobileAccountInfo />
         </div>

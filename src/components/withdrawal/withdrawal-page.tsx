@@ -1,7 +1,14 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ArrowLeft, ExternalLink, Wallet, AlertTriangle } from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
+import { useToast } from "@/components/ui/use-toast";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,8 +19,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useToast } from "@/components/ui/use-toast";
-import { Wallet } from "lucide-react";
 import { WithdrawalPasswordDialog } from "./withdrawal-password-dialog";
 
 export default function WithdrawalPage() {
@@ -30,6 +35,7 @@ export default function WithdrawalPage() {
   const [isVerified, setIsVerified] = useState<boolean>(false);
   const [hasWithdrawalPassword, setHasWithdrawalPassword] =
     useState<boolean>(false);
+  const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -119,6 +125,15 @@ export default function WithdrawalPage() {
 
     const amountValue = parseFloat(amount);
 
+    if (amountValue < 50) {
+      toast({
+        variant: "destructive",
+        title: "Minimum Amount",
+        description: "Minimum withdrawal amount is $50",
+      });
+      return false;
+    }
+
     if (withdrawalType === "profit" && amountValue > userProfit) {
       toast({
         variant: "destructive",
@@ -158,10 +173,8 @@ export default function WithdrawalPage() {
 
   const handleConfirmWithdrawal = () => {
     if (hasWithdrawalPassword) {
-      // If user has a withdrawal password, show password dialog
       setShowPasswordDialog(true);
     } else {
-      // If no withdrawal password is set, proceed with withdrawal
       processWithdrawal();
     }
   };
@@ -193,7 +206,6 @@ export default function WithdrawalPage() {
         return;
       }
 
-      // Password is correct, proceed with withdrawal
       await processWithdrawal();
     } catch (error: any) {
       console.error("Error verifying withdrawal password:", error);
@@ -228,7 +240,6 @@ export default function WithdrawalPage() {
       if (withdrawalType === "profit") {
         fromProfit = amountValue;
       } else {
-        // For balance withdrawal, we take directly from balance
         fromBalance = amountValue;
       }
 
@@ -243,9 +254,6 @@ export default function WithdrawalPage() {
       });
 
       if (error) throw error;
-
-      // No longer updating user account balance immediately
-      // Balance and profit will only be updated after withdrawal approval
 
       toast({
         title: "Withdrawal Request Submitted",
@@ -268,6 +276,8 @@ export default function WithdrawalPage() {
         setUserBalance(accountData.balance || 0);
         setUserProfit(accountData.profit || 0);
       }
+
+      navigate("/dashboard");
     } catch (error) {
       console.error("Error processing withdrawal:", error);
       toast({
@@ -282,155 +292,215 @@ export default function WithdrawalPage() {
     }
   };
 
-  return (
-    <div className="container max-w-8xl mx-auto px-2 sm:px-1">
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-2xl font-bold">Withdraw Funds</h1>
-        </div>
+  const maxAmount = withdrawalType === "profit" ? userProfit : userBalance;
 
-        {/* Summary Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-          <div className="bg-card/80 p-4 sm:p-6 rounded-xl shadow-sm border-0 w-full">
-            <h3 className="text-lg font-medium mb-2 text-muted-foreground">
-              Available Balance
-            </h3>
-            <p className="text-3xl font-bold">${userBalance.toFixed(2)}</p>
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <div className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
+        <div className="max-w-2xl mx-auto px-4 py-4">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate(-1)}
+              className="rounded-full"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div>
+              <h1 className="text-xl font-semibold">Withdraw Funds</h1>
+              <p className="text-sm text-muted-foreground">Request a withdrawal from your account</p>
+            </div>
           </div>
-          <div className="bg-card/80 p-4 sm:p-6 rounded-xl shadow-sm border-0 w-full">
-            <h3 className="text-lg font-medium mb-2 text-muted-foreground">
-              Available Profit
-            </h3>
-            <p className="text-3xl font-bold">${userProfit.toFixed(2)}</p>
-          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
+        {/* Account Summary */}
+        <div className="grid grid-cols-2 gap-4">
+          <Card className="border-2 border-primary/20">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm text-muted-foreground">Available Balance</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold">${userBalance.toFixed(2)}</p>
+            </CardContent>
+          </Card>
+          <Card className="border-2 border-green-500/20">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm text-muted-foreground">Available Profit</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold text-green-600">${userProfit.toFixed(2)}</p>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Withdrawal Type Selection */}
-        <div className="bg-card/80 p-4 sm:p-6 rounded-xl shadow-sm border-0 w-full">
-          <h3 className="text-xl font-medium mb-4 text-muted-foreground">
-            Withdrawal Type
-          </h3>
-          <div className="flex flex-col sm:flex-row gap-4">
-            <Button
-              variant={withdrawalType === "profit" ? "default" : "secondary"}
-              className={`flex-1 h-16 rounded-xl transition-all ${withdrawalType === "profit" ? "shadow-md" : "shadow-none"}`}
-              onClick={() => setWithdrawalType("profit")}
-            >
-              <div className="flex flex-col items-center gap-1">
-                <span className="text-lg font-medium">Profit Withdrawal</span>
-                <span className="text-xs text-muted-foreground">
-                  Withdraw only from your trading profits
-                </span>
-              </div>
-            </Button>
-            <Button
-              variant={withdrawalType === "balance" ? "default" : "secondary"}
-              className={`flex-1 h-16 rounded-xl transition-all ${withdrawalType === "balance" ? "shadow-md" : "shadow-none"}`}
-              onClick={() => setWithdrawalType("balance")}
-            >
-              <div className="flex flex-col items-center gap-1">
-                <span className="text-lg font-medium">Balance Withdrawal</span>
-                <span className="text-xs text-muted-foreground">
-                  Withdraw from your total account balance
-                </span>
-              </div>
-            </Button>
-          </div>
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Withdrawal Type</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid grid-cols-1 gap-3">
+              <Button
+                variant={withdrawalType === "profit" ? "default" : "outline"}
+                className="h-auto p-4 justify-start"
+                onClick={() => setWithdrawalType("profit")}
+              >
+                <div className="text-left">
+                  <div className="font-medium">Profit Withdrawal</div>
+                  <div className="text-xs text-muted-foreground">
+                    Withdraw only from your trading profits
+                  </div>
+                </div>
+              </Button>
+              <Button
+                variant={withdrawalType === "balance" ? "default" : "outline"}
+                className="h-auto p-4 justify-start"
+                onClick={() => setWithdrawalType("balance")}
+              >
+                <div className="text-left">
+                  <div className="font-medium">Balance Withdrawal</div>
+                  <div className="text-xs text-muted-foreground">
+                    Withdraw from your total account balance
+                  </div>
+                </div>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Withdrawal Form */}
-        <div className="bg-card/80 p-4 sm:p-6 rounded-xl shadow-sm border-0 w-full">
-          <h3 className="text-xl font-medium mb-4 text-muted-foreground">
-            Withdrawal Details
-          </h3>
-          <div className="space-y-6">
-            <div>
-              <label
-                htmlFor="amount"
-                className="block text-sm font-medium mb-2 text-muted-foreground"
-              >
-                Amount to Withdraw ($)
-              </label>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Withdrawal Details</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="amount">Amount (USD)</Label>
               <Input
                 id="amount"
                 type="text"
                 value={amount}
                 onChange={handleAmountChange}
-                placeholder="Enter amount"
-                className="w-full bg-background/50 border-muted rounded-lg h-12"
+                placeholder="Minimum $50"
+                className="text-lg"
               />
-              <p className="text-sm text-muted-foreground mt-2">
-                Maximum: $
-                {withdrawalType === "profit"
-                  ? userProfit.toFixed(2)
-                  : userBalance.toFixed(2)}
-              </p>
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>Minimum: $50</span>
+                <span>Maximum: ${maxAmount.toFixed(2)}</span>
+              </div>
             </div>
 
-            <div>
-              <label
-                htmlFor="wallet"
-                className="block text-sm font-medium mb-2 text-muted-foreground"
-              >
-                TRC20 Wallet Address
-              </label>
+            <div className="space-y-2">
+              <Label htmlFor="wallet">TRC20 Wallet Address</Label>
               <Input
                 id="wallet"
                 type="text"
                 value={walletAddress}
                 onChange={(e) => setWalletAddress(e.target.value)}
                 placeholder="Enter your TRC20 wallet address"
-                className="w-full bg-background/50 border-muted rounded-lg h-12"
+                className="font-mono text-sm"
               />
+              <p className="text-xs text-muted-foreground">
+                Only TRC20 USDT addresses are supported
+              </p>
             </div>
+          </CardContent>
+        </Card>
 
-            <div className="pt-2">
-              <Button
-                onClick={handleSubmit}
-                disabled={isLoading || !isVerified || !hasWithdrawalPassword}
-                className="w-full h-12 rounded-lg shadow-md"
-              >
-                {isLoading ? "Processing..." : "Request Withdrawal"}
-              </Button>
-              {!isVerified && (
-                <p className="text-sm text-destructive/90 mt-3 px-2">
-                  You need to verify your account before making withdrawals.
-                  Please visit the Account page.
-                </p>
-              )}
-              {!hasWithdrawalPassword && (
-                <p className="text-sm text-destructive/90 mt-3 px-2">
-                  You need to set a withdrawal password before making
-                  withdrawals. Please visit the Settings page to set up your
-                  withdrawal password.
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
+        {/* Status Warnings */}
+        {(!isVerified || !hasWithdrawalPassword) && (
+          <Card className="border-amber-200 bg-amber-50/50">
+            <CardContent className="pt-6">
+              <div className="flex gap-3">
+                <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+                <div className="space-y-2">
+                  {!isVerified && (
+                    <p className="text-sm text-amber-700">
+                      <strong>Account verification required:</strong> You need to verify your account before making withdrawals. Visit the Account page to complete verification.
+                    </p>
+                  )}
+                  {!hasWithdrawalPassword && (
+                    <p className="text-sm text-amber-700">
+                      <strong>Withdrawal password required:</strong> Set up a withdrawal password in Settings for enhanced security.
+                    </p>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Submit Button */}
+        <Button 
+          onClick={handleSubmit}
+          disabled={isLoading || !isVerified || !hasWithdrawalPassword}
+          className="w-full h-12 text-base font-medium"
+        >
+          {isLoading ? "Processing..." : "Request Withdrawal"}
+        </Button>
 
         {/* Important Information */}
-        <div className="bg-secondary/50 p-4 sm:p-6 rounded-lg border border-border w-full">
-          <div className="flex items-start gap-4">
-            <Wallet className="h-6 w-6 text-primary mt-1" />
-            <div>
-              <h4 className="text-lg font-medium mb-2">
-                Important Information
-              </h4>
-              <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground">
-                <li>Withdrawals are typically processed within 24-48 hours</li>
-                <li>Minimum withdrawal amount is $50</li>
-                <li>
-                  Make sure your wallet address is correct - incorrect addresses
-                  may result in permanent loss of funds
-                </li>
-                <li>
-                  For security reasons, withdrawals to new wallet addresses may
-                  require additional verification
-                </li>
-              </ul>
+        <Card className="bg-muted/30">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Wallet className="h-5 w-5" />
+              Important Information
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {[
+                "Withdrawals are processed within 24-48 hours",
+                "Minimum withdrawal amount is $50",
+                "Double-check your wallet address - incorrect addresses may result in permanent loss",
+                "New wallet addresses may require additional verification",
+                "All withdrawals are sent as USDT via TRC20 network"
+              ].map((info, index) => (
+                <div key={index} className="flex gap-3 items-start">
+                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center font-medium shrink-0 mt-0.5">
+                    {index + 1}
+                  </div>
+                  <p className="text-sm">{info}</p>
+                </div>
+              ))}
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Footer Links */}
+        <div className="text-center space-y-4 pt-4">
+          <Separator />
+          <div className="text-sm text-muted-foreground flex flex-wrap justify-center gap-x-6 gap-y-2">
+            <Link
+              to="/terms"
+              className="flex items-center hover:text-primary transition-colors"
+            >
+              <span>Terms of Service</span>
+              <ExternalLink className="ml-1 h-3 w-3" />
+            </Link>
+            <Link
+              to="/privacy"
+              className="flex items-center hover:text-primary transition-colors"
+            >
+              <span>Privacy Policy</span>
+              <ExternalLink className="ml-1 h-3 w-3" />
+            </Link>
+            <Link
+              to="/legal"
+              className="flex items-center hover:text-primary transition-colors"
+            >
+              <span>Legal Notice</span>
+              <ExternalLink className="ml-1 h-3 w-3" />
+            </Link>
           </div>
+          <p className="text-xs text-muted-foreground">
+            By using our withdrawal service, you agree to our terms and conditions.
+          </p>
         </div>
       </div>
 
@@ -453,12 +523,6 @@ export default function WithdrawalPage() {
                 <p className="mt-2 text-sm font-medium text-amber-500">
                   You will need to enter your withdrawal password to complete
                   this transaction.
-                </p>
-              )}
-              {!hasWithdrawalPassword && (
-                <p className="mt-2 text-sm font-medium text-amber-500">
-                  For added security, consider setting a withdrawal password in
-                  your account settings.
                 </p>
               )}
             </AlertDialogDescription>

@@ -11,13 +11,18 @@ import {
   Info,
   HelpCircle,
   Check,
+  ExternalLink,
+  Settings,
+  User,
+  Lock,
+  Trash2,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-
+import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import {
   AlertDialog,
@@ -282,186 +287,279 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-0">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => navigate(-1)}
-          className="rounded-full"
-        >
-          <ArrowLeft className="h-6 w-6" />
-        </Button>
-        <h1 className="text-2xl font-bold">Settings</h1>
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <div className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
+        <div className="max-w-2xl mx-auto px-4 py-4">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate(-1)}
+              className="rounded-full"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div>
+              <h1 className="text-xl font-semibold">Account Settings</h1>
+              <p className="text-sm text-muted-foreground">
+                Manage your account preferences and security
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div className="space-y-8">
+      {/* Main Content */}
+      <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
+        {/* Account Section */}
+        <Card className="border-2 border-primary/20">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <User className="h-5 w-5" />
+              Account Information
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email Address</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter new email"
+                  className="flex-1"
+                />
+                <Button onClick={handleEmailUpdate} disabled={loading}>
+                  Update
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                You'll need to verify your new email address
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Security Section */}
-        <div className="space-y-6">
-          <div className="flex items-center gap-2 border-b pb-2">
-            <Shield className="h-5 w-5" />
-            <h2 className="text-xl font-semibold">Security</h2>
-          </div>
-          {/* Login History */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Login History</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {loginHistory.map((login, index) => (
-                  <div
-                    key={index}
-                    className="flex justify-between items-center text-sm"
-                  >
-                    <span>{new Date(login.login_time).toLocaleString()}</span>
-                    <span className="text-muted-foreground">
-                      {login.ip_address}
-                    </span>
-                  </div>
-                ))}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Shield className="h-5 w-5" />
+              Security Settings
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Password Update */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <Key className="h-4 w-4" />
+                <h3 className="font-medium">Change Password</h3>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Email Settings */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Mail className="h-5 w-5" />
-                Email Settings
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Email Address</Label>
-                <div className="flex gap-2">
-                  <Input
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Enter new email"
-                  />
-                  <Button onClick={handleEmailUpdate} disabled={loading}>
-                    Update
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Password Settings */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Key className="h-5 w-5" />
-                Password Settings
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Current Password</Label>
-                <Input
-                  type="password"
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  placeholder="Enter current password"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>New Password</Label>
-                <Input
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Enter new password"
-                />
-              </div>
-              <Button
-                onClick={handlePasswordUpdate}
-                disabled={loading || !currentPassword || !newPassword}
-              >
-                Update Password
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Advanced Section */}
-        <div className="space-y-6">
-          <div className="flex items-center gap-2 border-b pb-2">
-            <Key className="h-5 w-5" />
-            <h2 className="text-xl font-semibold">Advanced Settings</h2>
-          </div>
-          {/* Withdrawal Password */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Withdrawal Password</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {hasExistingWithdrawalPassword && (
+              <div className="space-y-3">
                 <div className="space-y-2">
-                  <Label>Current Withdrawal Password</Label>
+                  <Label htmlFor="current-password">Current Password</Label>
                   <Input
+                    id="current-password"
                     type="password"
-                    value={currentWithdrawalPassword}
-                    onChange={(e) =>
-                      setCurrentWithdrawalPassword(e.target.value)
-                    }
-                    placeholder="Enter current withdrawal password"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    placeholder="Enter current password"
                   />
                 </div>
-              )}
-              <div className="space-y-2">
-                <Label>
-                  {hasExistingWithdrawalPassword ? "New" : "Set"} Withdrawal
-                  Password
-                </Label>
-                <Input
-                  type="password"
-                  value={newWithdrawalPassword}
-                  onChange={(e) => setNewWithdrawalPassword(e.target.value)}
-                  placeholder={`Enter ${hasExistingWithdrawalPassword ? "new" : ""} withdrawal password`}
-                />
+                <div className="space-y-2">
+                  <Label htmlFor="new-password">New Password</Label>
+                  <Input
+                    id="new-password"
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Enter new password"
+                  />
+                </div>
+                <Button
+                  onClick={handlePasswordUpdate}
+                  disabled={loading || !currentPassword || !newPassword}
+                  className="w-full"
+                >
+                  {loading ? "Updating..." : "Update Password"}
+                </Button>
               </div>
-              <Button
-                onClick={handleWithdrawalPasswordUpdate}
-                disabled={
-                  loading ||
-                  !newWithdrawalPassword ||
-                  (hasExistingWithdrawalPassword && !currentWithdrawalPassword)
-                }
-              >
-                {hasExistingWithdrawalPassword ? "Update" : "Set"} Password
-              </Button>
-            </CardContent>
-          </Card>
+            </div>
 
-          {/* 2FA Settings */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Two-Factor Authentication</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+            <Separator />
+
+            {/* Two-Factor Authentication */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Lock className="h-4 w-4" />
+                <h3 className="font-medium">Two-Factor Authentication</h3>
+              </div>
               <div className="flex items-center justify-between">
-                <Label>Enable 2FA</Label>
+                <div>
+                  <p className="text-sm">Enable 2FA for enhanced security</p>
+                  <p className="text-xs text-muted-foreground">
+                    Adds an extra layer of protection to your account
+                  </p>
+                </div>
                 <Switch
                   checked={twoFactorEnabled}
                   onCheckedChange={handleTwoFactorToggle}
                   disabled={loading}
                 />
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </CardContent>
+        </Card>
 
-          {/* Delete Account */}
+        {/* Withdrawal Security */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Key className="h-5 w-5" />
+              Withdrawal Security
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {hasExistingWithdrawalPassword && (
+              <div className="space-y-2">
+                <Label htmlFor="current-withdrawal-password">
+                  Current Withdrawal Password
+                </Label>
+                <Input
+                  id="current-withdrawal-password"
+                  type="password"
+                  value={currentWithdrawalPassword}
+                  onChange={(e) => setCurrentWithdrawalPassword(e.target.value)}
+                  placeholder="Enter current withdrawal password"
+                />
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label htmlFor="new-withdrawal-password">
+                {hasExistingWithdrawalPassword ? "New" : "Set"} Withdrawal
+                Password
+              </Label>
+              <Input
+                id="new-withdrawal-password"
+                type="password"
+                value={newWithdrawalPassword}
+                onChange={(e) => setNewWithdrawalPassword(e.target.value)}
+                placeholder={`Enter ${hasExistingWithdrawalPassword ? "new" : ""} withdrawal password`}
+              />
+              <p className="text-xs text-muted-foreground">
+                Required for all withdrawal requests for enhanced security
+              </p>
+            </div>
+            <Button
+              onClick={handleWithdrawalPasswordUpdate}
+              disabled={
+                loading ||
+                !newWithdrawalPassword ||
+                (hasExistingWithdrawalPassword && !currentWithdrawalPassword)
+              }
+              className="w-full"
+            >
+              {loading
+                ? "Updating..."
+                : hasExistingWithdrawalPassword
+                  ? "Update"
+                  : "Set"}{" "}
+              Password
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Login History */}
+        {loginHistory.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle className="text-destructive">Delete Account</CardTitle>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Shield className="h-5 w-5" />
+                Recent Login Activity
+              </CardTitle>
             </CardHeader>
             <CardContent>
+              <div className="space-y-3">
+                {loginHistory.map((login, index) => (
+                  <div key={index}>
+                    <div className="flex justify-between items-center py-2">
+                      <div>
+                        <p className="text-sm font-medium">
+                          {new Date(login.login_time).toLocaleDateString()}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(login.login_time).toLocaleTimeString()}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm text-muted-foreground">
+                          {login.ip_address}
+                        </p>
+                      </div>
+                    </div>
+                    {index < loginHistory.length - 1 && <Separator />}
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Support Section */}
+        <Card className="bg-muted/30">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <HelpCircle className="h-5 w-5" />
+              Support & Information
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-3">
+              <div>
+                <h4 className="font-medium">Contact Support</h4>
+                <p className="text-sm text-muted-foreground">
+                  Available 24/7 for any questions or issues
+                </p>
+                <div className="mt-2 space-y-1 text-sm">
+                  <p>Email: support@exudostrade.com</p>
+                  <p>Phone: +1 (555) 123-4567</p>
+                </div>
+              </div>
+              <Separator />
+              <div>
+                <h4 className="font-medium">App Information</h4>
+                <div className="mt-2 space-y-1 text-sm text-muted-foreground">
+                  <p>Version: 3.5.1</p>
+                  <p>License: Proprietary</p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Danger Zone */}
+        <Card className="border-red-200 bg-red-50/50">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2 text-red-600">
+              <Trash2 className="h-5 w-5" />
+              Danger Zone
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div>
+                <h4 className="font-medium text-red-700">Delete Account</h4>
+                <p className="text-sm text-red-600">
+                  Permanently delete your account and all associated data
+                </p>
+              </div>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="destructive">Delete Account</Button>
+                  <Button variant="destructive" size="sm">
+                    Delete Account
+                  </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
@@ -484,78 +582,39 @@ export default function SettingsPage() {
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+          </CardContent>
+        </Card>
 
-        {/* Support Section */}
-        <div className="space-y-6">
-          <div className="flex items-center gap-2 border-b pb-2">
-            <HelpCircle className="h-5 w-5" />
-            <h2 className="text-xl font-semibold">Support</h2>
+        {/* Footer Links */}
+        <div className="text-center space-y-4 pt-4">
+          <Separator />
+          <div className="text-sm text-muted-foreground flex flex-wrap justify-center gap-x-6 gap-y-2">
+            <Link
+              to="/terms"
+              className="flex items-center hover:text-primary transition-colors"
+            >
+              <span>Terms of Service</span>
+              <ExternalLink className="ml-1 h-3 w-3" />
+            </Link>
+            <Link
+              to="/privacy"
+              className="flex items-center hover:text-primary transition-colors"
+            >
+              <span>Privacy Policy</span>
+              <ExternalLink className="ml-1 h-3 w-3" />
+            </Link>
+            <Link
+              to="/legal"
+              className="flex items-center hover:text-primary transition-colors"
+            >
+              <span>Legal Notice</span>
+              <ExternalLink className="ml-1 h-3 w-3" />
+            </Link>
           </div>
-          <Card>
-            <CardHeader>
-              <CardTitle>Contact Support</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                For any issues or questions, please contact our support team:
-              </p>
-              <div className="mt-4 space-y-2">
-                <p>Email: support@exodustrade.com</p>
-                <p>Phone: +1 (555) 123-4567</p>
-                <p>Hours: 24/7</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* About Section */}
-        <div className="space-y-6">
-          <div className="flex items-center gap-2 border-b pb-2">
-            <Info className="h-5 w-5" />
-            <h2 className="text-xl font-semibold">About</h2>
-          </div>
-          <Card>
-            <CardHeader>
-              <CardTitle>About Exodus Trade©</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p>
-                Exodus Trade© is a cutting-edge trading platform that combines
-                artificial intelligence with traditional trading methods to
-                provide users with the best possible trading experience.
-              </p>
-              <div className="space-y-2">
-                <p>Version: 1.0.0</p>
-                <p>License: Proprietary</p>
-                <div className="flex gap-2">
-                  <Button
-                    variant="link"
-                    onClick={() => navigate("/terms")}
-                    className="p-0"
-                  >
-                    Terms of Service
-                  </Button>
-                  <Button
-                    variant="link"
-                    onClick={() => navigate("/privacy")}
-                    className="p-0"
-                  >
-                    Privacy Policy
-                  </Button>
-                  <Button
-                    variant="link"
-                    onClick={() => navigate("/legal")}
-                    className="p-0"
-                  >
-                    Legal
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <p className="text-xs text-muted-foreground">
+            Your privacy and security are our top priorities.
+          </p>
         </div>
       </div>
 

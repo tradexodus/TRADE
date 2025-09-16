@@ -7,6 +7,11 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "12.2.3 (519615d)"
+  }
   public: {
     Tables: {
       auto_trading_attempts: {
@@ -67,25 +72,31 @@ export type Database = {
           amount: number
           created_at: string
           id: string
+          network: string | null
           screenshot_url: string | null
           status: string
           user_id: string
+          wallet_address: string | null
         }
         Insert: {
           amount: number
           created_at?: string
           id?: string
+          network?: string | null
           screenshot_url?: string | null
           status?: string
           user_id: string
+          wallet_address?: string | null
         }
         Update: {
           amount?: number
           created_at?: string
           id?: string
+          network?: string | null
           screenshot_url?: string | null
           status?: string
           user_id?: string
+          wallet_address?: string | null
         }
         Relationships: []
       }
@@ -534,20 +545,29 @@ export type Database = {
       }
       wallet_settings: {
         Row: {
+          bep20_address: string | null
           created_at: string | null
+          erc20_address: string | null
           id: string
+          trc20_address: string | null
           updated_at: string | null
           wallet_address: string
         }
         Insert: {
+          bep20_address?: string | null
           created_at?: string | null
+          erc20_address?: string | null
           id?: string
+          trc20_address?: string | null
           updated_at?: string | null
           wallet_address: string
         }
         Update: {
+          bep20_address?: string | null
           created_at?: string | null
+          erc20_address?: string | null
           id?: string
+          trc20_address?: string | null
           updated_at?: string | null
           wallet_address?: string
         }
@@ -563,6 +583,7 @@ export type Database = {
           status: string
           user_id: string
           wallet_address: string
+          withdrawal_address: string | null
         }
         Insert: {
           amount: number
@@ -573,6 +594,7 @@ export type Database = {
           status?: string
           user_id: string
           wallet_address: string
+          withdrawal_address?: string | null
         }
         Update: {
           amount?: number
@@ -583,6 +605,7 @@ export type Database = {
           status?: string
           user_id?: string
           wallet_address?: string
+          withdrawal_address?: string | null
         }
         Relationships: []
       }
@@ -592,47 +615,47 @@ export type Database = {
     }
     Functions: {
       check_and_increment_attempts: {
-        Args: { user_id_param: string; max_attempts_param: number }
+        Args: { max_attempts_param: number; user_id_param: string }
         Returns: boolean
       }
       create_auto_trading_session_with_trade: {
         Args: {
-          p_user_id: string
           p_amount: number
-          p_duration_minutes: number
-          p_risk_level: number
           p_crypto_pair: string
+          p_duration_minutes: number
           p_original_balance: number
+          p_risk_level: number
+          p_user_id: string
         }
         Returns: string
       }
       get_active_trading_session: {
         Args: { user_id_param: string }
         Returns: {
-          id: string
           amount: number
           duration_minutes: number
+          end_time: string
+          id: string
           risk_level: number
           start_time: string
-          end_time: string
           time_remaining_seconds: number
         }[]
       }
       get_trades_ready_for_processing: {
         Args: { p_user_id: string }
         Returns: {
-          trade_id: string
-          session_id: string
           amount: number
           risk_level: number
+          session_id: string
+          trade_id: string
         }[]
       }
       get_user_trading_settings: {
         Args: { p_user_id: string }
         Returns: {
-          win_probability: number
-          max_profit_percentage: number
           max_loss_percentage: number
+          max_profit_percentage: number
+          win_probability: number
         }[]
       }
       process_expired_trades: {
@@ -657,21 +680,25 @@ export type Database = {
   }
 }
 
-type DefaultSchema = Database[Extract<keyof Database, "public">]
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
     ? R
@@ -689,14 +716,16 @@ export type Tables<
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Insert: infer I
     }
     ? I
@@ -712,14 +741,16 @@ export type TablesInsert<
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Update: infer U
     }
     ? U
@@ -735,14 +766,16 @@ export type TablesUpdate<
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
-> = DefaultSchemaEnumNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
     : never
@@ -750,14 +783,16 @@ export type Enums<
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never = never,
-> = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
