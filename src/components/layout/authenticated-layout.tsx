@@ -403,7 +403,7 @@ export default function AuthenticatedLayout({
           </div>
         </header>
         {/* Main Content */}
-        <main className="p-6 flex-1">{children}</main>
+        <main className="p-0 flex-1">{children}</main>
       </div>
     </div>
   );

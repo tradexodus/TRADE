@@ -1,11 +1,27 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, BrainCircuit } from "lucide-react";
+import { 
+  ArrowLeft, 
+  BrainCircuit, 
+  User, 
+  Shield, 
+  Mail, 
+  CheckCircle, 
+  Clock, 
+  XCircle,
+  ExternalLink,
+  Star,
+  TrendingUp
+} from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import VerificationForm from "./verification-form";
 import TradingStatistics from "./trading-statistics";
 import { getNeuronLevel, NEURON_LEVELS } from "@/lib/neuron-levels";
@@ -17,10 +33,6 @@ export default function AccountPage() {
     "not_verified" | "pending" | "verified"
   >("not_verified");
   const [isEmailVerified, setIsEmailVerified] = useState(false);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<
-    "identity" | "neurons" | "verification"
-  >("identity");
   const [totalDepositAmount, setTotalDepositAmount] = useState(0);
   const [neuronLevel, setNeuronLevel] = useState(NEURON_LEVELS[0]);
   const { toast } = useToast();
@@ -92,338 +104,473 @@ export default function AccountPage() {
     }
   }
 
-  return (
-    <div className="container mx-auto p-0 space-y-8">
-      <div className="flex items-center gap-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => navigate(-1)}
-          className="rounded-full"
-        >
-          <ArrowLeft className="h-6 w-6" />
-        </Button>
-        <h1 className="text-2xl font-bold">Profile</h1>
-      </div>
+  const getVerificationIcon = (status: string) => {
+    switch (status) {
+      case "verified":
+        return <CheckCircle className="h-4 w-4 text-green-500" />;
+      case "pending":
+        return <Clock className="h-4 w-4 text-yellow-500" />;
+      default:
+        return <XCircle className="h-4 w-4 text-red-500" />;
+    }
+  };
 
-      <div className="space-y-6 max-w-3xl">
-        {/* Tabs for multi-menu design */}
-        <div className="border-b">
-          <div className="flex space-x-6">
-            <button
-              onClick={() => setActiveTab("identity")}
-              className={`pb-2 font-medium text-sm transition-colors ${activeTab === "identity" ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground"}`}
+  const getVerificationBadge = (status: string) => {
+    switch (status) {
+      case "verified":
+        return <Badge className="bg-green-500/20 text-green-500 hover:bg-green-500/30">Verified</Badge>;
+      case "pending":
+        return <Badge variant="secondary">Pending Review</Badge>;
+      default:
+        return <Badge variant="destructive">Not Verified</Badge>;
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <div className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
+        <div className="max-w-2xl mx-auto px-4 py-4">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate(-1)}
+              className="rounded-full"
             >
-              Identity Info
-            </button>
-            <button
-              onClick={() => setActiveTab("verification")}
-              className={`pb-2 font-medium text-sm transition-colors ${activeTab === "verification" ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground"}`}
-            >
-              ID Verification
-            </button>
-            <button
-              onClick={() => setActiveTab("neurons")}
-              className={`pb-2 font-medium text-sm transition-colors ${activeTab === "neurons" ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground"}`}
-            >
-              Neurons Level
-            </button>
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div>
+              <h1 className="text-xl font-semibold">Account Profile</h1>
+              <p className="text-sm text-muted-foreground">Manage your account information and verification</p>
+            </div>
           </div>
         </div>
+      </div>
 
-        {/* Trading Profile Tab */}
-        {activeTab === "trading" && (
-          <div className="space-y-6">
-            <h2 className="text-xl font-semibold">Trading Profile</h2>
-            <div className="space-y-4">
-              {/* Nickname */}
-              <div className="space-y-2">
-                <Label>Nickname</Label>
-                <div className="flex gap-2">
-                  <Input
-                    value={nickname}
-                    onChange={(e) => setNickname(e.target.value)}
-                    placeholder="Enter nickname"
-                  />
-                  <Button onClick={updateNickname}>Save</Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Identity Info Tab */}
-        {activeTab === "identity" && (
-          <div className="space-y-6">
-            <h2 className="text-xl font-semibold">Identity Info</h2>
-            <div className="space-y-4">
-              {/* Email Verification Status */}
-              <div className="space-y-2">
-                <Label>Email Status</Label>
-                <div className="flex items-center gap-2">
-                  <div
-                    className={`px-2 py-1 rounded text-sm ${isEmailVerified ? "bg-green-500/20 text-green-500" : "bg-yellow-500/20 text-yellow-500"}`}
-                  >
-                    {isEmailVerified ? "Verified" : "Not Verified"}
-                  </div>
-                  {!isEmailVerified && (
-                    <Button variant="outline" size="sm">
-                      Resend Verification
-                    </Button>
-                  )}
-                </div>
-              </div>
-
-              {/* ID Verification Status */}
-              <div className="space-y-2">
-                <Label>ID Verification Status</Label>
-                <div className="flex items-center gap-2">
-                  <div
-                    className={`px-2 py-1 rounded text-sm ${
-                      {
-                        not_verified: "bg-red-500/20 text-red-500",
-                        pending: "bg-yellow-500/20 text-yellow-500",
-                        verified: "bg-green-500/20 text-green-500",
-                      }[isVerified]
-                    }`}
-                  >
-                    {
-                      {
-                        not_verified: "Not Verified",
-                        pending: "Pending",
-                        verified: "Verified",
-                      }[isVerified]
-                    }
-                  </div>
-                  {isVerified === "not_verified" && (
-                    <Button
-                      onClick={() => {
-                        setIsDialogOpen(true);
-                      }}
-                    >
-                      Verify Now
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ID Verification Tab */}
-        {activeTab === "verification" && (
-          <div className="space-y-6">
-            <h2 className="text-xl font-semibold">ID Verification</h2>
-            <div className="space-y-4">
-              {/* Verification Status */}
-              <div className="space-y-2">
-                <Label>Verification Status</Label>
-                <div className="flex items-center gap-2">
-                  <div
-                    className={`px-2 py-1 rounded text-sm ${
-                      {
-                        not_verified: "bg-red-500/20 text-red-500",
-                        pending: "bg-yellow-500/20 text-yellow-500",
-                        verified: "bg-green-500/20 text-green-500",
-                      }[isVerified]
-                    }`}
-                  >
-                    {
-                      {
-                        not_verified: "Not Verified",
-                        pending: "Pending Review",
-                        verified: "Verified",
-                      }[isVerified]
-                    }
-                  </div>
-                </div>
-              </div>
-
-              {/* Verification Form */}
-              {isVerified === "not_verified" && (
-                <VerificationForm
-                  onVerificationSubmitted={() => setIsVerified("pending")}
-                />
-              )}
-
-              {/* Pending Message */}
-              {isVerified === "pending" && (
-                <div className="p-6 border rounded-lg bg-yellow-500/10">
-                  <div className="text-center space-y-4">
-                    <p className="text-yellow-500 font-medium">
-                      Your verification is being reviewed
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      We are currently reviewing your submitted documents. This
-                      process typically takes 1-3 business days.
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* Verified Message */}
-              {isVerified === "verified" && (
-                <div className="p-6 border rounded-lg bg-green-500/10">
-                  <div className="text-center space-y-4">
-                    <p className="text-green-500 font-medium">
-                      Your identity has been verified
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      You now have full access to all platform features.
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Neurons Level Tab */}
-        {activeTab === "neurons" && (
-          <div className="space-y-6">
-            <h2 className="text-xl font-semibold">Neurons Level</h2>
-            <div className="p-6 border rounded-lg">
-              <div className="text-center space-y-4">
+      {/* Main Content */}
+      <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
+        {/* Account Overview */}
+        <div className="grid grid-cols-2 gap-4">
+          <Card className="border-2 border-primary/20">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm text-muted-foreground flex items-center gap-2">
+                <Star className="h-4 w-4" />
+                Neuron Level
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-2">
                 <div
-                  className="inline-flex p-4 rounded-full"
+                  className="p-1 rounded-full"
                   style={{ backgroundColor: `${neuronLevel.bgColor}40` }}
                 >
                   <BrainCircuit
-                    className="h-10 w-10"
+                    className="h-4 w-4"
                     style={{ color: neuronLevel.color }}
                   />
                 </div>
-                <h3
-                  className="text-lg font-medium"
-                  style={{ color: neuronLevel.color }}
-                >
-                  {neuronLevel.name} Level
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  {neuronLevel.name === "Elite"
-                    ? "You've reached the highest level!"
-                    : "Deposit more to increase your neurons level"}
+                <p className="font-bold" style={{ color: neuronLevel.color }}>
+                  {neuronLevel.name}
                 </p>
-                <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                  <span>${neuronLevel.minAmount.toLocaleString()}</span>
-                  {neuronLevel.maxAmount ? (
-                    <span>${neuronLevel.maxAmount.toLocaleString()}</span>
-                  ) : (
-                    <span>∞</span>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-2 border-green-500/20">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm text-muted-foreground flex items-center gap-2">
+                <TrendingUp className="h-4 w-4" />
+                Total Deposits
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold text-green-600">
+                ${totalDepositAmount.toLocaleString()}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Tabs */}
+        <Tabs defaultValue="identity" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="identity" className="flex items-center gap-2">
+              <User className="h-4 w-4" />
+              <span>Identity</span>
+            </TabsTrigger>
+            <TabsTrigger value="verification" className="flex items-center gap-2">
+              <Shield className="h-4 w-4" />
+              <span>Verification</span>
+            </TabsTrigger>
+            <TabsTrigger value="neurons" className="flex items-center gap-2">
+              <BrainCircuit className="h-4 w-4" />
+              <span>Neurons</span>
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="identity" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <User className="h-5 w-5" />
+                  Identity Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Nickname */}
+                <div className="space-y-2">
+                  <Label htmlFor="nickname">Display Nickname</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="nickname"
+                      value={nickname}
+                      onChange={(e) => setNickname(e.target.value)}
+                      placeholder="Enter your nickname"
+                      className="flex-1"
+                    />
+                    <Button onClick={updateNickname}>Save</Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    This will be displayed in your trading profile
+                  </p>
+                </div>
+
+                <Separator />
+
+                {/* Email Status */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Mail className="h-4 w-4" />
+                    <h3 className="font-medium">Email Verification</h3>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm">Email verification status</p>
+                      <p className="text-xs text-muted-foreground">
+                        Verify your email to secure your account
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {getVerificationIcon(isEmailVerified ? "verified" : "not_verified")}
+                      {getVerificationBadge(isEmailVerified ? "verified" : "not_verified")}
+                    </div>
+                  </div>
+                  {!isEmailVerified && (
+                    <Button variant="outline" size="sm" className="w-full">
+                      Resend Verification Email
+                    </Button>
                   )}
                 </div>
-                <div className="w-full bg-gray-800 h-2 rounded-full overflow-hidden">
-                  <div
-                    className="h-full"
-                    style={{
-                      width: `${neuronLevel.progressPercentage}%`,
-                      backgroundColor: neuronLevel.color,
-                    }}
-                  ></div>
-                </div>
-                <div className="flex justify-between items-center">
-                  <p className="text-xs text-muted-foreground">
-                    {neuronLevel.name === "Elite"
-                      ? "Maximum level achieved"
-                      : `${neuronLevel.progressPercentage}% to next level`}
-                  </p>
-                  <div
-                    className="px-2 py-1 rounded-full text-xs font-medium"
-                    style={{
-                      backgroundColor: `${neuronLevel.bgColor}80`,
-                      color: neuronLevel.color,
-                    }}
-                  >
-                    {neuronLevel.percentage}% Rate
-                  </div>
-                </div>
-                <div className="mt-4 pt-4 border-t border-gray-800">
-                  <p className="text-sm font-medium text-gray-300">
-                    Total Deposits
-                  </p>
-                  <p
-                    className="text-xl font-bold"
-                    style={{ color: neuronLevel.color }}
-                  >
-                    ${totalDepositAmount.toLocaleString()}
-                  </p>
-                </div>
-              </div>
-            </div>
 
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">Neuron Levels</h3>
-              <div className="space-y-3">
-                {NEURON_LEVELS.map((level) => (
-                  <div
-                    key={level.name}
-                    className="flex justify-between items-center p-4 border rounded-lg transition-all duration-200 hover:scale-[1.02] cursor-pointer"
-                    style={{
-                      borderColor: level.color,
-                    }}
-                    onClick={() => {
-                      // This is just for interactivity, doesn't change actual level
-                      if (totalDepositAmount >= level.minAmount) {
-                        toast({
-                          title: `${level.name} Level`,
-                          description: `You are ${level.name === neuronLevel.name ? "currently at" : "eligible for"} this level.`,
-                        });
-                      } else {
-                        toast({
-                          title: `${level.name} Level`,
-                          description: `You need ${(level.minAmount - totalDepositAmount).toLocaleString()} more to reach this level.`,
-                          variant: "destructive",
-                        });
-                      }
-                    }}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="p-2 rounded-full"
-                        style={{ backgroundColor: `${level.bgColor}80` }}
-                      >
-                        <BrainCircuit
-                          className="h-5 w-5"
-                          style={{ color: level.color }}
-                        />
-                      </div>
-                      <div>
-                        <p
-                          className="font-medium"
-                          style={{ color: level.color }}
-                        >
-                          {level.name}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {level.maxAmount
-                            ? `${level.minAmount.toLocaleString()} - ${level.maxAmount.toLocaleString()}`
-                            : `${level.minAmount.toLocaleString()}+`}
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {level.dailyAutoTradingAttempts === Infinity
-                            ? "Unlimited auto trading attempts"
-                            : `${level.dailyAutoTradingAttempts} auto trading attempts/day`}
-                        </p>
+                <Separator />
+
+                {/* ID Verification Status */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Shield className="h-4 w-4" />
+                    <h3 className="font-medium">Identity Verification</h3>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm">ID verification status</p>
+                      <p className="text-xs text-muted-foreground">
+                        Required for withdrawals and higher limits
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {getVerificationIcon(isVerified)}
+                      {getVerificationBadge(isVerified)}
+                    </div>
+                  </div>
+                  {isVerified === "not_verified" && (
+                    <Button className="w-full">
+                      Start Verification Process
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="verification" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Shield className="h-5 w-5" />
+                  Identity Verification
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Current Status */}
+                <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    {getVerificationIcon(isVerified)}
+                    <div>
+                      <p className="font-medium">Current Status</p>
+                      <p className="text-sm text-muted-foreground">
+                        {isVerified === "verified" && "Your identity has been verified"}
+                        {isVerified === "pending" && "Your documents are being reviewed"}
+                        {isVerified === "not_verified" && "Identity verification required"}
+                      </p>
+                    </div>
+                  </div>
+                  {getVerificationBadge(isVerified)}
+                </div>
+
+                {/* Verification Form */}
+                {isVerified === "not_verified" && (
+                  <div className="space-y-4">
+                    <div className="space-y-3">
+                      <h3 className="font-medium">Required Documents</h3>
+                      <div className="space-y-2">
+                        {[
+                          "Government-issued photo ID (passport, driver's license, or national ID)",
+                          "Clear, high-resolution photos of both sides",
+                          "Ensure all text is readable and corners are visible",
+                          "Documents must be valid and not expired"
+                        ].map((requirement, index) => (
+                          <div key={index} className="flex gap-3 items-start">
+                            <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center font-medium shrink-0 mt-0.5">
+                              {index + 1}
+                            </div>
+                            <p className="text-sm">{requirement}</p>
+                          </div>
+                        ))}
                       </div>
                     </div>
+                    <VerificationForm
+                      onVerificationSubmitted={() => setIsVerified("pending")}
+                    />
+                  </div>
+                )}
+
+                {/* Pending Message */}
+                {isVerified === "pending" && (
+                  <Card className="border-amber-200 bg-amber-50/50">
+                    <CardContent className="pt-6">
+                      <div className="text-center space-y-4">
+                        <Clock className="h-12 w-12 mx-auto text-amber-500" />
+                        <div>
+                          <p className="font-medium text-amber-700">
+                            Verification in Progress
+                          </p>
+                          <p className="text-sm text-amber-600 mt-2">
+                            We are currently reviewing your submitted documents. This
+                            process typically takes 1-3 business days. You'll receive
+                            an email notification once the review is complete.
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Verified Message */}
+                {isVerified === "verified" && (
+                  <Card className="border-green-200 bg-green-50/50">
+                    <CardContent className="pt-6">
+                      <div className="text-center space-y-4">
+                        <CheckCircle className="h-12 w-12 mx-auto text-green-500" />
+                        <div>
+                          <p className="font-medium text-green-700">
+                            Identity Verified Successfully
+                          </p>
+                          <p className="text-sm text-green-600 mt-2">
+                            Your identity has been verified. You now have full access
+                            to all platform features including withdrawals and higher
+                            trading limits.
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="neurons" className="mt-6">
+            <div className="space-y-6">
+              {/* Current Level Card */}
+              <Card className="border-2" style={{ borderColor: `${neuronLevel.color}40` }}>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <BrainCircuit className="h-5 w-5" style={{ color: neuronLevel.color }} />
+                    Current Neuron Level
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center space-y-4">
                     <div
-                      className="px-2 py-1 rounded-full text-xs font-medium"
-                      style={{
-                        backgroundColor: `${level.bgColor}40`,
-                        color: level.color,
-                      }}
+                      className="inline-flex p-4 rounded-full"
+                      style={{ backgroundColor: `${neuronLevel.bgColor}40` }}
                     >
-                      {level.percentage}%
+                      <BrainCircuit
+                        className="h-10 w-10"
+                        style={{ color: neuronLevel.color }}
+                      />
+                    </div>
+                    <div>
+                      <h3
+                        className="text-xl font-bold"
+                        style={{ color: neuronLevel.color }}
+                      >
+                        {neuronLevel.name} Level
+                      </h3>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {neuronLevel.name === "Elite"
+                          ? "You've reached the highest level!"
+                          : "Deposit more to increase your neurons level"}
+                      </p>
+                    </div>
+                    
+                    {/* Progress Bar */}
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>${neuronLevel.minAmount.toLocaleString()}</span>
+                        {neuronLevel.maxAmount ? (
+                          <span>${neuronLevel.maxAmount.toLocaleString()}</span>
+                        ) : (
+                          <span>∞</span>
+                        )}
+                      </div>
+                      <div className="w-full bg-muted h-2 rounded-full overflow-hidden">
+                        <div
+                          className="h-full transition-all duration-300"
+                          style={{
+                            width: `${neuronLevel.progressPercentage}%`,
+                            backgroundColor: neuronLevel.color,
+                          }}
+                        ></div>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <p className="text-xs text-muted-foreground">
+                          {neuronLevel.name === "Elite"
+                            ? "Maximum level achieved"
+                            : `${neuronLevel.progressPercentage}% to next level`}
+                        </p>
+                        <Badge
+                          style={{
+                            backgroundColor: `${neuronLevel.bgColor}80`,
+                            color: neuronLevel.color,
+                          }}
+                        >
+                          {neuronLevel.percentage}% Rate
+                        </Badge>
+                      </div>
+                    </div>
+
+                    <div className="pt-4 border-t">
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Total Deposits
+                      </p>
+                      <p
+                        className="text-2xl font-bold"
+                        style={{ color: neuronLevel.color }}
+                      >
+                        ${totalDepositAmount.toLocaleString()}
+                      </p>
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+                </CardContent>
+              </Card>
 
-      {/* Verification dialog is now replaced by the tab */}
+              {/* All Levels */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">All Neuron Levels</CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <div className="space-y-0">
+                    {NEURON_LEVELS.map((level, index) => (
+                      <div key={level.name}>
+                        <div className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors">
+                          <div className="flex items-center gap-3">
+                            <div
+                              className="p-2 rounded-full"
+                              style={{ backgroundColor: `${level.bgColor}80` }}
+                            >
+                              <BrainCircuit
+                                className="h-4 w-4"
+                                style={{ color: level.color }}
+                              />
+                            </div>
+                            <div>
+                              <p
+                                className="font-medium"
+                                style={{ color: level.color }}
+                              >
+                                {level.name}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {level.maxAmount
+                                  ? `$${level.minAmount.toLocaleString()} - $${level.maxAmount.toLocaleString()}`
+                                  : `$${level.minAmount.toLocaleString()}+`}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {level.dailyAutoTradingAttempts === Infinity
+                                  ? "Unlimited auto trading"
+                                  : `${level.dailyAutoTradingAttempts} trades/day`}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <Badge
+                              variant={level.name === neuronLevel.name ? "default" : "outline"}
+                              style={{
+                                backgroundColor: level.name === neuronLevel.name ? level.color : "transparent",
+                                borderColor: level.color,
+                                color: level.name === neuronLevel.name ? "white" : level.color,
+                              }}
+                            >
+                              {level.percentage}%
+                            </Badge>
+                            {totalDepositAmount >= level.minAmount && (
+                              <p className="text-xs text-green-500 mt-1">Unlocked</p>
+                            )}
+                          </div>
+                        </div>
+                        {index < NEURON_LEVELS.length - 1 && <Separator />}
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+        </Tabs>
+
+        {/* Footer Links */}
+        <div className="text-center space-y-4 pt-4">
+          <Separator />
+          <div className="text-sm text-muted-foreground flex flex-wrap justify-center gap-x-6 gap-y-2">
+            <Link
+              to="/terms"
+              className="flex items-center hover:text-primary transition-colors"
+            >
+              <span>Terms of Service</span>
+              <ExternalLink className="ml-1 h-3 w-3" />
+            </Link>
+            <Link
+              to="/privacy"
+              className="flex items-center hover:text-primary transition-colors"
+            >
+              <span>Privacy Policy</span>
+              <ExternalLink className="ml-1 h-3 w-3" />
+            </Link>
+            <Link
+              to="/legal"
+              className="flex items-center hover:text-primary transition-colors"
+            >
+              <span>Legal Notice</span>
+              <ExternalLink className="ml-1 h-3 w-3" />
+            </Link>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Your account security and verification status are protected and encrypted.
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
