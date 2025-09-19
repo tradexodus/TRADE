@@ -237,7 +237,7 @@ export default function CopyTradingPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-black">
         <div className="max-w-2xl mx-auto px-4 py-8">
           <Card className="border-red-200 bg-red-50/50">
             <CardContent className="pt-6">
@@ -251,7 +251,7 @@ export default function CopyTradingPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-black">
         <div className="max-w-2xl mx-auto px-4 py-8">
           <Card>
             <CardContent className="pt-6">
@@ -264,7 +264,7 @@ export default function CopyTradingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-black">
       {/* Header */}
       <div className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-2xl mx-auto px-4 py-4">

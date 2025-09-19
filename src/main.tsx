@@ -14,8 +14,8 @@ import "@fontsource/poppins/500.css";
 import "@fontsource/poppins/600.css";
 import "@fontsource/manrope/700.css";
 
-import { TempoDevtools } from "tempo-devtools";
-TempoDevtools.init();
+/* import { TempoDevtools } from 'tempo-devtools'; [deprecated] */
+/* TempoDevtools.init() [deprecated] */;
 
 // Apply theme from cookies or localStorage on initial load
 import { getThemePreference } from "./lib/cookies";
