@@ -8,7 +8,7 @@ const conditionalPlugins: [string, Record<string, any>][] = [];
 
 // @ts-ignore
 if (process.env.TEMPO === "true") {
-  conditionalPlugins.push(["tempo-devtools/swc", {}]);
+  /* conditionalPlugins.push(["tempo-devtools/swc", {}]) [deprecated] */
 }
 
 // Ensure package.json path is correctly resolved
