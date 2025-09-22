@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { TRC20Icon, BEP20Icon, ERC20Icon } from "@/components/ui/network-icons";
+import { uploadFileToStorage } from "@/lib/file-upload";
 
 const NETWORKS = [
   {
@@ -189,15 +190,18 @@ export default function DepositPage() {
 
       let screenshotUrl = "";
       if (screenshot) {
-        const { data, error: uploadError } = await supabase.storage
-          .from("deposit-screenshots")
-          .upload(`${user.id}/${Date.now()}-${screenshot.name}`, screenshot, {
-            cacheControl: "3600",
-            upsert: false,
-          });
+        // Use the new safe upload system
+        const uploadResult = await uploadFileToStorage(
+          screenshot, 
+          "deposit-screenshots", 
+          "transactions"
+        );
 
-        if (uploadError) throw uploadError;
-        screenshotUrl = data.path;
+        if (!uploadResult.success) {
+          throw new Error(uploadResult.error || "Failed to upload screenshot");
+        }
+
+        screenshotUrl = uploadResult.data!.storagePath;
       }
 
       const depositAmount = parseFloat(amount);
@@ -227,7 +231,7 @@ export default function DepositPage() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to submit deposit request. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to submit deposit request. Please try again.",
       });
     } finally {
       setLoading(false);

@@ -25,6 +25,7 @@ const SettingsPage = lazy(() => import("./pages/settings"));
 
 const WithdrawalPage = lazy(() => import("./pages/withdrawal"));
 const AiTradingPage = lazy(() => import("./pages/ai-trading"));
+const FileUploadPage = lazy(() => import("./pages/file-upload"));
 
 function App() {
   const navigate = useNavigate();
@@ -91,6 +92,7 @@ function App() {
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/account" element={<AccountPage />} />
             <Route path="/deposit" element={<DepositPage />} />
+            <Route path="/file-upload" element={<FileUploadPage />} />
             <Route path="/copy-trading" element={<CopyTrading />} />
             <Route path="/copy-trading/:traderId" element={<CopyTrading />} />
             <Route path="/history" element={<HistoryPage />} />

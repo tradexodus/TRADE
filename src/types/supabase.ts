@@ -420,6 +420,36 @@ export type Database = {
         }
         Relationships: []
       }
+      uploads: {
+        Row: {
+          created_at: string | null
+          file_path: string
+          file_size: number | null
+          id: string
+          mime_type: string | null
+          original_name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          file_path: string
+          file_size?: number | null
+          id?: string
+          mime_type?: string | null
+          original_name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          file_path?: string
+          file_size?: number | null
+          id?: string
+          mime_type?: string | null
+          original_name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_accounts: {
         Row: {
           account_id: number
