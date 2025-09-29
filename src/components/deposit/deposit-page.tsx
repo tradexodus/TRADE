@@ -64,6 +64,7 @@ export default function DepositPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 3;
   const [amount, setAmount] = useState("");
+  const [couponCode, setCouponCode] = useState("");
   const [screenshot, setScreenshot] = useState<File | null>(null);
   const [selectedNetwork, setSelectedNetwork] = useState(NETWORKS[0]);
   const [walletAddresses, setWalletAddresses] = useState<{
@@ -215,6 +216,7 @@ export default function DepositPage() {
           screenshot_url: screenshotUrl,
           network: selectedNetwork.id,
           wallet_address: walletAddresses[selectedNetwork.id],
+          coupon_code: couponCode || null,
         },
       ]);
 
@@ -489,6 +491,21 @@ export default function DepositPage() {
                     />
                     <p className="text-xs text-muted-foreground">
                       Minimum deposit: 1 USDT
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="couponCode">Bonus Coupon Code (Optional)</Label>
+                    <Input
+                      id="couponCode"
+                      type="text"
+                      value={couponCode}
+                      onChange={(e) => setCouponCode(e.target.value)}
+                      placeholder="Enter coupon code for bonus"
+                      className="h-12"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Apply a coupon code to receive additional bonuses
                     </p>
                   </div>
                 </CardContent>
