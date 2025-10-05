@@ -7,7 +7,7 @@ import "@fontsource/poppins/500.css";
 import "@fontsource/poppins/600.css";
 import "@fontsource/manrope/700.css";
 import React, { useState, useEffect } from "react";
-import { Star } from "lucide-react";
+import { Star, Download } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import { getCookie, setCookie } from "@/lib/cookies";
 import {
@@ -90,11 +90,7 @@ export default function LandingPage() {
       {/* Navigation */}
       <nav className="w-full py-1 sm:py-0 px-1 md:px-12 sticky top-0 bg-black/90 backdrop-blur-sm z-50">
         <div className="flex justify-between items-center">
-          <img
-            src="https://i.top4top.io/p_3417xmy0t0.png"
-            alt="Logo"
-            className="h-10 sm:h-12 md:h-16 w-auto max-w-[160px] sm:max-w-[180px] md:max-w-[220px] object-contain flex"
-          />
+          <img className="h-10 sm:h-12 md:h-16 w-auto max-w-[160px] sm:max-w-[180px] md:max-w-[220px] object-contain flex" />
 
           <div className="hidden md:flex items-center space-x-6">
             <div className="flex space-x-6">
@@ -255,6 +251,15 @@ export default function LandingPage() {
           >
             Log in
           </button>
+          <a
+            href="https://drive.usercontent.google.com/download?id=127lyOQoNFnQ9Jef4Zn2_Y71xu76-_wu7&export=download&authuser=0&confirm=t&uuid=0f598b63-5b2b-4995-bcf1-08c7dcab0e83&at=AKSUxGOzY0BxNUr8DMOyHPYg8RCu%3A1759695796710"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-4 py-3 bg-gradient-to-r from-green-500 to-green-600 rounded-lg text-white text-sm font-bold font-manrope w-full sm:w-[180px] flex items-center justify-center space-x-2 hover:from-green-600 hover:to-green-700 transition-all"
+          >
+            <Download className="w-4 h-4" />
+            <span>Download App</span>
+          </a>
         </div>
       </section>
       {/* Stats Section */}
@@ -440,11 +445,6 @@ export default function LandingPage() {
       >
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-10 md:gap-6 mb-10 md:mb-8">
           <div className="space-y-6 col-span-1 sm:col-span-2 md:col-span-1">
-            <img
-              src="https://storage.googleapis.com/tempo-public-images/figma-exports%2Fgithub%7C196424230-1740190881924-node-103%3A91-1740180080498.png"
-              alt="Logo"
-              className="w-28 sm:w-32 h-[36px] sm:h-[40px] object-contain"
-            />
             <p className="text-base sm:text-lg font-semibold font-poppins">
               Get the lastes Updates
             </p>
@@ -510,7 +510,7 @@ export default function LandingPage() {
 
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 pt-6 border-t border-white/10">
           <p className="text-sm sm:text-base font-semibold font-poppins text-center md:text-left">
-            Exodus Trade©. All Rights Reserved
+            Exudos Trade©. All Rights Reserved
           </p>
           <div className="flex space-x-4">{/* Social Icons */}</div>
         </div>
