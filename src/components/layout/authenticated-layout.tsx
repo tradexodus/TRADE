@@ -164,7 +164,7 @@ export default function AuthenticatedLayout({
       <div className="hidden md:flex flex-col w-[270px] p-0">
         <div className="p-2">
           <div className="space-y-0 md:pl-14 md:my-6">
-            <h2 className="text-xl font-bold tracking-wide">Exodus Trade</h2>
+            <h2 className="text-xl font-bold tracking-wide">Exudos Trade</h2>
             <p className="text-sm font-bold/90">{profile?.email}</p>
             <p className="text-sm font-bold">
               Account ID: {loading ? "Loading..." : profile?.account_id}
@@ -277,7 +277,7 @@ export default function AuthenticatedLayout({
               className="p-0"
               onClick={() => navigate("/dashboard")}
             >
-              <h2 className="text-xl font-bold tracking-wide">Exodus Trade</h2>
+              <h2 className="text-xl font-bold tracking-wide">Exudos Trade</h2>
             </Button>
             <div className="md:hidden flex items-center gap-2">
               <ThemeToggle />
@@ -294,7 +294,7 @@ export default function AuthenticatedLayout({
                   <SheetHeader className="p-6 border-b border-blue-700/20 bg-blue-900/20">
                     <div className="space-y-1">
                       <SheetTitle className="text-xl font-bold tracking-wide">
-                        Exodus Trade
+                        Exudos Trade
                       </SheetTitle>
                       <p className="text-sm font-bold">{profile?.email}</p>
                       <p className="text-sm font-bold">
