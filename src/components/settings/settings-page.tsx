@@ -524,7 +524,7 @@ export default function SettingsPage() {
                 </p>
                 <div className="mt-2 space-y-1 text-sm">
                   <p>Email: support@exudostrade.com</p>
-                  <p>Phone: +1 (555) 123-4567</p>
+                  <p>Telegram: @exudos_support</p>
                 </div>
               </div>
               <Separator />
