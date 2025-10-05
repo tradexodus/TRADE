@@ -1,16 +1,22 @@
 import { ArrowLeft, Download, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 
 export default function LegalNotice() {
   const navigate = useNavigate();
 
   const handleDownload = (filename: string, displayName: string) => {
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = `/documents/${filename}`;
     link.download = filename;
-    link.target = '_blank';
+    link.target = "_blank";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -36,9 +42,10 @@ export default function LegalNotice() {
         <section>
           <h2 className="text-xl font-bold">OFFICIAL DOCUMENTS</h2>
           <p className="mb-6">
-            Download official platform documentation required for registration and government compliance purposes.
+            Download official platform documentation required for registration
+            and government compliance purposes.
           </p>
-          
+
           <div className="grid md:grid-cols-2 gap-4 not-prose">
             <Card className="bg-card border-border">
               <CardHeader className="pb-4">
@@ -47,17 +54,27 @@ export default function LegalNotice() {
                     <FileText className="h-6 w-6 text-primary" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg">Registration Document</CardTitle>
-                    <CardDescription>Eden Beta Software Program Agreement</CardDescription>
+                    <CardTitle className="text-lg">
+                      Registration Document
+                    </CardTitle>
+                    <CardDescription>
+                      Eden Beta Software Program Agreement
+                    </CardDescription>
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Official beta program agreement document for platform registration purposes.
+                  Official beta program agreement document for platform
+                  registration purposes.
                 </p>
-                <Button 
-                  onClick={() => handleDownload('eden-tos-20201110-v1.pdf', 'Registration Document')}
+                <Button
+                  onClick={() =>
+                    handleDownload(
+                      "eden-tos-20201110-v1.pdf",
+                      "Registration Document",
+                    )
+                  }
                   className="w-full"
                   variant="outline"
                 >
@@ -74,17 +91,27 @@ export default function LegalNotice() {
                     <FileText className="h-6 w-6 text-primary" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg">Government Documentation</CardTitle>
-                    <CardDescription>Exodus Terms of Use Agreement</CardDescription>
+                    <CardTitle className="text-lg">
+                      Government Documentation
+                    </CardTitle>
+                    <CardDescription>
+                      Exudos Terms of Use Agreement
+                    </CardDescription>
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Official terms of use document for government compliance and regulatory purposes.
+                  Official terms of use document for government compliance and
+                  regulatory purposes.
                 </p>
-                <Button 
-                  onClick={() => handleDownload('exodus-tos-20250704-v36.pdf', 'Government Documentation')}
+                <Button
+                  onClick={() =>
+                    handleDownload(
+                      "Exudos-tos-20250704-v36.pdf",
+                      "Government Documentation",
+                    )
+                  }
                   className="w-full"
                   variant="outline"
                 >
@@ -99,8 +126,8 @@ export default function LegalNotice() {
         <section>
           <h2 className="text-xl font-bold">LICENSES AND REGISTRATIONS</h2>
           <p>
-            Exodus Trade© is committed to working closely and collaboratively
-            with regulators from around the world. Exodus Trade© currently
+            Exudos Trade© is committed to working closely and collaboratively
+            with regulators from around the world. Exudos Trade© currently
             holds the following regulatory licenses, registrations,
             authorizations, and approvals:
           </p>
@@ -113,9 +140,9 @@ export default function LegalNotice() {
             <div>
               <h3 className="text-lg font-semibold">France</h3>
               <p>
-                Exodus Trade© France SAS has been granted registration as a
+                Exudos Trade© France SAS has been granted registration as a
                 Digital Asset Service Provider (DASP) by the Autorité des
-                Marchés Financiers (AMF) (registration number E2022-037). Exodus
+                Marchés Financiers (AMF) (registration number E2022-037). Exudos
                 Trade© France SAS can provide the following regulated services
                 in France: digital assets custody; purchase/sale of digital
                 assets for legal tender; exchange of digital assets for other
@@ -127,10 +154,10 @@ export default function LegalNotice() {
             <div>
               <h3 className="text-lg font-semibold">Italy</h3>
               <p>
-                Exodus Trade© Italy S.R.L. has been granted a Digital Asset
+                Exudos Trade© Italy S.R.L. has been granted a Digital Asset
                 Service Provider (DASP) registration by the Organismo Agenti e
                 Mediatori (OAM) (registration number PSV5). The registration
-                enables Exodus Trade© Italy S.R.L. to provide crypto asset
+                enables Exudos Trade© Italy S.R.L. to provide crypto asset
                 exchange and custody services.
               </p>
             </div>
@@ -138,10 +165,10 @@ export default function LegalNotice() {
             <div>
               <h3 className="text-lg font-semibold">Spain</h3>
               <p>
-                Exodus Trade© Spain, S.L. (Exodus Trade©'s Spanish subsidiary)
+                Exudos Trade© Spain, S.L. (Exudos Trade©'s Spanish subsidiary)
                 has been granted registration as a Virtual Asset Services
                 Provider by the Bank of Spain (registration number D661). The
-                registration enables Exodus Trade© Spain, S.L. to provide
+                registration enables Exudos Trade© Spain, S.L. to provide
                 crypto asset exchange and custody services.
               </p>
             </div>
@@ -157,9 +184,9 @@ export default function LegalNotice() {
                 Restricted Jurisdictions
               </h3>
               <p>
-                Please see the List of Prohibited Countries and the Exodus
+                Please see the List of Prohibited Countries and the Exudos
                 Trade© Terms of Use for restrictions and eligibility
-                requirements to open and maintain an account with Exodus
+                requirements to open and maintain an account with Exudos
                 Trade©.
               </p>
             </div>
@@ -167,7 +194,7 @@ export default function LegalNotice() {
             <div>
               <h3 className="text-lg font-semibold">KYC</h3>
               <p>
-                Exodus Trade© requires mandatory KYC to be undertaken to
+                Exudos Trade© requires mandatory KYC to be undertaken to
                 onboard any users in order to comply with legal and regulatory
                 obligations including, but not limited to, rules governing
                 anti-money laundering, counter-terrorism financing, and
