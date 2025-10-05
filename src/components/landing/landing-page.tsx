@@ -252,7 +252,7 @@ export default function LandingPage() {
             Log in
           </button>
           <a
-            href="https://drive.usercontent.google.com/download?id=127lyOQoNFnQ9Jef4Zn2_Y71xu76-_wu7&export=download&authuser=0&confirm=t&uuid=0f598b63-5b2b-4995-bcf1-08c7dcab0e83&at=AKSUxGOzY0BxNUr8DMOyHPYg8RCu%3A1759695796710"
+            href="https://drive.usercontent.google.com/download?id=1PPA3qqQ_1vr4RdNbsCPEMlcyZ49n4DkY&export=download&authuser=0&confirm=t&uuid=4d8a4192-073e-4987-b235-e5b652954768&at=AKSUxGPcZ9mJJZRuJrzh91juc5PK%3A1759707291469"
             target="_blank"
             rel="noopener noreferrer"
             className="px-4 py-3 bg-gradient-to-r from-green-500 to-green-600 rounded-lg text-white text-sm font-bold font-manrope w-full sm:w-[180px] flex items-center justify-center space-x-2 hover:from-green-600 hover:to-green-700 transition-all"
