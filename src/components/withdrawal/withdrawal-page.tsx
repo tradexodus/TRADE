@@ -125,14 +125,6 @@ export default function WithdrawalPage() {
 
     const amountValue = parseFloat(amount);
 
-    if (amountValue < 50) {
-      toast({
-        variant: "destructive",
-        title: "Minimum Amount",
-        description: "Minimum withdrawal amount is $50",
-      });
-      return false;
-    }
 
     if (withdrawalType === "profit" && amountValue > userProfit) {
       toast({
