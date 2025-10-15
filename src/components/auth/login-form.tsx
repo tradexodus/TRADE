@@ -83,7 +83,7 @@ export default function LoginForm() {
             title: "Account Banned",
             description:
 
-              "Your account has been banned. Please contact support for assistance via Telegram: @exudossupport",
+              "Your account has been banned. Please contact support for assistance via Telegram: @exudos_support",
           });
           return;
         }
