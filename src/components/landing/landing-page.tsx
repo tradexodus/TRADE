@@ -230,7 +230,7 @@ export default function LandingPage() {
         <h1 className="text-2xl sm:text-3xl md:text-5xl font-extrabold leading-[1.2] tracking-tight">
           <span>Trade with </span>
           <span className="text-[#007aff]">AI</span>
-          <span> New gen of trading</span>
+          <span> New Gen of Trading</span>
         </h1>
         <p className="mt-4 md:mt-6 text-sm md:text-base text-white/80 font-medium leading-relaxed max-w-2xl mx-auto">
           With the development of artificial intelligence, in partnership with
@@ -270,9 +270,9 @@ export default function LandingPage() {
               Our AI-Powered Trading
             </p>
             <h2 className="text-2xl md:text-4xl font-extrabold leading-tight mt-3 md:mt-4">
-              Entre the new
+              Enter the New
               <br />
-              universe of Trading
+              World of Trading
             </h2>
             <p className="mt-4 md:mt-6 text-sm md:text-base font-medium text-[#a8a8a8] leading-relaxed max-w-xl">
               With the development of artificial intelligence, in partnership
