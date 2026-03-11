@@ -1,8 +1,6 @@
 import path from "path";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
-import { tempo } from "tempo-devtools/dist/vite";
-import fs from "fs";
 
 const conditionalPlugins: [string, Record<string, any>][] = [];
 
@@ -15,35 +13,41 @@ if (process.env.TEMPO === "true") {
 const packageJsonPath = path.resolve(__dirname, "./package.json");
 
 // https://vitejs.dev/config/
-export default defineConfig({
-  base: "/",
-  optimizeDeps: {
-    entries: ["src/main.tsx"],
-  },
-  plugins: [
+export default defineConfig(async () => {
+  const plugins: any[] = [
     react({
       plugins: conditionalPlugins,
     }),
-    tempo(),
-  ],
-  resolve: {
-    preserveSymlinks: true,
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
-      // Add alias for package.json to ensure it's found correctly
-      "package.json": packageJsonPath,
+  ];
+
+  if (process.env.TEMPO === "true") {
+    const { tempo } = await import("tempo-devtools/dist/vite");
+    plugins.push(tempo());
+  }
+
+  return {
+    base: "/",
+    optimizeDeps: {
+      entries: ["src/main.tsx"],
     },
-  },
-  server: {
-    // @ts-ignore
-    allowedHosts: process.env.TEMPO === "true" ? true : undefined,
-    host: process.env.TEMPO === "true" ? "0.0.0.0" : undefined,
-    hmr: {
-      overlay: false, // Disable HMR overlay for better debugging
+    plugins,
+    resolve: {
+      preserveSymlinks: true,
+      alias: {
+        "@": path.resolve(__dirname, "./src"),
+        "package.json": packageJsonPath,
+      },
     },
-    fs: {
-      // Allow serving files from one level up to the project root
-      allow: ["..", "./"],
+    server: {
+      // @ts-ignore
+      allowedHosts: process.env.TEMPO === "true" ? true : undefined,
+      host: process.env.TEMPO === "true" ? "0.0.0.0" : undefined,
+      hmr: {
+        overlay: false,
+      },
+      fs: {
+        allow: ["..", "./"],
+      },
     },
-  },
+  };
 });

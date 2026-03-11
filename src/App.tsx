@@ -1,8 +1,7 @@
-import { Suspense, lazy, useEffect } from "react";
+import { Suspense, lazy, useEffect, useState } from "react";
 import CopyTrading from "./pages/copy-trading";
 import { useRoutes, Routes, Route, useNavigate } from "react-router-dom";
 import Home from "./components/home";
-import routes from "tempo-routes";
 import { Toaster } from "@/components/ui/toaster";
 import AuthLayout from "./components/layout/AuthLayout";
 import { LoadingScreen } from "./components/ui/loading-screen";
@@ -26,6 +25,19 @@ const SettingsPage = lazy(() => import("./pages/settings"));
 const WithdrawalPage = lazy(() => import("./pages/withdrawal"));
 const AiTradingPage = lazy(() => import("./pages/ai-trading"));
 const FileUploadPage = lazy(() => import("./pages/file-upload"));
+
+// Tempo routes wrapper - only loads in development
+function TempoRoutes() {
+  const [routes, setRoutes] = useState<any[]>([]);
+  useEffect(() => {
+    if (import.meta.env.VITE_TEMPO === "true") {
+      import("tempo-routes").then((mod) => {
+        setRoutes(mod.default || []);
+      }).catch(() => {});
+    }
+  }, []);
+  return useRoutes(routes);
+}
 
 function App() {
   const navigate = useNavigate();
@@ -75,7 +87,7 @@ function App() {
         <div className="fixed z-50 md:right-8 sm:right-8 xs:right-4 right-14 top-3 hidden md:block">
           <ThemeToggle />
         </div>
-        {import.meta.env.VITE_TEMPO === "true" && useRoutes(routes)}
+        {import.meta.env.VITE_TEMPO === "true" && <TempoRoutes />}
         {import.meta.env.VITE_TEMPO === "true" && (
           <Routes>
             <Route path="/tempobook/*" />
