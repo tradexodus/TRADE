@@ -16,7 +16,7 @@ const packageJsonPath = path.resolve(__dirname, "./package.json");
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  base: process.env.TEMPO === "true" ? "/" : "./",
+  base: "/",
   optimizeDeps: {
     entries: ["src/main.tsx"],
   },
@@ -36,7 +36,8 @@ export default defineConfig({
   },
   server: {
     // @ts-ignore
-    allowedHosts: true,
+    allowedHosts: process.env.TEMPO === "true" ? true : undefined,
+    host: process.env.TEMPO === "true" ? "0.0.0.0" : undefined,
     hmr: {
       overlay: false, // Disable HMR overlay for better debugging
     },
