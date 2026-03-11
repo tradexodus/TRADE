@@ -12,7 +12,7 @@ export default function SignupPage() {
       </div>
 
       {/* أنميشن الزوم */}
-      <style jsx>{`
+      <style>{`
         @keyframes zoom {
           0% {
             transform: scale(1);

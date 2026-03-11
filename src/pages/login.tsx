@@ -11,7 +11,7 @@ export default function LoginPage() {
         <LoginForm className="w-full bg-[url('https://storage.googleapis.com/tempo-public-images/github%7C205284952-1746649569311-downlhoadpng')]" />
       </div>
 
-      <style jsx>{`
+      <style>{`
         @keyframes zoom {
           0% {
             transform: scale(1);
